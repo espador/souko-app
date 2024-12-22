@@ -1,6 +1,6 @@
 // src/firebase/firebase.js
 import { initializeApp } from 'firebase/app';
-import { getFirestore, collection, query, where, getDocs } from 'firebase/firestore';
+import { getFirestore, collection, query, where, getDocs, addDoc } from 'firebase/firestore';
 import { getAuth, GoogleAuthProvider } from 'firebase/auth';
 
 // Firebase configuration
@@ -19,16 +19,16 @@ const db = getFirestore(app);
 const auth = getAuth(app);
 const googleProvider = new GoogleAuthProvider();
 
-// In-memory cache for fetched projects to reduce reads
+// In-memory cache for fetched projects
 const projectCache = new Map();
 
-// Function to fetch user-specific projects with caching
+// Function to fetch projects for a user
 const fetchUserProjects = async (userId, forceRefresh = false) => {
   if (!userId) {
     throw new Error('User ID is required to fetch projects.');
   }
 
-  // Check the cache first
+  // Check cache
   if (!forceRefresh && projectCache.has(userId)) {
     console.log('Returning cached projects for user:', userId);
     return projectCache.get(userId);
@@ -44,7 +44,7 @@ const fetchUserProjects = async (userId, forceRefresh = false) => {
       ...doc.data(),
     }));
 
-    // Cache the result
+    // Update cache
     projectCache.set(userId, projects);
 
     console.log('Projects fetched and cached for user:', userId);
@@ -55,15 +55,95 @@ const fetchUserProjects = async (userId, forceRefresh = false) => {
   }
 };
 
-// Example integration where a forced refresh might be needed
-const refreshUserProjects = async (userId) => {
+// Function to fetch sessions for a project
+const fetchProjectSessions = async (projectName, userId) => {
+  if (!projectName || !userId) {
+    throw new Error('Project name and user ID are required to fetch sessions.');
+  }
+
   try {
-    console.log("Refreshing projects for user", userId);
-    const projects = await fetchUserProjects(userId, true); // Force refresh
-    console.log("Refreshed projects:", projects);
+    const sessionsRef = collection(db, 'sessions');
+    const q = query(sessionsRef, where('project', '==', projectName), where('userId', '==', userId));
+    const querySnapshot = await getDocs(q);
+
+    const sessions = querySnapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+
+    console.log('Sessions fetched for project:', projectName, sessions);
+    return sessions;
   } catch (error) {
-    console.error("Error refreshing user projects:", error);
+    console.error("Error fetching project sessions:", error);
+    throw error;
   }
 };
 
-export { auth, googleProvider, db, fetchUserProjects, refreshUserProjects, app };
+// Function to add a project
+const addProject = async (name, userId) => {
+  if (!name || !userId) {
+    throw new Error('Project name and user ID are required to add a project.');
+  }
+
+  try {
+    const docRef = await addDoc(collection(db, 'projects'), {
+      name,
+      userId,
+      trackedTime: 0, // Default tracked time
+    });
+    console.log('Project added with ID:', docRef.id);
+    return docRef.id;
+  } catch (error) {
+    console.error("Error adding project:", error);
+    throw error;
+  }
+};
+
+// Function to add a session
+const addSession = async (userId, project, elapsedTime, startTime, endTime, isBillable, sessionNotes) => {
+  if (!userId || !project) {
+    throw new Error('User ID and project name are required to add a session.');
+  }
+
+  try {
+    const docRef = await addDoc(collection(db, 'sessions'), {
+      userId,
+      project,
+      elapsedTime: elapsedTime || 0,
+      startTime: startTime ? new Date(startTime) : null,
+      endTime: endTime ? new Date(endTime) : null,
+      isBillable: isBillable || false,
+      sessionNotes: sessionNotes || '',
+    });
+    console.log('Session added with ID:', docRef.id);
+    return docRef.id;
+  } catch (error) {
+    console.error("Error adding session:", error);
+    throw error;
+  }
+};
+
+// Function to refresh project cache
+const refreshUserProjects = async (userId) => {
+  try {
+    console.log("Refreshing projects for user:", userId);
+    const projects = await fetchUserProjects(userId, true); // Force refresh
+    console.log("Refreshed projects:", projects);
+    return projects;
+  } catch (error) {
+    console.error("Error refreshing user projects:", error);
+    throw error;
+  }
+};
+
+export {
+  auth,
+  googleProvider,
+  db,
+  fetchUserProjects,
+  fetchProjectSessions,
+  addProject,
+  addSession,
+  refreshUserProjects,
+  app,
+};

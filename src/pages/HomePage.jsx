@@ -75,9 +75,18 @@ const HomePage = () => {
 
   const toggleDropdown = () => setShowDropdown(!showDropdown);
 
+ // Get today's date and format it with timezone handling
+const today = new Date().toLocaleString('en-GB', {
+  weekday: 'long',
+  day: 'numeric',
+  month: 'long',
+  timeZone: 'Europe/Brussels', // Explicitly set Brussels timezone
+});
+
+
   return (
     <div className="homepage">
-      <Header title="Wed, 18 December" user={user}>
+      <Header title={today} user={user}>
         {user && (
           <div className="dropdown-wrapper">
             <img
