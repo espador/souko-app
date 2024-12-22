@@ -5,17 +5,17 @@ import {
   query,
   where,
   getDocs,
-  addDoc,
-  updateDoc,
   doc,
   setDoc,
+  updateDoc,
   serverTimestamp,
 } from 'firebase/firestore';
 import { db, auth } from '../services/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import { formatTime } from '../utils/formatTime';
-import '../styles/global.css'; // Global styles
-import '../styles/components/TimeTrackerPage.css'; // Specific styles for ProjectDetailPage
+import Header from '../components/Layout/Header'; // Corrected import
+import '../styles/global.css';
+import '../styles/components/TimeTrackerPage.css';
 
 const TimeTrackerPage = () => {
   const [user, setUser] = useState(null);
@@ -30,6 +30,7 @@ const TimeTrackerPage = () => {
   const [startTime, setStartTime] = useState(null);
   const navigate = useNavigate();
 
+  // Fetch user and projects
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       if (!currentUser) {
@@ -78,18 +79,20 @@ const TimeTrackerPage = () => {
     return () => unsubscribe();
   }, [navigate]);
 
+  // Timer logic
   useEffect(() => {
     let interval = null;
     if (isRunning && !isPaused) {
       interval = setInterval(() => {
         setTimer((prevTime) => prevTime + 1);
       }, 1000);
-    } else if (!isRunning || isPaused) {
+    } else {
       clearInterval(interval);
     }
     return () => clearInterval(interval);
   }, [isRunning, isPaused]);
 
+  // Handlers
   const handleStart = async () => {
     if (!selectedProject) {
       alert('Please select a project to start the timer.');
@@ -175,43 +178,42 @@ const TimeTrackerPage = () => {
 
   return (
     <div className="tracker-container">
+      <Header
+  showBackArrow={true}
+  onBack={() => navigate('/home')}
+  title="Time Tracker"
+  hideProfile={true} // Hides the profile picture and logout option
+/>
       <div className="timer">
         <h2>{formatTime(timer)}</h2>
-        <div className="controls">
-          <button
-            className="button"
-            onClick={handleReset}
-            disabled={!isRunning && timer === 0}
-          >
-            🔄 Reset
-          </button>
-
-          {isRunning ? (
-            <button className="button" onClick={handleStop}>
-              ■ Stop
-            </button>
-          ) : (
-            <button className="button" onClick={handleStart}>
-              ▶ Start
-            </button>
-          )}
-
-          {isRunning && !isPaused ? (
-            <button className="button" onClick={handlePause}>
-              || Pause
-            </button>
-          ) : isPaused ? (
-            <button className="button" onClick={handleResume}>
-              ▶ Resume
-            </button>
-          ) : (
-            <button className="button" disabled>
-              || Pause
-            </button>
-          )}
-        </div>
       </div>
-
+      <div className="controls">
+        <button className="button" onClick={handleReset} disabled={!isRunning && timer === 0}>
+          🔄 Reset
+        </button>
+        {isRunning ? (
+          <button className="button" onClick={handleStop}>
+            ■ Stop
+          </button>
+        ) : (
+          <button className="button" onClick={handleStart}>
+            ▶ Start
+          </button>
+        )}
+        {isRunning && !isPaused ? (
+          <button className="button" onClick={handlePause}>
+            || Pause
+          </button>
+        ) : isPaused ? (
+          <button className="button" onClick={handleResume}>
+            ▶ Resume
+          </button>
+        ) : (
+          <button className="button" disabled>
+            || Pause
+          </button>
+        )}
+      </div>
       <div className="dropdown">
         <label>
           Select Project:
@@ -229,7 +231,6 @@ const TimeTrackerPage = () => {
           </select>
         </label>
       </div>
-
       <div className="billable">
         <label>
           <span>Billable:</span>
@@ -241,7 +242,6 @@ const TimeTrackerPage = () => {
           />
         </label>
       </div>
-
       <div className="notes">
         <label>
           Session Notes:

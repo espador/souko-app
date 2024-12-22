@@ -1,50 +1,59 @@
 .tracker-container {
   padding: 20px;
   text-align: center;
-  background-color: var(--background-color);
-  color: var(--text-color);
+  background-color: #0f0f14; /* Match homepage background */
+  color: #ffffff; /* Match homepage text color */
+  min-height: 100vh;
 }
 
 .timer {
-  font-size: 3rem;
-  margin-bottom: 20px;
+  font-size: 2rem;
+  font-weight: bold;
+  margin: 20px auto;
+  background-color: #16161d; /* Tile-like design */
+  border-radius: 10px;
+  padding: 20px;
+  box-shadow: 0px 6px 10px rgba(0, 0, 0, 0.4);
+  width: 300px;
 }
 
 .controls {
   display: flex;
-  justify-content: space-between;
-  margin-top: 20px;
-}
-
-.button {
-  padding: 10px 20px;
-  margin: 0 5px;
-  color: var(--text-color);
-  background-color: var(--accent-color);
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-}
-
-.button:hover {
-  background-color: #3e8e41;
+  justify-content: space-evenly;
+  margin: 20px 0;
 }
 
 .dropdown {
-  margin: 20px 0;
+  margin: 20px auto;
+  background-color: #16161d; /* Tile-like design */
+  border-radius: 10px;
+  padding: 10px;
+  box-shadow: 0px 6px 10px rgba(0, 0, 0, 0.4);
+  width: 300px;
+  text-align: left;
 }
 
 .select {
   padding: 10px;
   font-size: 16px;
+  border: 1px solid #25252d;
+  border-radius: 5px;
+  width: 100%;
+  color: #ffffff;
+  background-color: #0f0f14;
 }
 
 .billable {
-  margin: 20px 0;
+  margin: 20px auto;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 10px;
+  background-color: #16161d;
+  border-radius: 10px;
+  padding: 10px;
+  box-shadow: 0px 6px 10px rgba(0, 0, 0, 0.4);
+  width: 300px;
 }
 
 .toggle {
@@ -53,12 +62,22 @@
 }
 
 .notes {
-  margin: 20px 0;
+  margin: 20px auto;
+  background-color: #16161d; /* Tile-like design */
+  border-radius: 10px;
+  padding: 10px;
+  box-shadow: 0px 6px 10px rgba(0, 0, 0, 0.4);
+  width: 300px;
+  text-align: left;
 }
 
 .textarea {
   width: 100%;
-  height: 60px;
+  height: 80px;
   padding: 10px;
   font-size: 16px;
+  border-radius: 5px;
+  border: 1px solid #25252d;
+  background-color: #0f0f14;
+  color: #ffffff;
 }

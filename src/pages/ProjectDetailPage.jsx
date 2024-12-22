@@ -4,6 +4,7 @@ import { doc, getDoc, collection, query, where, getDocs, limit } from 'firebase/
 import { db, auth } from '../services/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import { formatTime } from '../utils/formatTime';
+import Header from '../components/Layout/Header'; // Correct import for Header
 import '../styles/global.css'; // Global styles
 import '../styles/components/ProjectDetailPage.css'; // Specific styles for ProjectDetailPage
 
@@ -93,9 +94,12 @@ const ProjectDetailPage = () => {
 
   return (
     <div className="project-container">
-      <button className="back-button" onClick={() => navigate('/home')}>
-        ⬅
-      </button>
+      <Header
+        title={project.name}
+        showBackArrow={true}
+        onBack={() => navigate('/home')}
+        hideProfile={true} // Hides the profile picture and logout option
+      />
       <div className="project-header">
         <div className="project-icon">
           <span>{project.name[0]}</span>
@@ -105,26 +109,27 @@ const ProjectDetailPage = () => {
       </div>
 
       <div className="sessions-container">
-        <h2>Sessions</h2>
-        {sessions.length > 0 ? (
-          <ul className="sessions-list">
-            {sessions.map((session) => (
-              <li key={session.id} className="session-item">
-                <div>
-                  <p>
-                    <strong>{new Date(session.startTime).toLocaleDateString()}</strong>
-                  </p>
-                  <p>Elapsed Time: {formatTime(session.elapsedTime)}</p>
-                  {session.isBillable && <p className="billable">Billable</p>}
-                  {session.sessionNotes && <p className="notes">Notes: {session.sessionNotes}</p>}
-                </div>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p>No sessions tracked for this project yet.</p>
-        )}
-      </div>
+  <h2>Sessions</h2>
+  {sessions.length > 0 ? (
+    <ul className="sessions-list">
+      {sessions.map((session) => (
+        <li key={session.id} className="session-item">
+          <div>
+            <p className="session-details">
+              <strong>{new Date(session.startTime).toLocaleDateString()}</strong>
+            </p>
+            <p className="session-time">Elapsed Time: {formatTime(session.elapsedTime)}</p>
+            {session.isBillable && <p className="billable">Billable</p>}
+            {session.sessionNotes && <p className="notes">Notes: {session.sessionNotes}</p>}
+          </div>
+        </li>
+      ))}
+    </ul>
+  ) : (
+    <p>No sessions tracked for this project yet.</p>
+  )}
+</div>
+
       <button className="button" onClick={() => navigate('/home')}>
         Return to Homepage
       </button>

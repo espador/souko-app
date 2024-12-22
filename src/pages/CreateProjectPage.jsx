@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { collection, addDoc } from 'firebase/firestore';
 import { db, auth } from '../services/firebase';
 import { useNavigate } from 'react-router-dom';
+import Header from '../components/Layout/Header'; // Adjust path if necessary
 
 const CreateProjectPage = () => {
   const [projectName, setProjectName] = useState('');
@@ -39,24 +40,32 @@ const CreateProjectPage = () => {
   };
 
   return (
-    <div style={styles.container}>
-      <h1>Create New Project</h1>
-      <form onSubmit={handleCreateProject} style={styles.form}>
-        <label>
-          Project Name:
-          <input
-            type="text"
-            value={projectName}
-            onChange={(e) => setProjectName(e.target.value)}
-            style={styles.input}
-            placeholder="Enter project name"
-          />
-        </label>
-        {error && <p style={styles.error}>{error}</p>}
-        <button type="submit" style={styles.button}>
-          Create Project
-        </button>
-      </form>
+    <div>
+      <Header
+        title="Create Project"
+        showBackArrow={true}
+        onBack={() => navigate('/home')} // Navigate back to the homepage
+        hideProfile={true} // Hides the profile picture and logout option
+      />
+      <div style={styles.container}>
+        <h1>Create New Project</h1>
+        <form onSubmit={handleCreateProject} style={styles.form}>
+          <label>
+            Project Name:
+            <input
+              type="text"
+              value={projectName}
+              onChange={(e) => setProjectName(e.target.value)}
+              style={styles.input}
+              placeholder="Enter project name"
+            />
+          </label>
+          {error && <p style={styles.error}>{error}</p>}
+          <button type="submit" style={styles.button}>
+            Create Project
+          </button>
+        </form>
+      </div>
     </div>
   );
 };

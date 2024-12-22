@@ -4,6 +4,8 @@ import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { collection, getDocs, query, where, limit } from 'firebase/firestore';
 import { useNavigate } from 'react-router-dom';
 import { formatTime } from '../utils/formatTime';
+import Header from '../components/Layout/Header';
+import '../styles/global.css';
 import '../styles/components/HomePage.css';
 
 const HomePage = () => {
@@ -11,6 +13,7 @@ const HomePage = () => {
   const [projects, setProjects] = useState([]);
   const [totalSessionTime, setTotalSessionTime] = useState({});
   const [loading, setLoading] = useState(true);
+  const [showDropdown, setShowDropdown] = useState(false); // Dropdown visibility state
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -21,22 +24,18 @@ const HomePage = () => {
         setUser(currentUser);
 
         try {
-          // Fetch projects belonging to the authenticated user
           const projectsRef = collection(db, 'projects');
           const projectQuery = query(
             projectsRef,
             where('userId', '==', currentUser.uid)
           );
           const projectSnapshot = await getDocs(projectQuery);
-          const userProjects = projectSnapshot.docs
-            .filter((doc) => doc.data().userId === currentUser.uid)
-            .map((doc) => ({
-              id: doc.id,
-              name: doc.data().name,
-            }));
+          const userProjects = projectSnapshot.docs.map((doc) => ({
+            id: doc.id,
+            name: doc.data().name,
+          }));
           setProjects(userProjects);
 
-          // Fetch user sessions and calculate total times
           const sessionRef = collection(db, 'sessions');
           const sessionQuery = query(
             sessionRef,
@@ -74,26 +73,29 @@ const HomePage = () => {
     }
   };
 
-  const handleFABClick = () => {
-    navigate('/time-tracker');
-  };
-
-  const handleCreateProjectClick = () => {
-    navigate('/create-project');
-  };
-
-  const handleProjectClick = (projectId) => {
-    navigate(`/project/${projectId}`);
-  };
+  const toggleDropdown = () => setShowDropdown(!showDropdown);
 
   return (
     <div className="homepage">
-      <header className="homepage-header">
-        <h1>Welcome, {user?.displayName || 'User'}!</h1>
-        <button className="logout-button" onClick={handleLogout}>
-          Log Out
-        </button>
-      </header>
+      <Header title="Wed, 18 December" user={user}>
+        {user && (
+          <div className="dropdown-wrapper">
+            <img
+              src={user?.photoURL || '/default-profile.png'}
+              alt="Profile"
+              className="profile-pic"
+              onClick={toggleDropdown}
+            />
+            {showDropdown && (
+              <div className="dropdown-menu">
+                <button className="dropdown-item" onClick={handleLogout}>
+                  Log Out
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+      </Header>
 
       <main className="homepage-content">
         {loading ? (
@@ -107,7 +109,7 @@ const HomePage = () => {
                   <li
                     key={project.id}
                     className="project-item"
-                    onClick={() => handleProjectClick(project.id)}
+                    onClick={() => navigate(`/project/${project.id}`)}
                   >
                     <span className="project-link">{project.name}</span> - Total Time: {formatTime(totalSessionTime[project.name] || 0)}
                   </li>
@@ -116,7 +118,7 @@ const HomePage = () => {
             ) : (
               <p>No projects found. Start tracking to see results here!</p>
             )}
-            <button className="track-project-button" onClick={handleCreateProjectClick}>
+            <button className="track-project-button" onClick={() => navigate('/create-project')}>
               + Track New Project
             </button>
           </section>
@@ -124,7 +126,7 @@ const HomePage = () => {
       </main>
 
       {projects.length > 0 && (
-        <button className="fab" onClick={handleFABClick}>
+        <button className="fab" onClick={() => navigate('/time-tracker')}>
           ▶
         </button>
       )}
