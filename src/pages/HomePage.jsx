@@ -4,6 +4,7 @@ import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { collection, getDocs, query, where, limit } from 'firebase/firestore';
 import { useNavigate } from 'react-router-dom';
 import { formatTime } from '../utils/formatTime';
+import '../styles/components/HomePage.css';
 
 const HomePage = () => {
   const [user, setUser] = useState(null);
@@ -28,7 +29,7 @@ const HomePage = () => {
           );
           const projectSnapshot = await getDocs(projectQuery);
           const userProjects = projectSnapshot.docs
-            .filter((doc) => doc.data().userId === currentUser.uid) // Validate userId
+            .filter((doc) => doc.data().userId === currentUser.uid)
             .map((doc) => ({
               id: doc.id,
               name: doc.data().name,
@@ -86,36 +87,36 @@ const HomePage = () => {
   };
 
   return (
-    <div style={styles.container}>
-      <header style={styles.header}>
+    <div className="homepage">
+      <header className="homepage-header">
         <h1>Welcome, {user?.displayName || 'User'}!</h1>
-        <button style={styles.logoutButton} onClick={handleLogout}>
+        <button className="logout-button" onClick={handleLogout}>
           Log Out
         </button>
       </header>
 
-      <main>
+      <main className="homepage-content">
         {loading ? (
           <p>Loading your data...</p>
         ) : (
-          <section style={styles.projects}>
+          <section>
             <h2>Your Projects</h2>
             {projects.length > 0 ? (
-              <ul>
+              <ul className="projects-list">
                 {projects.map((project) => (
                   <li
                     key={project.id}
-                    style={styles.projectItem}
+                    className="project-item"
                     onClick={() => handleProjectClick(project.id)}
                   >
-                    <span style={styles.projectLink}>{project.name}</span> - Total Time: {formatTime(totalSessionTime[project.name] || 0)}
+                    <span className="project-link">{project.name}</span> - Total Time: {formatTime(totalSessionTime[project.name] || 0)}
                   </li>
                 ))}
               </ul>
             ) : (
               <p>No projects found. Start tracking to see results here!</p>
             )}
-            <button style={styles.createProjectButton} onClick={handleCreateProjectClick}>
+            <button className="track-project-button" onClick={handleCreateProjectClick}>
               + Track New Project
             </button>
           </section>
@@ -123,73 +124,12 @@ const HomePage = () => {
       </main>
 
       {projects.length > 0 && (
-        <button style={styles.fab} onClick={handleFABClick}>
+        <button className="fab" onClick={handleFABClick}>
           ▶
         </button>
       )}
     </div>
   );
-};
-
-const styles = {
-  container: {
-    fontFamily: 'Arial, sans-serif',
-    padding: '20px',
-    minHeight: '100vh',
-    backgroundColor: '#f9f9f9',
-  },
-  header: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  logoutButton: {
-    backgroundColor: '#d9534f',
-    color: '#fff',
-    border: 'none',
-    borderRadius: '5px',
-    padding: '10px',
-    cursor: 'pointer',
-  },
-  projects: {
-    marginTop: '20px',
-  },
-  projectItem: {
-    padding: '10px 0',
-    borderBottom: '1px solid #ddd',
-    cursor: 'pointer',
-  },
-  projectLink: {
-    color: '#007BFF',
-    textDecoration: 'underline',
-  },
-  createProjectButton: {
-    marginTop: '20px',
-    padding: '10px 20px',
-    backgroundColor: '#4285F4',
-    color: '#fff',
-    border: 'none',
-    borderRadius: '5px',
-    cursor: 'pointer',
-    fontSize: '16px',
-  },
-  fab: {
-    position: 'fixed',
-    bottom: '20px',
-    right: '20px',
-    width: '60px',
-    height: '60px',
-    borderRadius: '50%',
-    backgroundColor: '#28a745',
-    color: '#fff',
-    fontSize: '24px',
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-    border: 'none',
-    cursor: 'pointer',
-    boxShadow: '0 2px 6px rgba(0, 0, 0, 0.2)',
-  },
 };
 
 export default HomePage;

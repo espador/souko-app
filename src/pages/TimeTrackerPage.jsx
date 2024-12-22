@@ -14,6 +14,8 @@ import {
 import { db, auth } from '../services/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import { formatTime } from '../utils/formatTime';
+import '../styles/global.css'; // Global styles
+import '../styles/components/TimeTrackerPage.css'; // Specific styles for ProjectDetailPage
 
 const TimeTrackerPage = () => {
   const [user, setUser] = useState(null);
@@ -36,7 +38,6 @@ const TimeTrackerPage = () => {
         setUser(currentUser);
 
         try {
-          // Fetch projects with only necessary fields
           const projectsRef = collection(db, 'projects');
           const projectQuery = query(projectsRef, where('userId', '==', currentUser.uid));
           const projectSnapshot = await getDocs(projectQuery);
@@ -44,7 +45,6 @@ const TimeTrackerPage = () => {
             projectSnapshot.docs.map((doc) => ({ id: doc.id, name: doc.data().name }))
           );
 
-          // Check for an active session
           const sessionRef = collection(db, 'sessions');
           const activeSessionQuery = query(
             sessionRef,
@@ -61,7 +61,6 @@ const TimeTrackerPage = () => {
             setSessionNotes(sessionData.sessionNotes || '');
             setIsBillable(sessionData.isBillable || true);
 
-            // Calculate elapsed time
             const now = Date.now();
             const sessionStartTime = sessionData.startTime?.toDate().getTime() || 0;
             setStartTime(sessionStartTime);
@@ -99,15 +98,14 @@ const TimeTrackerPage = () => {
 
     if (!sessionId) {
       try {
-        // Create a new session
-        const sessionRef = doc(collection(db, 'sessions')); // Auto-generate document ID
+        const sessionRef = doc(collection(db, 'sessions'));
         await setDoc(sessionRef, {
-          userId: user.uid, // Include authenticated user's UID
+          userId: user.uid,
           project: selectedProject,
           sessionNotes,
           isBillable,
           startTime: serverTimestamp(),
-          endTime: null, // Session is active
+          endTime: null,
           elapsedTime: 0,
         });
         setSessionId(sessionRef.id);
@@ -176,13 +174,12 @@ const TimeTrackerPage = () => {
   };
 
   return (
-    <div style={styles.container}>
-      {/* Timer and functional buttons */}
-      <div style={styles.timer}>
+    <div className="tracker-container">
+      <div className="timer">
         <h2>{formatTime(timer)}</h2>
-        <div style={styles.controls}>
+        <div className="controls">
           <button
-            style={styles.button}
+            className="button"
             onClick={handleReset}
             disabled={!isRunning && timer === 0}
           >
@@ -190,38 +187,38 @@ const TimeTrackerPage = () => {
           </button>
 
           {isRunning ? (
-            <button style={styles.button} onClick={handleStop}>
+            <button className="button" onClick={handleStop}>
               ■ Stop
             </button>
           ) : (
-            <button style={styles.button} onClick={handleStart}>
+            <button className="button" onClick={handleStart}>
               ▶ Start
             </button>
           )}
 
           {isRunning && !isPaused ? (
-            <button style={styles.button} onClick={handlePause}>
+            <button className="button" onClick={handlePause}>
               || Pause
             </button>
           ) : isPaused ? (
-            <button style={styles.button} onClick={handleResume}>
+            <button className="button" onClick={handleResume}>
               ▶ Resume
             </button>
           ) : (
-            <button style={styles.button} disabled>
+            <button className="button" disabled>
               || Pause
             </button>
           )}
         </div>
       </div>
 
-      <div style={styles.dropdown}>
+      <div className="dropdown">
         <label>
           Select Project:
           <select
             value={selectedProject}
             onChange={(e) => setSelectedProject(e.target.value)}
-            style={styles.select}
+            className="select"
           >
             <option value="">-- Select a Project --</option>
             {projects.map((project) => (
@@ -233,85 +230,30 @@ const TimeTrackerPage = () => {
         </label>
       </div>
 
-      <div style={styles.billable}>
+      <div className="billable">
         <label>
           <span>Billable:</span>
           <input
             type="checkbox"
             checked={isBillable}
             onChange={() => setIsBillable(!isBillable)}
-            style={styles.toggle}
+            className="toggle"
           />
         </label>
       </div>
 
-      <div style={styles.notes}>
+      <div className="notes">
         <label>
           Session Notes:
           <textarea
             value={sessionNotes}
             onChange={(e) => setSessionNotes(e.target.value)}
-            style={styles.textarea}
+            className="textarea"
           />
         </label>
       </div>
     </div>
   );
-};
-
-const styles = {
-  container: {
-    padding: '20px',
-    textAlign: 'center',
-    backgroundColor: '#1E1E2C',
-    color: '#fff',
-    fontFamily: 'Arial, sans-serif',
-  },
-  timer: {
-    fontSize: '3rem',
-    marginBottom: '20px',
-  },
-  controls: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    marginTop: '20px',
-  },
-  button: {
-    padding: '10px 20px',
-    margin: '0 5px',
-    color: '#fff',
-    border: 'none',
-    borderRadius: '5px',
-    cursor: 'pointer',
-    backgroundColor: '#4CAF50',
-  },
-  dropdown: {
-    margin: '20px 0',
-  },
-  select: {
-    padding: '10px',
-    fontSize: '16px',
-  },
-  billable: {
-    margin: '20px 0',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: '10px',
-  },
-  toggle: {
-    width: '20px',
-    height: '20px',
-  },
-  notes: {
-    margin: '20px 0',
-  },
-  textarea: {
-    width: '100%',
-    height: '60px',
-    padding: '10px',
-    fontSize: '16px',
-  },
 };
 
 export default TimeTrackerPage;
