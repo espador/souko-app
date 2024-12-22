@@ -3,12 +3,12 @@
     "version": "1.0.0",
     "description": "A time tracking app",
     "scripts": {
-        "start": "react-scripts start",
-        "build": "react-scripts build",
-        "test": "react-scripts test",
-        "eject": "react-scripts eject",
-        "build": "CI=false react-scripts build"
-    },
+    "start": "react-scripts start",
+    "build": "CI=false react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject"
+}
+,
     "dependencies": {
         "firebase": "^11.1.0",
         "nth-check": "^2.0.1",
@@ -45,5 +45,5 @@
     "engines": {
         "node": ">=20.0.0"
     },
-    "homepage": "https://souko.netlify.app/home"
+    "homepage": "/"
 }
