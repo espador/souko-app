@@ -29,10 +29,12 @@ const LoginPage = () => {
 
   return (
     <div className="login-container">
-      <h1 className="login-logo">Sou—ko*</h1>
+      <h1 className="login-logo">
+        Sou—ko<span className="login-logo-accent">*</span>
+      </h1>
       <p className="login-tagline">Every journey begins with one moment.</p>
       <button className="login-button" onClick={handleLogin}>
-        Sign in with Google
+        <span className="google-icon">G</span> Sign in with Google
       </button>
     </div>
   );

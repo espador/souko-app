@@ -1,127 +1,144 @@
 /* Global Reset */
 * {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-  }
-  
-  /* Theme Variables */
-  :root {
-    --background-color: #0f0f14;
-    --text-color: #ffffff;
-    --text-muted: #8f92a9;
-    --accent-color: #00ff7f;
-    --card-background: #16161d;
-    --border-color: #25252d;
-    --font-primary: 'Serif Pro', serif;
-    --font-secondary: 'Arial', sans-serif;
-  }
-  
-  /* Global Styles */
-  body {
-    background-color: var(--background-color);
-    color: var(--text-color);
-    font-family: var(--font-primary);
-    line-height: 1.5;
-    -webkit-font-smoothing: antialiased;
-  }
-  
-  /* Utility Classes */
-  .text-center {
-    text-align: center;
-  }
-  
-  .text-muted {
-    color: var(--text-muted);
-  }
-  
-  .flex {
-    display: flex;
-  }
-  
-  .center {
-    justify-content: center;
-    align-items: center;
-  }
-  
-  .card {
-    background-color: var(--card-background);
-    border-radius: 8px;
-    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.3);
-    padding: 1rem;
-  }
-  
-  .button {
-    display: inline-block;
-    padding: 0.75rem 1.5rem;
-    font-size: 1rem;
-    font-weight: bold;
-    border-radius: 8px;
-    cursor: pointer;
-    text-align: center;
-  }
-  
-  .button-accent {
-    color: var(--accent-color);
-    background-color: transparent;
-    border: 1px solid var(--accent-color);
-  }
-  
-  .fab {
-    position: fixed;
-    bottom: 2rem;
-    right: 2rem;
-    width: 60px;
-    height: 60px;
-    border-radius: 50%;
-    background: radial-gradient(circle, #ffffff, #a9a9a9);
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-  }
-  
-  .fab > button {
-    font-size: 2rem;
-    color: var(--background-color);
-  }
-  
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* Theme Variables */
+:root {
+  --background-color: #0f0f14;
+  --text-color: #ffffff;
+  --text-muted: #8f92a9;
+  --accent-color: #00ff7f;
+  --card-background: #16161d;
+  --border-color: #25252d;
+  --font-primary: 'Serif Pro', serif;
+  --font-secondary: 'Arial', sans-serif;
+}
+
+/* Global Styles */
+body {
+  background-color: var(--background-color);
+  color: var(--text-color);
+  font-family: var(--font-primary);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Utility Classes */
+.text-center {
+  text-align: center;
+}
+
+.text-muted {
+  color: var(--text-muted);
+}
+
+.flex {
+  display: flex;
+}
+
+.center {
+  justify-content: center;
+  align-items: center;
+}
+
+.card {
+  background-color: var(--card-background);
+  border-radius: 8px;
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.3);
+  padding: 1rem;
+}
+
+.button {
+  display: inline-block;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  font-weight: bold;
+  border-radius: 8px;
+  cursor: pointer;
+  text-align: center;
+}
+
+.button-accent {
+  color: var(--accent-color);
+  background-color: transparent;
+  border: 1px solid var(--accent-color);
+}
+
+.fab {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #ffffff, #a9a9a9);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.fab > button {
+  font-size: 2rem;
+  color: var(--background-color);
+}
+
 /* Login Page Styles */
 .login-container {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-    background-color: var(--background-color); /* Use theme variable */
-    color: var(--text-color); /* Use theme variable */
-  }
-  
-  .login-logo {
-    font-size: 3rem;
-    font-family: var(--font-primary);
-    color: var(--text-color);
-    margin-bottom: 1rem;
-  }
-  
-  .login-tagline {
-    font-size: 1.2rem;
-    margin-bottom: 2rem;
-    color: var(--text-muted); /* Use muted text color */
-  }
-  
-  .login-button {
-    padding: 0.75rem 1.5rem;
-    font-size: 1rem;
-    background-color: #4285f4;
-    color: #fff;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-  }
-  
-  .login-button:hover {
-    background-color: #357ae8;
-  }
-    
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  /* Previous background-color: var(--background-color); */
+  background-image: url('/bg-image.webp'); /* Replace with your image path */
+  background-size: cover;
+  background-position: center;
+  color: var(--text-color);
+}
+
+.login-logo {
+  font-size: 3rem;
+  font-family: 'serif', serif; /* Let's start with a generic serif font */
+  color: var(--text-color);
+  margin-bottom: 1rem;
+  text-align: center; /* Ensure it's centered */
+}
+
+.login-logo-accent {
+  color: var(--accent-color); /* Use your theme's accent color for the asterisk */
+}
+
+.login-tagline {
+  font-size: 1.2rem;
+  margin-bottom: 2rem;
+  color: var(--text-muted); /* Use muted text color */
+  text-align: center; /* Ensure it's centered */
+}
+
+.login-button {
+  display: flex; /* Use flexbox to align icon and text */
+  align-items: center; /* Vertically align icon and text */
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  font-weight: bold; /* Make the text bold */
+  background-color: #fff; /* White background */
+  color: #333; /* Dark text color */
+  border: 1px solid #ddd; /* Light grey border */
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.login-button:hover {
+  background-color: #f8f8f8; /* Slightly darker on hover */
+}
+
+.google-icon {
+  margin-right: 0.75rem; /* Add some space between the icon and text */
+  color: #4285f4; /* Google's blue color for the 'G' */
+  font-weight: bold;
+}
