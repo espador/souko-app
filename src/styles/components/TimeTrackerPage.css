@@ -1,83 +1,163 @@
-.tracker-container {
-  padding: 20px;
-  text-align: center;
-  background-color: #0f0f14; /* Match homepage background */
-  color: #ffffff; /* Match homepage text color */
+.time-tracker-page {
+  padding: 0; /* Remove padding here, handle with container */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background-color: var(--background-color);
+  color: var(--text-color);
+  font-family: var(--font-shippori-mincho);
   min-height: 100vh;
 }
 
+.time-tracker-page-container {
+  padding: 68px 24px 0; /* Top and horizontal padding */
+  width: 100%;
+  max-width: 600px; /* Adjust as needed */
+  position: relative; /* For absolute positioning of header elements */
+}
+
+.timer-quote {
+  font-family: var(--font-shippori-mincho);
+  font-size: 16px;
+  line-height: 24px;
+  color: var(--text-color);
+  margin-top: 24px;
+  margin-bottom: 32px;
+  text-align: center;
+}
+
 .timer {
-  font-size: 2rem;
-  font-weight: bold;
-  margin: 20px auto;
-  background-color: #16161d; /* Tile-like design */
-  border-radius: 10px;
-  padding: 20px;
-  box-shadow: 0px 6px 10px rgba(0, 0, 0, 0.4);
-  width: 300px;
+  font-family: var(--font-shippori-mincho);
+  font-size: 64px;
+  line-height: 80px;
+  margin-bottom: 40px;
+  color: var(--accent-color);
+  transition: color 0.3s ease;
+}
+
+.timer.paused {
+  color: var(--text-muted);
 }
 
 .controls {
   display: flex;
-  justify-content: space-evenly;
-  margin: 20px 0;
+  gap: 24px;
+  margin-bottom: 56px;
+  align-items: center;
 }
 
-.dropdown {
-  margin: 20px auto;
-  background-color: #16161d; /* Tile-like design */
-  border-radius: 10px;
-  padding: 10px;
-  box-shadow: 0px 6px 10px rgba(0, 0, 0, 0.4);
-  width: 300px;
-  text-align: left;
+.control-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0;
 }
 
-.select {
-  padding: 10px;
-  font-size: 16px;
-  border: 1px solid #25252d;
-  border-radius: 5px;
+.control-button.small {
+  width: 32px;
+  height: 32px;
+}
+
+.control-button.fab-like {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background-color: #ffffff;
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.25);
+  color: var(--background-color);
+}
+
+.control-button.fab-like:hover {
+  box-shadow: 0px 6px 12px rgba(0, 0, 0, 0.35);
+}
+
+.input-tile {
   width: 100%;
-  color: #ffffff;
-  background-color: #0f0f14;
-}
-
-.billable {
-  margin: 20px auto;
+  height: 56px;
+  border: 1px solid var(--card-background);
+  border-radius: 12px;
+  margin-bottom: 16px;
+  padding: 16px;
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 10px;
-  background-color: #16161d;
-  border-radius: 10px;
-  padding: 10px;
-  box-shadow: 0px 6px 10px rgba(0, 0, 0, 0.4);
-  width: 300px;
+  justify-content: space-between;
+  font-family: var(--font-shippori-mincho);
+  font-size: 16pt;
+  line-height: 24pt;
 }
 
-.toggle {
-  width: 20px;
-  height: 20px;
+.input-tile.notes-input-tile {
+  padding: 16px;
+  flex-direction: column;
+  align-items: stretch;
+  position: relative; /* For edit icon positioning */
 }
 
-.notes {
-  margin: 20px auto;
-  background-color: #16161d; /* Tile-like design */
-  border-radius: 10px;
-  padding: 10px;
-  box-shadow: 0px 6px 10px rgba(0, 0, 0, 0.4);
-  width: 300px;
-  text-align: left;
+.input-select {
+  flex-grow: 1;
+  padding: 0;
+  border: none;
+  background-color: transparent;
+  color: var(--text-color);
+  font-family: inherit;
+  font-size: inherit;
+  outline: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
 }
 
-.textarea {
+.dropdown-icon {
+  margin-left: 8px;
+  fill: var(--text-muted);
+}
+
+.billable-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   width: 100%;
-  height: 80px;
-  padding: 10px;
-  font-size: 16px;
-  border-radius: 5px;
-  border: 1px solid #25252d;
-  background-color: #0f0f14;
-  color: #ffffff;
+  cursor: pointer; /* Indicate it's clickable */
+}
+
+.billable-label {
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+}
+
+.billable-radio {
+  margin-left: auto;
+}
+
+.notes-textarea {
+  width: 100%;
+  padding: 0;
+  border: none;
+  background-color: transparent;
+  color: var(--text-color);
+  font-family: var(--font-shippori-mincho);
+  font-size: 14pt;
+  line-height: 20pt;
+  resize: none;
+  outline: none;
+  overflow: auto; /* Allow scrolling if content overflows */
+  min-height: 24pt; /* Ensure at least one line of text is visible */
+}
+
+.notes-textarea::placeholder {
+  color: var(--text-muted);
+  font-family: var(--font-shippori-mincho);
+  font-size: 14pt;
+  line-height: 20pt;
+}
+
+.notes-edit-icon {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  color: var(--text-muted);
 }

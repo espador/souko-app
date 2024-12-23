@@ -13,7 +13,8 @@ const HomePage = () => {
   const [projects, setProjects] = useState([]);
   const [totalSessionTime, setTotalSessionTime] = useState({});
   const [loading, setLoading] = useState(true);
-  const [showDropdown, setShowDropdown] = useState(false); // Dropdown visibility state
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [weeklyTrackedTime, setWeeklyTrackedTime] = useState(0);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -22,47 +23,59 @@ const HomePage = () => {
         navigate('/');
       } else {
         setUser(currentUser);
-
-        try {
-          const projectsRef = collection(db, 'projects');
-          const projectQuery = query(
-            projectsRef,
-            where('userId', '==', currentUser.uid)
-          );
-          const projectSnapshot = await getDocs(projectQuery);
-          const userProjects = projectSnapshot.docs.map((doc) => ({
-            id: doc.id,
-            name: doc.data().name,
-          }));
-          setProjects(userProjects);
-
-          const sessionRef = collection(db, 'sessions');
-          const sessionQuery = query(
-            sessionRef,
-            where('userId', '==', currentUser.uid),
-            limit(50)
-          );
-          const sessionSnapshot = await getDocs(sessionQuery);
-
-          const sessions = sessionSnapshot.docs.map((doc) => doc.data());
-          const timeByProject = sessions.reduce((acc, session) => {
-            if (session.userId === currentUser.uid) {
-              const project = session.project || 'Unknown Project';
-              acc[project] = (acc[project] || 0) + (session.elapsedTime || 0);
-            }
-            return acc;
-          }, {});
-          setTotalSessionTime(timeByProject);
-        } catch (error) {
-          console.error('Error fetching data:', error.message);
-        } finally {
-          setLoading(false);
-        }
+        fetchData(currentUser.uid);
       }
     });
 
     return () => unsubscribe();
   }, [navigate]);
+
+  const fetchData = async (uid) => {
+    setLoading(true);
+    try {
+      // Fetch Projects
+      const projectsRef = collection(db, 'projects');
+      const projectQuery = query(projectsRef, where('userId', '==', uid));
+      const projectSnapshot = await getDocs(projectQuery);
+      const userProjects = projectSnapshot.docs.map((doc) => ({
+        id: doc.id,
+        name: doc.data().name,
+      }));
+      setProjects(userProjects);
+
+      // Fetch Sessions for the current week
+      const startOfWeek = new Date();
+      startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay() + (startOfWeek.getDay() === 0 ? -6 : 1)); // Set to Monday
+      startOfWeek.setHours(0, 0, 0, 0);
+
+      const sessionRef = collection(db, 'sessions');
+      const sessionQuery = query(
+        sessionRef,
+        where('userId', '==', uid),
+        where('startTime', '>=', startOfWeek)
+      );
+      const sessionSnapshot = await getDocs(sessionQuery);
+
+      const sessions = sessionSnapshot.docs.map((doc) => doc.data());
+      const timeByProject = sessions.reduce((acc, session) => {
+        const project = session.project || 'Unknown Project';
+        acc[project] = (acc[project] || 0) + (session.elapsedTime || 0);
+        return acc;
+      }, {});
+      setTotalSessionTime(timeByProject);
+
+      // Calculate total tracked time this week
+      const totalWeeklyTime = sessions.reduce(
+        (sum, session) => sum + (session.elapsedTime || 0),
+        0
+      );
+      setWeeklyTrackedTime(totalWeeklyTime);
+    } catch (error) {
+      console.error('Error fetching data:', error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleLogout = async () => {
     try {
@@ -75,14 +88,13 @@ const HomePage = () => {
 
   const toggleDropdown = () => setShowDropdown(!showDropdown);
 
- // Get today's date and format it with timezone handling
-const today = new Date().toLocaleString('en-GB', {
-  weekday: 'long',
-  day: 'numeric',
-  month: 'long',
-  timeZone: 'Europe/Brussels', // Explicitly set Brussels timezone
-});
-
+  // Get today's date and format it with timezone handling
+  const today = new Date().toLocaleDateString('en-GB', {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'long',
+    timeZone: 'Europe/Brussels',
+  });
 
   return (
     <div className="homepage">
@@ -107,36 +119,52 @@ const today = new Date().toLocaleString('en-GB', {
       </Header>
 
       <main className="homepage-content">
-        {loading ? (
-          <p>Loading your data...</p>
-        ) : (
-          <section>
-            <h2>Your Projects</h2>
-            {projects.length > 0 ? (
-              <ul className="projects-list">
-                {projects.map((project) => (
-                  <li
-                    key={project.id}
-                    className="project-item"
-                    onClick={() => navigate(`/project/${project.id}`)}
-                  >
-                    <span className="project-link">{project.name}</span> - Total Time: {formatTime(totalSessionTime[project.name] || 0)}
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p>No projects found. Start tracking to see results here!</p>
-            )}
-            <button className="track-project-button" onClick={() => navigate('/create-project')}>
-              + Track New Project
-            </button>
-          </section>
-        )}
+        <section className="motivational-section">
+          {weeklyTrackedTime > 0 ? (
+            <p>
+              You have tracked <span className="tracked-time">{formatTime(weeklyTrackedTime)}</span> this week. This moment is progress.
+            </p>
+          ) : (
+            <p>
+              Every journey begins with <span className="tracked-time">one moment</span>. Tell me about your project ...
+            </p>
+          )}
+        </section>
+
+        <section className="projects-section">
+          <h2 className="projects-label">Your projects</h2>
+          {loading ? (
+            <p>Loading your projects...</p>
+          ) : projects.length > 0 ? (
+            <ul className="projects-list">
+              {projects.map((project) => (
+                <li
+                  key={project.id}
+                  className="project-item"
+                  onClick={() => navigate(`/project/${project.id}`)}
+                >
+                  <div className="project-name">{project.name}</div>
+                  <div className="project-total-time">
+                    {formatTime(totalSessionTime[project.name] || 0, 'hours')}h
+                  </div>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p>No projects found. Start tracking to see results here!</p>
+          )}
+          <button
+            className="track-project-button"
+            onClick={() => navigate('/create-project')}
+          >
+            <span className="button-icon">+</span> Track new project
+          </button>
+        </section>
       </main>
 
-      {projects.length > 0 && (
+      {projects.length >= 0 && ( // Ensure FAB is visible even with no projects initially
         <button className="fab" onClick={() => navigate('/time-tracker')}>
-          ▶
+          <span className="fab-icon">▶</span>
         </button>
       )}
     </div>
