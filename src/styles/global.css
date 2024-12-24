@@ -4,7 +4,6 @@
 @import "@fontsource/noto-sans/700.css";    /* Bold weight */
 @import '@fontsource/shippori-mincho';      /* Serif weight */
 
-
 /* Example global font usage */
 body {
   font-family: 'Noto Sans', sans-serif;
@@ -30,6 +29,16 @@ body {
 }
 
 /* Global Styles */
+html, body {
+  height: 100%;
+  overflow: hidden; /* Prevent scrolling on the html and body */
+}
+
+#root {
+  height: 100%;
+  overflow: hidden; /* Prevent scrolling within the root */
+}
+
 body {
   background-color: var(--background-color);
   color: var(--text-color);
@@ -37,6 +46,7 @@ body {
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden; /* Prevent horizontal scrollbar */
 }
 
 /* Layout Utilities */
@@ -98,4 +108,76 @@ body {
   .container {
     padding: 24px;
   }
+}
+
+/* Login Page */
+.login-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%; /* Ensure it fills the parent's height */
+  background: var(--background-color); /* Fallback if background image fails */
+}
+
+.background-image {
+  background-image: url('../styles/components/assets/bg-image.webp');
+  background-size: cover;
+  background-position: center;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between; /* Changed to space-between */
+  align-items: center;
+  padding: 24px;
+  text-align: center;
+}
+
+.login-logo {
+  margin-top: 264px;
+  width: auto; /* Adjust as needed */
+  height: auto; /* Adjust as needed */
+}
+
+.login-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 176px;
+}
+
+.login-tagline {
+  font-family: var(--font-shippori-mincho);
+  font-size: 16px;
+  color: var(--text-color); /* Changed to --text-color */
+  margin-bottom: 16px; /* Add some spacing between tagline and button */
+}
+
+.login-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 24px;
+  background-color: transparent; /* Set background to transparent */
+  border: 1px solid var(--card-background); /* Add the border */
+  border-radius: 12px;
+  color: var(--text-color);
+  font-family: var(--font-noto-sans);
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.login-button:hover {
+  opacity: 0.9;
+}
+
+/* global.css */
+/* ... other CSS rules ... */
+.google-icon {
+  width: 18px;
+  height: 18px;
+  margin-right: 8px;
+  fill: var(--accent-color); /* Style the SVG fill color */
 }
