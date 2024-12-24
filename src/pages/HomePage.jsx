@@ -42,29 +42,24 @@ const HomePage = () => {
         name: doc.data().name,
       }));
       setProjects(userProjects);
-
-      // Fetch Sessions for the current week
-      const startOfWeek = new Date();
-      startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay() + (startOfWeek.getDay() === 0 ? -6 : 1)); // Set to Monday
-      startOfWeek.setHours(0, 0, 0, 0);
-
+  
+      // Fetch Sessions
       const sessionRef = collection(db, 'sessions');
-      const sessionQuery = query(
-        sessionRef,
-        where('userId', '==', uid),
-        where('startTime', '>=', startOfWeek)
-      );
+      const sessionQuery = query(sessionRef, where('userId', '==', uid));
       const sessionSnapshot = await getDocs(sessionQuery);
-
+  
       const sessions = sessionSnapshot.docs.map((doc) => doc.data());
+  
+      // Calculate total time per project
       const timeByProject = sessions.reduce((acc, session) => {
         const project = session.project || 'Unknown Project';
-        acc[project] = (acc[project] || 0) + (session.elapsedTime || 0);
+        acc[project] = (acc[project] || 0) + (session.elapsedTime || 0); // Add elapsedTime in seconds
         return acc;
       }, {});
+  
       setTotalSessionTime(timeByProject);
-
-      // Calculate total tracked time this week
+  
+      // Calculate total tracked time for all projects this week
       const totalWeeklyTime = sessions.reduce(
         (sum, session) => sum + (session.elapsedTime || 0),
         0
@@ -79,8 +74,8 @@ const HomePage = () => {
 
   const handleLogout = async () => {
     try {
-      await signOut(auth);
-      navigate('/');
+      await signOut(auth); // Sign out the current user
+      navigate('/'); // Redirect to the login page
     } catch (error) {
       console.error('Logout Error:', error.message);
     }
@@ -138,17 +133,18 @@ const HomePage = () => {
           ) : projects.length > 0 ? (
             <ul className="projects-list">
               {projects.map((project) => (
-                <li
-                  key={project.id}
-                  className="project-item"
-                  onClick={() => navigate(`/project/${project.id}`)}
-                >
-                  <div className="project-name">{project.name}</div>
-                  <div className="project-total-time">
-                    {formatTime(totalSessionTime[project.name] || 0, 'hours')}h
-                  </div>
-                </li>
-              ))}
+              <li
+                key={project.id}
+                className="project-item"
+                onClick={() => navigate(`/project/${project.id}`)}
+              >
+                <div className="project-name">{project.name}</div>
+                <div className="project-total-time">
+                  {formatTime(totalSessionTime[project.name] || 0)}
+                </div>
+              </li>
+            ))}
+
             </ul>
           ) : (
             <p>No projects found. Start tracking to see results here!</p>
