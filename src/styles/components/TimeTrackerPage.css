@@ -1,8 +1,9 @@
+/* TimeTrackerPage.css */
+
 .time-tracker-page {
-  padding: 0; /* Remove padding here, handle with container */
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+  padding: 24px;
+  margin: 0 auto;
+  max-width: 600px;
   background-color: var(--background-color);
   color: var(--text-color);
   font-family: var(--font-shippori-mincho);
@@ -10,20 +11,18 @@
 }
 
 .time-tracker-page-container {
-  padding: 68px 24px 0; /* Top and horizontal padding */
-  width: 100%;
-  max-width: 600px; /* Adjust as needed */
-  position: relative; /* For absolute positioning of header elements */
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
 .timer-quote {
   font-family: var(--font-shippori-mincho);
   font-size: 16px;
   line-height: 24px;
-  color: var(--text-color);
-  margin-top: 24px;
-  margin-bottom: 32px;
+  color: var(--text-muted);
   text-align: center;
+  margin-bottom: 24px;
 }
 
 .timer {
@@ -32,6 +31,7 @@
   line-height: 80px;
   margin-bottom: 40px;
   color: var(--accent-color);
+  text-align: center;
   transition: color 0.3s ease;
 }
 
@@ -42,8 +42,8 @@
 .controls {
   display: flex;
   gap: 24px;
+  justify-content: center;
   margin-bottom: 56px;
-  align-items: center;
 }
 
 .control-button {
@@ -56,11 +56,6 @@
   padding: 0;
 }
 
-.control-button.small {
-  width: 32px;
-  height: 32px;
-}
-
 .control-button.fab-like {
   width: 64px;
   height: 64px;
@@ -70,72 +65,72 @@
   color: var(--background-color);
 }
 
-.control-button.fab-like:hover {
-  box-shadow: 0px 6px 12px rgba(0, 0, 0, 0.35);
-}
-
 .input-tile {
-  width: 100%;
-  height: 56px;
-  border: 1px solid var(--card-background);
+  background-color: var(--card-background);
   border-radius: 12px;
-  margin-bottom: 16px;
   padding: 16px;
+  margin-bottom: 16px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font-family: var(--font-shippori-mincho);
-  font-size: 16pt;
-  line-height: 24pt;
 }
 
-.input-tile.notes-input-tile {
+.project-dropdown-container {
+  background-color: var(--card-background);
+  border-radius: 12px;
   padding: 16px;
-  flex-direction: column;
-  align-items: stretch;
-  position: relative; /* For edit icon positioning */
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
 }
 
-.input-select {
-  flex-grow: 1;
-  padding: 0;
+.project-dropdown {
+  width: 100%;
   border: none;
   background-color: transparent;
   color: var(--text-color);
-  font-family: inherit;
-  font-size: inherit;
+  font-family: var(--font-shippori-mincho);
+  font-size: 16px;
   outline: none;
-  -webkit-appearance: none;
-  -moz-appearance: none;
   appearance: none;
 }
 
-.dropdown-icon {
-  margin-left: 8px;
+.dropdown-arrow {
+  position: absolute;
+  right: 16px;
+  width: 24px;
+  height: 24px;
   fill: var(--text-muted);
+  pointer-events: none;
 }
 
-.billable-container {
+.input-tile.billable-tile .billable-radio {
+  margin-left: auto;
   display: flex;
   align-items: center;
+  justify-content: flex-end;
+}
+
+.input-tile.notes-input-tile {
+  flex-direction: row;
+  align-items: center;
   justify-content: space-between;
-  width: 100%;
-  cursor: pointer; /* Indicate it's clickable */
+  position: relative;
 }
 
-.billable-label {
-  font-family: inherit;
-  font-size: inherit;
-  line-height: inherit;
-}
-
-.billable-radio {
-  margin-left: auto;
+.notes-edit-icon {
+  position: absolute;
+  right: 16px;
+  top: 16px;
+  width: 24px;
+  height: 24px;
+  fill: var(--text-color);
 }
 
 .notes-textarea {
   width: 100%;
-  padding: 0;
   border: none;
   background-color: transparent;
   color: var(--text-color);
@@ -144,20 +139,8 @@
   line-height: 20pt;
   resize: none;
   outline: none;
-  overflow: auto; /* Allow scrolling if content overflows */
-  min-height: 24pt; /* Ensure at least one line of text is visible */
 }
 
 .notes-textarea::placeholder {
-  color: var(--text-muted);
-  font-family: var(--font-shippori-mincho);
-  font-size: 14pt;
-  line-height: 20pt;
-}
-
-.notes-edit-icon {
-  position: absolute;
-  top: 16px;
-  right: 16px;
   color: var(--text-muted);
 }

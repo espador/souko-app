@@ -7,6 +7,7 @@ import { formatTime } from '../utils/formatTime';
 import Header from '../components/Layout/Header';
 import '../styles/global.css';
 import '../styles/components/HomePage.css';
+import { ReactComponent as StartTimerIcon } from '../styles/components/assets/start-timer.svg';
 
 const HomePage = () => {
   const [user, setUser] = useState(null);
@@ -160,7 +161,7 @@ const HomePage = () => {
 
       {projects.length >= 0 && ( // Ensure FAB is visible even with no projects initially
         <button className="fab" onClick={() => navigate('/time-tracker')}>
-          <span className="fab-icon">▶</span>
+         <StartTimerIcon className="fab-icon" />
         </button>
       )}
     </div>

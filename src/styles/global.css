@@ -1,4 +1,6 @@
-/* Global Reset */
+/* global.css */
+
+/* Reset */
 * {
   margin: 0;
   padding: 0;
@@ -11,7 +13,7 @@
   --text-color: #ffffff;
   --text-muted: #8f92a9;
   --accent-color: #00FF00;
-  --card-background: #1D1B25; /* Updated project tile background */
+  --card-background: #1D1B25;
   --border-color: #25252d;
   --font-shippori-mincho: 'Shippori Mincho', serif;
   --font-noto-sans: 'Noto Sans', sans-serif;
@@ -21,13 +23,58 @@
 body {
   background-color: var(--background-color);
   color: var(--text-color);
-  font-family: var(--font-shippori-mincho); /* Default to Shippori Mincho */
+  font-family: var(--font-shippori-mincho);
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale; /* Better font rendering for Firefox */
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* Utility Classes */
+/* Layout Utilities */
+.container {
+  margin: 0 auto;
+  padding: 24px;
+  max-width: 600px; /* Fixed width for consistency */
+}
+
+.card {
+  background-color: var(--card-background);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Buttons */
+.button {
+  width: 100%;
+  padding: 16px;
+  background-color: transparent;
+  border: 1px solid var(--card-background);
+  border-radius: 12px;
+  text-align: center;
+  font-family: var(--font-shippori-mincho);
+  font-size: 16px;
+  color: var(--text-color);
+  cursor: pointer;
+}
+
+.fab {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background-color: #ffffff;
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.25);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Text Utilities */
 .text-center {
   text-align: center;
 }
@@ -36,66 +83,9 @@ body {
   color: var(--text-muted);
 }
 
-.flex {
-  display: flex;
-}
-
-.center {
-  justify-content: center;
-  align-items: center;
-}
-
-.card {
-  background-color: var(--card-background);
-  border-radius: 12px; /* Consistent border radius */
-  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.3);
-  padding: 1rem;
-}
-
-.button {
-  display: inline-block;
-  padding: 0.75rem 1.5rem;
-  font-size: 1rem;
-  font-weight: bold;
-  border-radius: 8px;
-  cursor: pointer;
-  text-align: center;
-}
-
-.button-accent {
-  color: var(--accent-color);
-  background-color: transparent;
-  border: 1px solid var(--accent-color);
-}
-
-/* FAB Styling (CSS Generated) */
-.fab {
-  position: fixed;
-  bottom: 24px;
-  right: 24px;
-  width: 56px; /* Adjusted size to be closer to the design */
-  height: 56px;
-  border-radius: 50%;
-  background-color: #ffffff; /* Base white color */
-  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.25); /* Softer shadow */
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  cursor: pointer;
-}
-
-.fab-icon {
-  font-size: 1.5rem; /* Adjust icon size */
-  color: #0f0f14; /* Dark color for the icon */
-}
-
-/* Mobile Margins */
+/* Media Queries for Responsive Design */
 @media (max-width: 768px) {
-  .homepage {
-    margin-left: 24px;
-    margin-right: 24px;
+  .container {
+    padding: 24px;
   }
 }
-
-/* Font Imports - Moved here for better management */
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;700&family=Shippori+Mincho:wght@400;700&display=swap');

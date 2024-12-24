@@ -211,7 +211,7 @@ const TimeTrackerPage = () => {
     }
   };
 
-  const handleBillableChange = async () => {
+  const handleBillableToggle = async () => {
     const newIsBillable = !isBillable;
     setIsBillable(newIsBillable);
     if (sessionId) {
@@ -235,7 +235,9 @@ const TimeTrackerPage = () => {
 
       <div className="timer-quote">{timerQuote}</div>
 
-      <div className={`timer ${isPaused ? 'paused' : ''}`}>{formatTime(timer)}</div>
+      <div className={`timer ${isPaused ? 'paused' : ''}`}>{
+        new Date(timer * 1000).toISOString().substr(11, 8) /* Display time in HH:MM:SS format */
+      }</div>
 
       <div className="controls">
         <button className="control-button small" onClick={handleReset} disabled={!(isRunning || timer > 0)}>
@@ -263,33 +265,29 @@ const TimeTrackerPage = () => {
         </button>
       </div>
 
-      <div className="input-tile">
+      <div className="project-dropdown-container">
         <select
-          id="project-select"
-          className="input-select"
+          className="project-dropdown"
           value={selectedProject}
           onChange={(e) => setSelectedProject(e.target.value)}
         >
-          <option value="">Select a project</option>
           {projects.map((project) => (
             <option key={project.id} value={project.name}>
               {project.name}
             </option>
           ))}
         </select>
-        <DropdownIcon className="dropdown-icon" style={{ width: '24px', height: '24px' }} />
+        <DropdownIcon className="dropdown-arrow" />
       </div>
 
-      <div className="input-tile">
-        <div className="billable-container" onClick={handleBillableChange}>
-          <span className="input-label billable-label">Billable</span>
-          <div className="billable-radio">
-            {isBillable ? (
-              <RadioActiveIcon style={{ width: '24px', height: '24px' }} />
-            ) : (
-              <RadioMutedIcon style={{ width: '24px', height: '24px' }} />
-            )}
-          </div>
+      <div className="input-tile billable-tile" onClick={handleBillableToggle} style={{ cursor: 'pointer' }}>
+        <span className="input-label billable-label">Billable</span>
+        <div className="billable-radio">
+          {isBillable ? (
+            <RadioActiveIcon />
+          ) : (
+            <RadioMutedIcon />
+          )}
         </div>
       </div>
 
@@ -301,7 +299,7 @@ const TimeTrackerPage = () => {
           value={sessionNotes}
           onChange={(e) => setSessionNotes(e.target.value.slice(0, 140))}
         />
-        <EditIcon className="notes-edit-icon" style={{ width: '24px', height: '24px' }} />
+        <EditIcon className="notes-edit-icon" style={{ position: 'absolute', top: '16px', right: '16px' }} />
       </div>
     </div>
   );
