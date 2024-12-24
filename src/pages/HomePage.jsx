@@ -1,13 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { auth, db } from '../services/firebase';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
-import { collection, getDocs, query, where, limit } from 'firebase/firestore';
+import { collection, getDocs, query, where } from 'firebase/firestore';
 import { useNavigate } from 'react-router-dom';
 import { formatTime } from '../utils/formatTime';
 import Header from '../components/Layout/Header';
 import '../styles/global.css';
 import '../styles/components/HomePage.css';
 import { ReactComponent as StartTimerIcon } from '../styles/components/assets/start-timer.svg';
+import '@fontsource/shippori-mincho'; 
 
 const HomePage = () => {
   const [user, setUser] = useState(null);
@@ -118,7 +119,7 @@ const HomePage = () => {
         <section className="motivational-section">
           {weeklyTrackedTime > 0 ? (
             <p>
-              You have tracked <span className="tracked-time">{formatTime(weeklyTrackedTime)}</span> this week. This moment is progress.
+              This moment is progress. You tracked <span className="tracked-time">{formatTime(weeklyTrackedTime)}</span> this week.
             </p>
           ) : (
             <p>

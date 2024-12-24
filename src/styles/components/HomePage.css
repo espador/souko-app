@@ -77,5 +77,20 @@
 .fab-icon {
   width: 64px; /* Ensure the SVG fits the button */
   height: 64px;
+  margin-bottom: 64px;
+}
+
+.motivational-section {
+  font-family: 'Shippori Mincho', serif; /* Ensure you have Shippori Mincho loaded in your project */
+  font-size: 32px;
+  line-height: 40px;
+  color: var(--text-color); /* Applies --text-color for the main text */
+  margin-top: 24px;
+  margin-bottom: 40px; /* Add spacing below the section for better layout */
+}
+
+.motivational-section .tracked-time {
+  color: var(--accent-color); /* Applies --accent-color for the highlighted text */
+  font-weight: bold; /* Optional: Emphasize the tracked time */
 }
 

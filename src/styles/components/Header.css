@@ -3,7 +3,7 @@
   display: flex;
   justify-content: space-between; /* Ensures return icon and profile picture are on opposite ends */
   align-items: center;
-  padding: 0 24px; /* 24px margin as per requirements */
+  padding: 0; /* 24px margin as per requirements */
   height: 64px; /* Fixed height */
   width: 100%;
   z-index: 10;

@@ -1,4 +1,14 @@
 /* global.css */
+@import "@fontsource/noto-sans/index.css";  /* Import Noto Sans */
+@import "@fontsource/noto-sans/400.css";    /* Regular weight */
+@import "@fontsource/noto-sans/700.css";    /* Bold weight */
+@import '@fontsource/shippori-mincho';      /* Serif weight */
+
+
+/* Example global font usage */
+body {
+  font-family: 'Noto Sans', sans-serif;
+}
 
 /* Reset */
 * {
