@@ -221,8 +221,7 @@ const TimeTrackerPage = () => {
       <Header
         showBackArrow={true}
         onBack={() => navigate('/home')}
-        user={user} // Pass the user here
-        // hideProfile={false} // You can remove this, or set it to false
+        hideProfile={true} // You can remove this, or set it to false
       />
 
       <div className="timer-quote">{timerQuote}</div>
