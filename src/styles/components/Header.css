@@ -1,21 +1,27 @@
 /* Header.css */
 .header {
   display: flex;
-  justify-content: space-between; /* Ensures return icon and profile picture are on opposite ends */
+  justify-content: space-between;
   align-items: center;
-  padding: 0; /* 24px margin as per requirements */
-  height: 64px; /* Fixed height */
+  height: 64px;
   width: 100%;
   z-index: 10;
-  background-color: var(--background-color);
+  background-color: transparent;
   position: sticky;
   top: 0;
+}
+
+.header-left-section {
+  display: flex;
+  align-items: center;
+  gap: 16px; /* Adjust the spacing between back button and title */
 }
 
 .header-title {
   font-family: var(--font-shippori-mincho);
   font-size: 20px;
   color: var(--text-muted);
+  margin: 0; /* Reset default margin for h1 */
 }
 
 .header-profile {
@@ -45,4 +51,16 @@
   width: 40px;
   height: 40px;
   fill: var(--text-color);
+}
+
+.profile-placeholder {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: var(--text-muted); /* Or any color you prefer */
+  color: var(--background-color);
+  font-weight: bold;
 }

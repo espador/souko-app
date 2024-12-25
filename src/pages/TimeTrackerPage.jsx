@@ -1,3 +1,4 @@
+// TimeTrackingPage.jsx
 import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { collection, query, where, getDocs, doc, setDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
@@ -17,7 +18,7 @@ import { ReactComponent as ReturnIcon } from '../styles/components/assets/return
 import { ReactComponent as DropdownIcon } from '../styles/components/assets/dropdown.svg';
 import { ReactComponent as RadioActiveIcon } from '../styles/components/assets/radio-active.svg';
 import { ReactComponent as RadioMutedIcon } from '../styles/components/assets/radio-muted.svg';
-import '@fontsource/shippori-mincho'; 
+import '@fontsource/shippori-mincho';
 
 const TimeTrackerPage = () => {
   const [user, setUser] = useState(null);
@@ -220,8 +221,8 @@ const TimeTrackerPage = () => {
       <Header
         showBackArrow={true}
         onBack={() => navigate('/home')}
-        hideProfile={true}
-        backIcon={<ReturnIcon style={{ width: '40px', height: '40px' }} />}
+        user={user} // Pass the user here
+        // hideProfile={false} // You can remove this, or set it to false
       />
 
       <div className="timer-quote">{timerQuote}</div>
@@ -230,41 +231,39 @@ const TimeTrackerPage = () => {
         new Date(timer * 1000).toISOString().substr(11, 8) /* Display time in HH:MM:SS format */
       }</div>
 
-<div className="controls">
-  {/* Reset Button */}
-  <button className="control-button small" onClick={handleReset} disabled={!(isRunning || timer > 0)}>
-    {isRunning || timer > 0 ? (
-      <ResetActiveIcon style={{ width: '32px', height: '32px', fill: 'var(--text-color)' }} />
-    ) : (
-      <ResetMuteIcon style={{ width: '32px', height: '32px', fill: 'var(--text-muted)' }} />
-    )}
-  </button>
+      <div className="controls">
+        {/* Reset Button */}
+        <button className="control-button small" onClick={handleReset} disabled={!(isRunning || timer > 0)}>
+          {isRunning || timer > 0 ? (
+            <ResetActiveIcon style={{ width: '32px', height: '32px', fill: 'var(--text-color)' }} />
+          ) : (
+            <ResetMuteIcon style={{ width: '32px', height: '32px', fill: 'var(--text-muted)' }} />
+          )}
+        </button>
 
-  {/* Start/Stop Button */}
-  <button className="control-button fab-like" onClick={isRunning ? handleStop : handleStart}>
-    {isRunning ? (
-      <StopTimerIcon style={{ width: '64px', height: '64px' }} />
-    ) : (
-      <StartTimerIcon style={{ width: '64px', height: '64px' }} />
-    )}
-  </button>
+        {/* Start/Stop Button */}
+        <button className="control-button fab-like" onClick={isRunning ? handleStop : handleStart}>
+          {isRunning ? (
+            <StopTimerIcon style={{ width: '64px', height: '64px' }} />
+          ) : (
+            <StartTimerIcon style={{ width: '64px', height: '64px' }} />
+          )}
+        </button>
 
-  {/* Pause/Play Button */}
-  <button
-    className="control-button small"
-    onClick={isRunning && !isPaused ? handlePause : isPaused ? handleResume : undefined}
-  >
-    {isRunning && !isPaused ? (
-      <PauseIcon style={{ width: '32px', height: '32px', fill: 'var(--text-muted)' }} />
-    ) : timer === 0 ? (
-      <PauseIcon style={{ width: '32px', height: '32px', fill: 'var(--text-muted)' }} />
-    ) : (
-      <PlayIcon style={{ width: '32px', height: '32px', fill: 'var(--text-color)' }} />
-    )}
-  </button>
-</div>
-
-
+        {/* Pause/Play Button */}
+        <button
+          className="control-button small"
+          onClick={isRunning && !isPaused ? handlePause : isPaused ? handleResume : undefined}
+        >
+          {isRunning && !isPaused ? (
+            <PauseIcon style={{ width: '32px', height: '32px', fill: 'var(--text-muted)' }} />
+          ) : timer === 0 ? (
+            <PauseIcon style={{ width: '32px', height: '32px', fill: 'var(--text-muted)' }} />
+          ) : (
+            <PlayIcon style={{ width: '32px', height: '32px', fill: 'var(--text-color)' }} />
+          )}
+        </button>
+      </div>
 
       <div className="project-dropdown-container">
         <select

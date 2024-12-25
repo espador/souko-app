@@ -1,13 +1,10 @@
 /* TimeTrackerPage.css */
 
 .time-tracker-page {
-  padding: 24px;
-  margin: 0 auto;
   max-width: 600px;
   background-color: var(--background-color);
   color: var(--text-color);
   font-family: var(--font-shippori-mincho);
-  min-height: 100vh;
 }
 
 .time-tracker-page-container {

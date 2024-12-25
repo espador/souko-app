@@ -1,17 +1,21 @@
 /* HomePage.css */
 
 .homepage {
-  padding: 24px;
+  /* padding: 24px;  Keep padding for content spacing */
   margin: 0 auto;
   max-width: 600px;
   background-color: var(--background-color);
   color: var(--text-color);
+  /* min-height: 100vh; Remove this as body should handle the viewport height */
+  display: flex;
+  flex-direction: column; /* Ensure content flows vertically */
 }
 
 .homepage-content {
   display: flex;
   flex-direction: column;
   gap: 16px;
+  flex: 0; /* Allow content to grow and take available space */
 }
 
 .motivational-section {
@@ -43,6 +47,7 @@
   border-radius: 12px;
   padding: 16px;
   margin-bottom: 16px;
+  cursor: pointer; /* Indicate it's clickable */
 }
 
 .track-project-button {
@@ -62,40 +67,46 @@
   color: var(--accent-color);
 }
 
+/* FAB styles are now in global.css */
+
 .fab {
   position: fixed;
-  bottom: 24px;
+  bottom: 64px; /* Adjusted bottom */
   right: 24px;
-  width: 64px; /* Adjusted for the play.svg size */
-  height: 64px; /* Adjusted for the play.svg size */
-  border: none;
+  width: 64px;
+  height: 64px;
   border-radius: 50%;
-  background-color: transparent; /* No background to showcase the icon */
+  background-color: transparent;
   display: flex;
   justify-content: center;
   align-items: center;
   cursor: pointer;
-  padding: 0;
+  padding: 0; /* Keep padding at 0 */
+  transition: opacity 0.3s ease-in-out;
+  opacity: 1;
+}
+
+.fab.scrolling {
+  opacity: 0.0;
 }
 
 .fab-icon {
-  width: 64px; /* Ensure the SVG fits the button */
-  height: 64px;
-  margin-bottom: 64px;
+  width: 100%; /* Make the icon take full width of the FAB */
+  height: 100%; /* Make the icon take full height of the FAB */
+  fill: var(--text-color); /* Ensure your icon color is set */
 }
 
 .motivational-section {
-  font-family: 'Shippori Mincho', serif; /* Ensure you have Shippori Mincho loaded in your project */
+  font-family: 'Shippori Mincho', serif;
   font-size: 32px;
   line-height: 40px;
   text-align: left;
-  color: var(--text-color); /* Applies --text-color for the main text */
+  color: var(--text-color);
   margin-top: 24px;
-  margin-bottom: 40px; /* Add spacing below the section for better layout */
+  margin-bottom: 40px;
 }
 
 .motivational-section .tracked-time {
-  color: var(--accent-color); /* Applies --accent-color for the highlighted text */
-  font-weight: bold; /* Optional: Emphasize the tracked time */
+  color: var(--accent-color);
+  font-weight: bold;
 }
-

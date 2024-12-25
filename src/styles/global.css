@@ -1,19 +1,37 @@
 /* global.css */
-@import "@fontsource/noto-sans/index.css";  /* Import Noto Sans */
-@import "@fontsource/noto-sans/400.css";    /* Regular weight */
-@import "@fontsource/noto-sans/700.css";    /* Bold weight */
-@import '@fontsource/shippori-mincho';      /* Serif weight */
+@import "@fontsource/noto-sans/index.css";
+@import "@fontsource/noto-sans/400.css";
+@import "@fontsource/noto-sans/700.css";
+@import '@fontsource/shippori-mincho';
 
-/* Example global font usage */
-body {
-  font-family: 'Noto Sans', sans-serif;
+/* Reset and Global Defaults */
+html {
+  height: 100%; /* Ensure html takes up the full viewport height */
 }
 
-/* Reset */
-* {
+body {
   margin: 0;
   padding: 0;
+  background-color: var(--background-color);
+  color: var(--text-color);
+  font-family: var(--font-shippori-mincho);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
   box-sizing: border-box;
+  min-height: 100vh; /* Ensure body is at least the height of the viewport */
+}
+
+#root {
+  height: 100%; /* Make root take up the full height of the body */
+  padding: 24px;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: inherit;
 }
 
 /* Theme Variables */
@@ -26,31 +44,13 @@ body {
   --border-color: #25252d;
   --font-shippori-mincho: 'Shippori Mincho', serif;
   --font-noto-sans: 'Noto Sans', sans-serif;
-  height: 100%;
-  overflow: hidden; /* Prevent scrolling within the root */
-}
-
-/* Global Styles */
-html, body {
-  height: 100%;
-  overflow: hidden; /* Prevent scrolling on the html and body */
-}
-
-body {
-  background-color: var(--background-color);
-  color: var(--text-color);
-  font-family: var(--font-shippori-mincho);
-  line-height: 1.5;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  overflow-x: hidden; /* Prevent horizontal scrollbar */
 }
 
 /* Layout Utilities */
 .container {
   margin: 0 auto;
   padding: 24px;
-  max-width: 600px; /* Fixed width for consistency */
+  max-width: 600px;
 }
 
 .card {
@@ -65,7 +65,7 @@ body {
 
 /* Buttons */
 .button {
-  width: 100%;
+  display: block;
   padding: 16px;
   background-color: transparent;
   border: 1px solid var(--card-background);
@@ -75,20 +75,28 @@ body {
   font-size: 16px;
   color: var(--text-color);
   cursor: pointer;
+  width: 100%;
 }
 
 .fab {
   position: fixed;
-  bottom: 24px;
+  bottom: 64px;
   right: 24px;
-  width: 56px;
-  height: 56px;
+  width: 64px;
+  height: 64px;
   border-radius: 50%;
-  background-color: #ffffff;
-  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.25);
+  background-color: transparent;
   display: flex;
   justify-content: center;
   align-items: center;
+  cursor: pointer;
+  padding: 0;
+  transition: opacity 0.3s ease-in-out; /* Add a transition for the fade effect */
+  opacity: 1; /* Ensure it's initially visible */
+}
+
+.fab.scrolling {
+  opacity: 0.1; /* Example: Fade out slightly while scrolling */
 }
 
 /* Text Utilities */
@@ -103,51 +111,54 @@ body {
 /* Media Queries for Responsive Design */
 @media (max-width: 768px) {
   .container {
-    padding: 24px;
+    padding: 16px;
   }
 }
 
-/* Login Page */
+/* Login Page - If you still need no scroll on the login page */
+.login-page {
+  overflow: hidden;
+}
+
 .login-container {
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 100%; /* Ensure it fills the parent's height */
-  background: var(--background-color); /* Fallback if background image fails */
+  height: 100vh; /* Use vh to fill the viewport height */
+  background: var(--background-color);
 }
 
 .background-image {
   background-image: url('../styles/components/assets/bg-image.webp');
   background-size: cover;
   background-position: center;
+  background-repeat: no-repeat;
   width: 100%;
   height: 100%;
   display: flex;
   flex-direction: column;
-  justify-content: space-between; /* Changed to space-between */
+  justify-content: space-between;
   align-items: center;
   padding: 24px;
   text-align: center;
 }
 
 .login-logo {
-  margin-top: 264px;
-  width: auto; /* Adjust as needed */
-  height: auto; /* Adjust as needed */
+  width: auto;
+  height: auto;
 }
 
 .login-group {
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-bottom: 176px;
 }
 
 .login-tagline {
   font-family: var(--font-shippori-mincho);
   font-size: 16px;
-  color: var(--text-color); /* Changed to --text-color */
-  margin-bottom: 16px; /* Add some spacing between tagline and button */
+  color: var(--text-color);
+  margin-bottom: 16px;
 }
 
 .login-button {
@@ -155,8 +166,8 @@ body {
   align-items: center;
   justify-content: center;
   padding: 12px 24px;
-  background-color: transparent; /* Set background to transparent */
-  border: 1px solid var(--card-background); /* Add the border */
+  background-color: transparent;
+  border: 1px solid var(--card-background);
   border-radius: 12px;
   color: var(--text-color);
   font-family: var(--font-noto-sans);
@@ -164,28 +175,22 @@ body {
   font-weight: bold;
   cursor: pointer;
   transition: background-color 0.3s ease, color 0.3s ease;
+  width: 100%;
 }
 
 .login-button:hover {
   opacity: 0.9;
 }
 
-/* global.css */
-/* ... other CSS rules ... */
 .google-icon {
   width: 18px;
   height: 18px;
   margin-right: 8px;
-  fill: var(--accent-color); /* Style the SVG fill color */
-}
-
-.no-scroll {
-  overflow: hidden; /* Prevent scrolling */
-  height: 100vh; /* Fix height */
+  fill: var(--accent-color);
 }
 
 .fade {
-  transition: opacity 0.3s ease-in-out; /* Adjust duration and easing */
+  transition: opacity 0.3s ease-in-out;
 }
 
 .fade-enter {

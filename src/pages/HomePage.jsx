@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { auth, db } from '../services/firebase';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { collection, getDocs, query, where } from 'firebase/firestore';
@@ -8,7 +8,7 @@ import Header from '../components/Layout/Header';
 import '../styles/global.css';
 import '../styles/components/HomePage.css';
 import { ReactComponent as StartTimerIcon } from '../styles/components/assets/start-timer.svg';
-import '@fontsource/shippori-mincho'; 
+import '@fontsource/shippori-mincho';
 
 const HomePage = () => {
   const [user, setUser] = useState(null);
@@ -18,6 +18,9 @@ const HomePage = () => {
   const [showDropdown, setShowDropdown] = useState(false);
   const [weeklyTrackedTime, setWeeklyTrackedTime] = useState(0);
   const navigate = useNavigate();
+  const fabRef = useRef(null); // Create a ref for the FAB
+  const [isScrolling, setIsScrolling] = useState(false);
+  const scrollTimeout = useRef(null);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
@@ -44,23 +47,23 @@ const HomePage = () => {
         name: doc.data().name,
       }));
       setProjects(userProjects);
-  
+
       // Fetch Sessions
       const sessionRef = collection(db, 'sessions');
       const sessionQuery = query(sessionRef, where('userId', '==', uid));
       const sessionSnapshot = await getDocs(sessionQuery);
-  
+
       const sessions = sessionSnapshot.docs.map((doc) => doc.data());
-  
+
       // Calculate total time per project
       const timeByProject = sessions.reduce((acc, session) => {
         const project = session.project || 'Unknown Project';
         acc[project] = (acc[project] || 0) + (session.elapsedTime || 0); // Add elapsedTime in seconds
         return acc;
       }, {});
-  
+
       setTotalSessionTime(timeByProject);
-  
+
       // Calculate total tracked time for all projects this week
       const totalWeeklyTime = sessions.reduce(
         (sum, session) => sum + (session.elapsedTime || 0),
@@ -76,8 +79,8 @@ const HomePage = () => {
 
   const handleLogout = async () => {
     try {
-      await signOut(auth); // Sign out the current user
-      navigate('/'); // Redirect to the login page
+      await signOut(auth);
+      navigate('/');
     } catch (error) {
       console.error('Logout Error:', error.message);
     }
@@ -85,13 +88,33 @@ const HomePage = () => {
 
   const toggleDropdown = () => setShowDropdown(!showDropdown);
 
-  // Get today's date and format it with timezone handling
   const today = new Date().toLocaleDateString('en-GB', {
     weekday: 'short',
     day: 'numeric',
     month: 'long',
     timeZone: 'Europe/Brussels',
   });
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolling(true);
+      if (fabRef.current) {
+        fabRef.current.classList.add('scrolling');
+      }
+
+      clearTimeout(scrollTimeout.current);
+      scrollTimeout.current = setTimeout(() => {
+        setIsScrolling(false);
+        if (fabRef.current) {
+          fabRef.current.classList.remove('scrolling');
+        }
+      }, 300); // Adjust the timeout to match the transition duration
+    };
+
+    window.addEventListener('scroll', handleScroll);
+
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   return (
     <div className="homepage">
@@ -119,11 +142,13 @@ const HomePage = () => {
         <section className="motivational-section">
           {weeklyTrackedTime > 0 ? (
             <p>
-              This moment is progress. You tracked <span className="tracked-time">{formatTime(weeklyTrackedTime)}</span> this week.
+              This moment is progress. You tracked{' '}
+              <span className="tracked-time">{formatTime(weeklyTrackedTime)}</span> this week.
             </p>
           ) : (
             <p>
-              Every journey begins with <span className="tracked-time">one moment</span>. Tell me about your project ...
+              Every journey begins with <span className="tracked-time">one moment</span>. Tell me
+              about your project ...
             </p>
           )}
         </section>
@@ -135,18 +160,17 @@ const HomePage = () => {
           ) : projects.length > 0 ? (
             <ul className="projects-list">
               {projects.map((project) => (
-              <li
-                key={project.id}
-                className="project-item"
-                onClick={() => navigate(`/project/${project.id}`)}
-              >
-                <div className="project-name">{project.name}</div>
-                <div className="project-total-time">
-                  {formatTime(totalSessionTime[project.name] || 0)}
-                </div>
-              </li>
-            ))}
-
+                <li
+                  key={project.id}
+                  className="project-item"
+                  onClick={() => navigate(`/project/${project.id}`)}
+                >
+                  <div className="project-name">{project.name}</div>
+                  <div className="project-total-time">
+                    {formatTime(totalSessionTime[project.name] || 0)}
+                  </div>
+                </li>
+              ))}
             </ul>
           ) : (
             <p>No projects found. Start tracking to see results here!</p>
@@ -160,9 +184,9 @@ const HomePage = () => {
         </section>
       </main>
 
-      {projects.length >= 0 && ( // Ensure FAB is visible even with no projects initially
-        <button className="fab" onClick={() => navigate('/time-tracker')}>
-         <StartTimerIcon className="fab-icon" />
+      {projects.length >= 0 && (
+        <button ref={fabRef} className="fab" onClick={() => navigate('/time-tracker')}>
+          <StartTimerIcon className="fab-icon" />
         </button>
       )}
     </div>
