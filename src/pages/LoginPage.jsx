@@ -1,24 +1,20 @@
-// LoginPage.jsx
 import React, { useEffect } from 'react';
 import { signInWithPopup } from 'firebase/auth';
 import { auth, googleProvider } from '../services/firebase';
 import { useNavigate } from 'react-router-dom';
-import { onAuthStateChanged } from 'firebase/auth';
 import '../styles/global.css';
-import bgImage from '../styles/components/assets/bg-image.webp';
 import logo from '../styles/components/assets/souko-logo.svg';
-import googleIcon from '../styles/components/assets/google-icon.svg'; // Import as googleIcon (lowercase)
+import googleIcon from '../styles/components/assets/google-icon.svg';
 
 const LoginPage = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user) navigate('/home');
-    });
-
-    return () => unsubscribe();
-  }, [navigate]);
+    document.body.classList.add('no-scroll'); // Add the no-scroll class
+    return () => {
+      document.body.classList.remove('no-scroll'); // Remove it on unmount
+    };
+  }, []);
 
   const handleLogin = async () => {
     try {

@@ -27,8 +27,8 @@ const CreateProjectPage = () => {
       // Add project to Firestore
       await addDoc(collection(db, 'projects'), {
         name: projectName.trim(),
-        userId: user.uid,
-        trackedTime: 0, // Initialize tracked time
+        userId: user.uid, // Make sure this is set correctly
+        trackedTime: 0,
       });
 
       // Redirect back to the homepage

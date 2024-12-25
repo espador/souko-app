@@ -181,3 +181,8 @@ body {
   margin-right: 8px;
   fill: var(--accent-color); /* Style the SVG fill color */
 }
+
+.no-scroll {
+  overflow: hidden; /* Prevent scrolling */
+  height: 100vh; /* Fix height */
+}
