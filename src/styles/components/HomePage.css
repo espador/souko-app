@@ -58,6 +58,10 @@
   width: 100%;
 }
 
+.button-icon {
+  color: var(--accent-color);
+}
+
 .fab {
   position: fixed;
   bottom: 24px;
@@ -84,6 +88,7 @@
   font-family: 'Shippori Mincho', serif; /* Ensure you have Shippori Mincho loaded in your project */
   font-size: 32px;
   line-height: 40px;
+  text-align: left;
   color: var(--text-color); /* Applies --text-color for the main text */
   margin-top: 24px;
   margin-bottom: 40px; /* Add spacing below the section for better layout */

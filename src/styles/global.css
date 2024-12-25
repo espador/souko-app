@@ -26,17 +26,14 @@ body {
   --border-color: #25252d;
   --font-shippori-mincho: 'Shippori Mincho', serif;
   --font-noto-sans: 'Noto Sans', sans-serif;
+  height: 100%;
+  overflow: hidden; /* Prevent scrolling within the root */
 }
 
 /* Global Styles */
 html, body {
   height: 100%;
   overflow: hidden; /* Prevent scrolling on the html and body */
-}
-
-#root {
-  height: 100%;
-  overflow: hidden; /* Prevent scrolling within the root */
 }
 
 body {
@@ -185,4 +182,24 @@ body {
 .no-scroll {
   overflow: hidden; /* Prevent scrolling */
   height: 100vh; /* Fix height */
+}
+
+.fade {
+  transition: opacity 0.3s ease-in-out; /* Adjust duration and easing */
+}
+
+.fade-enter {
+  opacity: 0;
+}
+
+.fade-enter-active {
+  opacity: 1;
+}
+
+.fade-exit {
+  opacity: 1;
+}
+
+.fade-exit-active {
+  opacity: 0;
 }
