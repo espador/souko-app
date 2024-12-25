@@ -19,22 +19,31 @@
 }
 
 .motivational-section {
-  text-align: center;
-  margin-bottom: 24px;
+  margin-bottom: 0px;
   font-family: var(--font-shippori-mincho);
   color: var(--text-muted);
-  font-size: 16px;
-  line-height: 24px;
+  font-size: 32px;
+  line-height: 40px;
+  text-align: left;
+  color: var(--text-color);
 }
 
 .projects-section {
   display: flex;
   flex-direction: column;
+  font-family: var(--font-noto-sans);
+  color: var(--text-muted);
+  font-size: 12px;
+  line-height: 16px;
   gap: 16px;
 }
 
 .projects-list {
   list-style: none;
+  font-family: var(--font-shippori-mincho);
+  color: var(--text-color);
+  font-size: 20px;
+  line-height: 24px;
   padding: 0;
   margin: 0;
 }
@@ -48,6 +57,14 @@
   padding: 16px;
   margin-bottom: 16px;
   cursor: pointer; /* Indicate it's clickable */
+}
+
+.project-total-time {
+  color: var(--accent-color);
+  font-family: var(--font-noto-sans);
+  color: var(--text-color);
+  font-size: 16px;
+  line-height: 24px;
 }
 
 .track-project-button {
@@ -94,16 +111,6 @@
   width: 100%; /* Make the icon take full width of the FAB */
   height: 100%; /* Make the icon take full height of the FAB */
   fill: var(--text-color); /* Ensure your icon color is set */
-}
-
-.motivational-section {
-  font-family: 'Shippori Mincho', serif;
-  font-size: 32px;
-  line-height: 40px;
-  text-align: left;
-  color: var(--text-color);
-  margin-top: 24px;
-  margin-bottom: 40px;
 }
 
 .motivational-section .tracked-time {
