@@ -82,7 +82,6 @@
 }
 
 .project-dropdown-container {
-  background-color: var(--card-background);
   border-radius: 12px;
   padding: 16px;
   margin-bottom: 16px;
@@ -91,6 +90,7 @@
   align-items: center;
   justify-content: space-between;
   position: relative;
+  background-color: var(--card-background);
 }
 
 .project-dropdown {

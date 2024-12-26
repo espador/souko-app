@@ -1,103 +1,144 @@
+/* ProjectDetailPage.css */
+
 .project-container {
-  padding: 20px;
-  background-color: #0f0f14; /* Match homepage background */
-  color: #ffffff; /* Match homepage text color */
+  background-color: var(--background-color);
+  color: var(--text-color);
   min-height: 100vh;
+  max-width: 600px;
+  margin: 0 auto;
 }
 
 .project-header {
   text-align: center;
-  margin-bottom: 30px;
+  margin-bottom: 24px; /* Adjust spacing */
 }
 
 .project-icon {
-  width: 80px;
-  height: 80px;
+  width: 64px; /* Adjust size to match homepage elements if needed */
+  height: 64px;
   border-radius: 50%;
-  background-color: #4285f4;
+  background-color: var(--accent-color); /* Use accent color for consistency */
   display: flex;
   justify-content: center;
   align-items: center;
-  margin: 0 auto;
-  font-size: 32px;
-  color: #ffffff;
+  margin: 0 auto 16px; /* Add some bottom margin */
+  font-size: 24px; /* Adjust font size */
+  color: var(--background-color); /* Contrast color */
 }
 
 .project-title {
+  font-family: var(--font-shippori-mincho);
   font-size: 24px;
-  margin-top: 10px;
+  line-height: 1.2;
+  margin-top: 0;
 }
 
 .total-time {
-  font-size: 20px;
-  color: #00ff7f; /* Match homepage accent color */
+  font-family: var(--font-noto-sans);
+  font-weight: 400;
+  color: var(--accent-color);
+  font-size: 16px;
+  margin-top: 8px;
 }
 
 .sessions-container {
-  margin-top: 20px;
+  margin-top: 24px;
+}
+
+.sessions-by-day {
+  margin-bottom: 24px; /* Spacing between day groups */
+}
+
+.sessions-by-day h2 {
+  font-family: var(--font-noto-sans);
+  font-weight: 400;
+  color: var(--text-color);
+  font-size: 16px;
+  line-height: 20px;
+  margin-bottom: 16px; /* Spacing above the session tiles */
+  text-align: left; /* Align date title to the left */
 }
 
 .sessions-list {
-  background-color: #16161d; /* Same as homepage project tiles */
-  border-radius: 10px;
-  margin: 1rem auto;
-  padding: 1rem;
-  box-shadow: 0px 6px 10px rgba(0, 0, 0, 0.4);
-  max-width: 600px;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px; /* Spacing between session tiles */
 }
 
 .session-item {
+  background-color: var(--card-background); /* Match homepage project tiles */
+  border-radius: 12px;
+  padding: 16px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1rem;
-  border-bottom: 1px solid #25252d;
+  cursor: pointer;
   transition: background-color 0.3s ease;
 }
 
-.session-item:last-child {
-  border-bottom: none;
-}
-
 .session-item:hover {
-  background-color: #202027;
-  cursor: pointer;
+  background-color: #25252d; /* Slightly darker on hover */
 }
 
 .session-details {
-  color: #ffffff;
-  font-size: 1.1rem;
-  font-weight: bold;
+  color: var(--text-color);
+  font-family: var(--font-noto-sans);
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 1.4;
 }
 
 .session-time {
-  font-size: 1rem;
-  color: #8f92a9;
+  color: var(--text-muted);
+  font-size: 14px;
 }
 
 .billable {
   color: #ffd700;
   font-size: 12px;
   font-style: italic;
+  margin-left: 16px; /* Separate from time */
 }
 
 .notes {
-  color: #8f92a9;
-  font-size: 12px;
+  color: var(--text-muted);
+  font-size: 14px;
+  margin-top: 8px;
   font-style: italic;
-  margin-top: 5px;
 }
 
 .button {
-  margin-top: 20px;
-  padding: 10px 20px;
-  background-color: #4285f4;
-  color: #ffffff;
+  /* Keeping the existing button style, can be further aligned if needed */
+  margin-top: 24px;
+  padding: 12px 24px; /* Adjust padding */
+  background-color: var(--accent-color); /* Consistent with other interactive elements */
+  color: var(--background-color);
   border: none;
-  border-radius: 5px;
+  border-radius: 12px;
   cursor: pointer;
+  font-family: var(--font-noto-sans);
+  font-weight: bold;
+  font-size: 16px;
+  width: auto; /* Adjust width as needed */
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .button:hover {
-  background-color: #357ae8;
+  background-color: #00cc00; /* Darker shade of accent */
+}
+
+.loading {
+  color: var(--text-color);
+  text-align: center;
+  margin-top: 2rem;
+}
+
+.error-title {
+  color: var(--text-color);
+  text-align: center;
 }

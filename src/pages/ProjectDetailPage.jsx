@@ -4,9 +4,9 @@ import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firesto
 import { db, auth } from '../services/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import { formatTime } from '../utils/formatTime';
-import Header from '../components/Layout/Header'; // Correct import for Header
-import '../styles/global.css'; // Global styles
-import '../styles/components/ProjectDetailPage.css'; // Specific styles for ProjectDetailPage
+import Header from '../components/Layout/Header';
+import '../styles/global.css';
+import '../styles/components/ProjectDetailPage.css';
 
 const ProjectDetailPage = () => {
   const { projectId } = useParams();
@@ -20,27 +20,20 @@ const ProjectDetailPage = () => {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
-        console.log("User authenticated:", user);
         setCurrentUser(user);
       } else {
-        console.error("User not logged in or session expired.");
-        navigate('/'); // Redirect to the login page
+        navigate('/');
       }
-      setLoading(false); // Stop showing the loading spinner
+      setLoading(false);
     });
-
     return () => unsubscribe();
   }, [navigate]);
 
   useEffect(() => {
     const fetchProjectDetails = async () => {
-      if (!currentUser) {
-        console.warn("No user is logged in, skipping project fetch.");
-        return;
-      }
+      if (!currentUser) return;
 
       try {
-        // Fetch project details
         const projectRef = doc(db, 'projects', projectId);
         const projectSnapshot = await getDoc(projectRef);
 
@@ -49,40 +42,27 @@ const ProjectDetailPage = () => {
         } else if (projectSnapshot.data().userId !== currentUser.uid) {
           console.error("Project belongs to a different user.");
         } else {
-          console.log("Project successfully fetched:", projectSnapshot.data());
           const projectData = projectSnapshot.data();
           setProject(projectData);
 
-          // Debugging: Log user ID and project name
-          console.log("Current user ID:", currentUser.uid);
-          console.log("Query for sessions where project =", projectData.name);
-
-          // Fetch sessions for this project based on 'project' and 'userId' fields
           const sessionsRef = collection(db, 'sessions');
-          console.log("Querying sessions collection:", sessionsRef.path);
-
           const q = query(
             sessionsRef,
             where('project', '==', projectData.name),
-            where('userId', '==', currentUser.uid) // Ensure sessions are tied to the authenticated user
+            where('userId', '==', currentUser.uid)
           );
-
           const sessionsSnapshot = await getDocs(q);
 
-          if (sessionsSnapshot.empty) {
-            console.log("No sessions found for the project:", projectData.name);
-          } else {
+          if (!sessionsSnapshot.empty) {
             const fetchedSessions = sessionsSnapshot.docs.map(doc => ({
               id: doc.id,
               ...doc.data(),
             }));
-
-            console.log("Fetched sessions from Firestore:", fetchedSessions);
             setSessions(fetchedSessions);
-
-            // Calculate total time
             const totalElapsedTime = fetchedSessions.reduce((sum, session) => sum + (session.elapsedTime || 0), 0);
             setTotalTime(totalElapsedTime);
+          } else {
+            console.log("No sessions found for the project:", projectData.name);
           }
         }
       } catch (error) {
@@ -96,6 +76,23 @@ const ProjectDetailPage = () => {
       fetchProjectDetails();
     }
   }, [projectId, currentUser]);
+
+  // Group sessions by date
+  const sessionsByDate = sessions.reduce((acc, session) => {
+    let date;
+    if (session.startTime && typeof session.startTime.toDate === 'function') {
+      date = session.startTime.toDate().toLocaleDateString();
+    } else {
+      console.warn("Invalid startTime for session:", session.id, session.startTime);
+      date = "Invalid Date";
+    }
+
+    if (!acc[date]) {
+      acc[date] = [];
+    }
+    acc[date].push(session);
+    return acc;
+  }, {});
 
   if (loading) {
     return <p className="loading">Loading project details...</p>;
@@ -115,10 +112,9 @@ const ProjectDetailPage = () => {
   return (
     <div className="project-container">
       <Header
-        title={project.name}
         showBackArrow={true}
         onBack={() => navigate('/home')}
-        hideProfile={true} // Hides the profile picture and logout option
+        hideProfile={true}
       />
       <div className="project-header">
         <div className="project-icon">
@@ -129,38 +125,47 @@ const ProjectDetailPage = () => {
       </div>
 
       <div className="sessions-container">
-        <h2>Sessions</h2>
-        {sessions.length > 0 ? (
-          <ul className="sessions-list">
-            {sessions.map((session) => (
-              <li key={session.id} className="session-item">
-                <div>
-                  <p className="session-details">
-                    <strong>
-                      {session.startTime && session.startTime.toDate ? 
-                        session.startTime.toDate().toLocaleDateString('en-US', {
-                          weekday: 'long',
-                          month: 'long',
-                          day: 'numeric',
-                        }) : 
-                        "Unknown Date"}
-                    </strong>
-                  </p>
-                  <p className="session-time">Elapsed Time: {formatTime(session.elapsedTime)}</p>
-                  {session.isBillable && <p className="billable">Billable</p>}
-                  {session.sessionNotes && <p className="notes">Notes: {session.sessionNotes}</p>}
-                </div>
-              </li>
-            ))}
-          </ul>
+        {Object.keys(sessionsByDate).length > 0 ? (
+          Object.entries(sessionsByDate)
+            .sort(([, a], [, b]) => {
+              // Sort by date, putting "Invalid Date" at the end
+              if (a[0] === "Invalid Date") return 1;
+              if (b[0] === "Invalid Date") return -1;
+              try {
+                return new Date(b[0]) - new Date(a[0]);
+              } catch (error) {
+                console.error("Error comparing dates:", error);
+                return 0; // Don't change order on error
+              }
+            })
+            .map(([date, sessionsForDate]) => (
+              <div key={date} className="sessions-by-day">
+                <h2>
+                  {date === "Invalid Date"
+                    ? "Invalid Date"
+                    : new Date(date).toLocaleDateString('en-US', {
+                        weekday: 'long',
+                        month: 'long',
+                        day: 'numeric',
+                      })}
+                </h2>
+                <ul className="sessions-list">
+                  {sessionsForDate.map((session) => (
+                    <li key={session.id} className="session-item">
+                      <div className="session-details">
+                        <p className="session-time">Elapsed Time: {formatTime(session.elapsedTime)}</p>
+                        {session.isBillable && <p className="billable">Billable</p>}
+                        {session.sessionNotes && <p className="notes">Notes: {session.sessionNotes}</p>}
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))
         ) : (
           <p>No sessions tracked for this project yet.</p>
         )}
       </div>
-
-      <button className="button" onClick={() => navigate('/home')}>
-        Return to Homepage
-      </button>
     </div>
   );
 };
