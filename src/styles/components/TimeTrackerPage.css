@@ -68,6 +68,10 @@
   border-radius: 12px;
   padding: 16px;
   margin-bottom: 16px;
+  color: var(--text-color);
+  font-family: var(--font-shippori-mincho);
+  font-size: 16px;
+  line-height: 20pt;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -91,6 +95,7 @@
   color: var(--text-color);
   font-family: var(--font-shippori-mincho);
   font-size: 16px;
+  line-height: 20pt;
   outline: none;
   appearance: none;
 }
@@ -100,7 +105,6 @@
   right: 16px;
   width: 24px;
   height: 24px;
-  fill: var(--text-muted);
   pointer-events: none;
 }
 
@@ -109,6 +113,10 @@
   display: flex;
   align-items: center;
   justify-content: flex-end;
+  color: var(--text-color);
+  font-family: var(--font-shippori-mincho);
+  font-size: 16px;
+  line-height: 20pt;
 }
 
 .input-tile.notes-input-tile {
@@ -116,14 +124,17 @@
   align-items: center;
   justify-content: space-between;
   position: relative;
+  font-family: var(--font-shippori-mincho);
+  font-size: 16px;
+  line-height: 20pt;
 }
 
 .notes-edit-icon {
   position: absolute;
   right: 16px;
   top: 16px;
-  width: 24px;
-  height: 24px;
+  width: 20px;
+  height: 20px;
   fill: var(--text-color);
 }
 
@@ -133,7 +144,7 @@
   background-color: transparent;
   color: var(--text-color);
   font-family: var(--font-shippori-mincho);
-  font-size: 14pt;
+  font-size: 16px;
   line-height: 20pt;
   resize: none;
   outline: none;

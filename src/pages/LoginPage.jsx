@@ -10,8 +10,10 @@ const LoginPage = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    document.body.classList.add('login-page-background'); // Add a specific class to the body
     document.body.classList.add('no-scroll'); // Add the no-scroll class
     return () => {
+      document.body.classList.remove('login-page-background'); // Remove the class on unmount
       document.body.classList.remove('no-scroll'); // Remove it on unmount
     };
   }, []);

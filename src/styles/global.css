@@ -12,15 +12,23 @@ html {
 body {
   margin: 0;
   padding: 0;
-  background-color: var(--background-color);
+  background-color: var(--background-color); /* Keep the default background color */
   color: var(--text-color);
   font-family: var(--font-shippori-mincho);
   line-height: 1.5;
-  -webkit-font-smoothing: antialiased;
+  -webkit-font-smoothing: antialised;
   -moz-osx-font-smoothing: grayscale;
   overflow-x: hidden;
   box-sizing: border-box;
   min-height: 100vh; /* Ensure body is at least the height of the viewport */
+}
+
+/* Apply background image only when the 'login-page-background' class is on the body */
+body.login-page-background {
+  background-image: url('../styles/components/assets/bg-image.webp');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 }
 
 #root {
@@ -124,15 +132,12 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 100vh; /* Use vh to fill the viewport height */
-  background: var(--background-color);
+  height: 100%; /* Use vh to fill the viewport height */
+  /* Remove background styling from here */
 }
 
 .background-image {
-  background-image: url('../styles/components/assets/bg-image.webp');
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
+  /* Keep the flexbox layout for content positioning */
   width: 100%;
   height: 100%;
   display: flex;
@@ -146,12 +151,14 @@ body {
 .login-logo {
   width: auto;
   height: auto;
+  padding-top: 164px;
 }
 
 .login-group {
   display: flex;
   flex-direction: column;
   align-items: center;
+  margin-top: 164px;
 }
 
 .login-tagline {
