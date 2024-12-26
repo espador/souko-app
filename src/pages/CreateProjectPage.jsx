@@ -137,7 +137,7 @@ const CreateProjectPage = () => {
                             ) : (
                                 <div
                                     className="default-project-image"
-                                    style={{ backgroundColor: '#555' }} // Example background color
+                                    style={{ backgroundColor: '#FE2F00' }} // Example background color
                                     >
                                     <span>{getInitials(projectName || 'P')}</span>
                                 </div>

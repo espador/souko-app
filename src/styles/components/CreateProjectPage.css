@@ -40,7 +40,7 @@
 .project-image-container {
   width: 40px;
   height: 40px;
-  border-radius: 50%;
+  border-radius: 20%;
   overflow: hidden;
   display: flex;
   justify-content: center;
@@ -63,7 +63,7 @@
   align-items: center;
   color: var(--text-color);
   font-family: var(--font-noto-sans);
-  font-weight: 700;
+  font-weight: 400;
   font-size: 20px;
 }
 
