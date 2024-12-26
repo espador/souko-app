@@ -14,7 +14,6 @@ import { ReactComponent as PlayIcon } from '../styles/components/assets/play.svg
 import { ReactComponent as StopTimerIcon } from '../styles/components/assets/stop-timer.svg';
 import { ReactComponent as StartTimerIcon } from '../styles/components/assets/start-timer.svg';
 import { ReactComponent as EditIcon } from '../styles/components/assets/edit.svg';
-import { ReactComponent as ReturnIcon } from '../styles/components/assets/return.svg';
 import { ReactComponent as DropdownIcon } from '../styles/components/assets/dropdown.svg';
 import { ReactComponent as RadioActiveIcon } from '../styles/components/assets/radio-active.svg';
 import { ReactComponent as RadioMutedIcon } from '../styles/components/assets/radio-muted.svg';
@@ -263,7 +262,7 @@ const TimeTrackerPage = () => {
           )}
         </button>
       </div>
-
+      <h2 className="projects-label">Details</h2>
       <div className="project-dropdown-container">
         <select
           className="project-dropdown"
