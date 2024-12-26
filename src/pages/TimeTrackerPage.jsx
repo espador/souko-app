@@ -1,7 +1,7 @@
 // TimeTrackingPage.jsx
 import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { collection, query, where, getDocs, doc, setDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, setDoc, updateDoc, serverTimestamp, Timestamp } from 'firebase/firestore'; // Import Timestamp
 import { db, auth } from '../services/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import Header from '../components/Layout/Header';
@@ -88,9 +88,11 @@ const TimeTrackerPage = () => {
         setSessionNotes(sessionData.sessionNotes || '');
         setIsBillable(sessionData.isBillable || true);
 
+        // Keep startTime as a Timestamp object
+        setStartTime(sessionData.startTime);
         const now = Date.now();
-        const sessionStartTime = sessionData.startTime?.toDate().getTime() || 0;
-        setStartTime(sessionStartTime);
+        // Ensure sessionData.startTime is a Timestamp before calling toDate()
+        const sessionStartTime = sessionData.startTime instanceof Timestamp ? sessionData.startTime.toDate().getTime() : 0;
         const elapsedSeconds = Math.floor((now - sessionStartTime) / 1000);
         setTimer(elapsedSeconds + (sessionData.elapsedTime || 0));
         setIsRunning(true);
@@ -129,12 +131,12 @@ const TimeTrackerPage = () => {
           project: selectedProject,
           sessionNotes,
           isBillable,
-          startTime: serverTimestamp(),
+          startTime: serverTimestamp(), // Use serverTimestamp() here
           endTime: null,
           elapsedTime: 0,
         });
         setSessionId(sessionRef.id);
-        setStartTime(Date.now());
+        setStartTime(new Date()); // Keep track of start time locally as a Date object
       } catch (error) {
         console.error('Error starting session:', error);
       }
@@ -186,6 +188,7 @@ const TimeTrackerPage = () => {
     setSessionNotes('');
     setIsBillable(true);
     setSessionId(null);
+    setStartTime(null); // Reset local start time
     navigate('/home');
   };
 

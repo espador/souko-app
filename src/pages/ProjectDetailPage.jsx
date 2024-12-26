@@ -7,6 +7,7 @@ import { formatTime } from '../utils/formatTime';
 import Header from '../components/Layout/Header';
 import '../styles/global.css';
 import '../styles/components/ProjectDetailPage.css';
+import { Timestamp } from 'firebase/firestore'; // Import Timestamp
 
 const ProjectDetailPage = () => {
   const { projectId } = useParams();
@@ -77,11 +78,21 @@ const ProjectDetailPage = () => {
     }
   }, [projectId, currentUser]);
 
-  // Group sessions by date
+  // Group sessions by date, most recent first
   const sessionsByDate = sessions.reduce((acc, session) => {
     let date;
-    if (session.startTime && typeof session.startTime.toDate === 'function') {
-      date = session.startTime.toDate().toLocaleDateString();
+    console.log(`Session ID: ${session.id}, startTime type: ${typeof session.startTime}, startTime value:`, session.startTime);
+    if (session.startTime instanceof Timestamp) {
+      try {
+        date = session.startTime.toDate().toLocaleDateString('en-US', {
+          weekday: 'long',
+          month: 'long',
+          day: 'numeric',
+        });
+      } catch (error) {
+        console.error("Error converting Timestamp to Date:", error, session.startTime);
+        date = "Invalid Date";
+      }
     } else {
       console.warn("Invalid startTime for session:", session.id, session.startTime);
       date = "Invalid Date";
@@ -93,6 +104,17 @@ const ProjectDetailPage = () => {
     acc[date].push(session);
     return acc;
   }, {});
+
+  const sortedDates = Object.keys(sessionsByDate).sort((a, b) => {
+    if (a === "Invalid Date") return 1;
+    if (b === "Invalid Date") return -1;
+    try {
+      return new Date(b) - new Date(a); // Sort dates in descending order (most recent first)
+    } catch (error) {
+      console.error("Error comparing dates:", error);
+      return 0;
+    }
+  });
 
   if (loading) {
     return <p className="loading">Loading project details...</p>;
@@ -125,43 +147,31 @@ const ProjectDetailPage = () => {
       </div>
 
       <div className="sessions-container">
-        {Object.keys(sessionsByDate).length > 0 ? (
-          Object.entries(sessionsByDate)
-            .sort(([, a], [, b]) => {
-              // Sort by date, putting "Invalid Date" at the end
-              if (a[0] === "Invalid Date") return 1;
-              if (b[0] === "Invalid Date") return -1;
-              try {
-                return new Date(b[0]) - new Date(a[0]);
-              } catch (error) {
-                console.error("Error comparing dates:", error);
-                return 0; // Don't change order on error
-              }
-            })
-            .map(([date, sessionsForDate]) => (
-              <div key={date} className="sessions-by-day">
-                <h2>
-                  {date === "Invalid Date"
-                    ? "Invalid Date"
-                    : new Date(date).toLocaleDateString('en-US', {
-                        weekday: 'long',
-                        month: 'long',
-                        day: 'numeric',
-                      })}
-                </h2>
-                <ul className="sessions-list">
-                  {sessionsForDate.map((session) => (
-                    <li key={session.id} className="session-item">
-                      <div className="session-details">
-                        <p className="session-time">Elapsed Time: {formatTime(session.elapsedTime)}</p>
-                        {session.isBillable && <p className="billable">Billable</p>}
-                        {session.sessionNotes && <p className="notes">Notes: {session.sessionNotes}</p>}
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))
+        {sortedDates.length > 0 ? (
+          sortedDates.map(date => (
+            <div key={date} className="sessions-by-day">
+              <h2>
+                {date === "Invalid Date"
+                  ? "Invalid Date"
+                  : new Date(date).toLocaleDateString('en-US', {
+                      weekday: 'long',
+                      month: 'long',
+                      day: 'numeric',
+                    })}
+              </h2>
+              <ul className="sessions-list">
+                {sessionsByDate[date].map((session) => (
+                  <li key={session.id} className="session-item">
+                    <div className="session-details">
+                      <p className="session-time">Elapsed Time: {formatTime(session.elapsedTime)}</p>
+                      {session.isBillable && <p className="billable">Billable</p>}
+                      {session.sessionNotes && <p className="notes">Notes: {session.sessionNotes}</p>}
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))
         ) : (
           <p>No sessions tracked for this project yet.</p>
         )}
