@@ -6,9 +6,9 @@
   height: 64px;
   width: 100%;
   z-index: 10;
-  background-color: transparent;
+  background-color: var(--background-color);
   position: sticky;
-  top: 24px;
+  top: 0px;
 }
 
 .header-left-section {
