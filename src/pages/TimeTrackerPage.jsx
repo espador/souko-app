@@ -22,7 +22,7 @@ import '@fontsource/shippori-mincho';
 const TimeTrackerPage = () => {
   const [user, setUser] = useState(null);
   const [projects, setProjects] = useState([]);
-  const [selectedProject, setSelectedProject] = useState('');
+  const [selectedProject, setSelectedProject] = useState(null); // Initialize as null
   const [sessionNotes, setSessionNotes] = useState('');
   const [isBillable, setIsBillable] = useState(true);
   const [timer, setTimer] = useState(0);
@@ -75,12 +75,16 @@ const TimeTrackerPage = () => {
       const projectsRef = collection(db, 'projects');
       const projectQuery = query(projectsRef, where('userId', '==', uid));
       const projectSnapshot = await getDocs(projectQuery);
-      const userProjects = projectSnapshot.docs.map((doc) => ({ id: doc.id, name: doc.data().name }));
+      const userProjects = projectSnapshot.docs.map((doc) => ({
+        id: doc.id,
+        name: doc.data().name,
+        imageUrl: doc.data().imageUrl, // Fetch imageUrl
+      }));
       setProjects(userProjects);
 
-      // Prefill with the most recent project
+      // Prefill with the most recent project object
       if (userProjects.length > 0) {
-        setSelectedProject(userProjects[0].name);
+        setSelectedProject(userProjects[0]);
       }
 
       const sessionRef = collection(db, 'sessions');
@@ -95,7 +99,7 @@ const TimeTrackerPage = () => {
         const activeSession = activeSessionSnapshot.docs[0];
         const sessionData = activeSession.data();
         setSessionId(activeSession.id);
-        setSelectedProject(sessionData.project || '');
+        setSelectedProject(userProjects.find(proj => proj.name === sessionData.project) || null);
         setSessionNotes(sessionData.sessionNotes || '');
         setIsBillable(sessionData.isBillable || true);
 
@@ -139,7 +143,7 @@ const TimeTrackerPage = () => {
         const sessionRef = doc(collection(db, 'sessions'));
         await setDoc(sessionRef, {
           userId: user.uid,
-          project: selectedProject,
+          project: selectedProject.name,
           sessionNotes,
           isBillable,
           startTime: serverTimestamp(), // Use serverTimestamp() here
@@ -195,7 +199,7 @@ const TimeTrackerPage = () => {
     }
 
     setTimer(0);
-    setSelectedProject('');
+    setSelectedProject(null);
     setSessionNotes('');
     setIsBillable(true);
     setSessionId(null);
@@ -278,10 +282,25 @@ const TimeTrackerPage = () => {
       </div>
       <h2 className="projects-label">Details</h2>
       <div className="project-dropdown-container">
+        {selectedProject?.imageUrl ? (
+          <img
+            src={selectedProject.imageUrl}
+            alt={selectedProject.name}
+            className="dropdown-project-image"
+          />
+        ) : selectedProject?.name ? (
+          <div className="dropdown-default-image">
+            {selectedProject.name.charAt(0).toUpperCase()}
+          </div>
+        ) : null}
         <select
           className="project-dropdown"
-          value={selectedProject}
-          onChange={(e) => setSelectedProject(e.target.value)}
+          value={selectedProject?.name || ''}
+          onChange={(e) => {
+            const projectName = e.target.value;
+            const selectedProj = projects.find(proj => proj.name === projectName);
+            setSelectedProject(selectedProj);
+          }}
         >
           {projects.map((project) => (
             <option key={project.id} value={project.name}>

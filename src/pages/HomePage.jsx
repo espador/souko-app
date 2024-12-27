@@ -19,7 +19,6 @@ const HomePage = () => {
   const [totalSessionTime, setTotalSessionTime] = useState({});
   const [loading, setLoading] = useState(true);
   const [weeklyTrackedTime, setWeeklyTrackedTime] = useState(0);
-  const [showDropdown, setShowDropdown] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const navigate = useNavigate();
   const fabRef = useRef(null);
@@ -100,8 +99,6 @@ const HomePage = () => {
     }
   };
 
-  const toggleDropdown = () => setShowDropdown(!showDropdown);
-
   const openSidebar = () => setIsSidebarOpen(true);
   const closeSidebar = () => setIsSidebarOpen(false);
 
@@ -145,14 +142,6 @@ const HomePage = () => {
               className="profile-pic"
               onClick={openSidebar} // Open the sidebar on profile pic click
             />
-            {/* Conditionally render the dropdown if needed */}
-            {/* {showDropdown && (
-              <div className="dropdown-menu">
-                <button className="dropdown-item" onClick={handleLogout}>
-                  Log Out
-                </button>
-              </div>
-            )} */}
           </div>
         )}
       </Header>

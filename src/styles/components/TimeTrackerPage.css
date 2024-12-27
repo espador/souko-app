@@ -83,7 +83,7 @@
 
 .project-dropdown-container {
   border-radius: 12px;
-  padding: 16px;
+  padding: 8px 16px; /* Adjust padding to accommodate image */
   margin-bottom: 16px;
   margin-top: 16px;
   display: flex;
@@ -93,15 +93,37 @@
   background-color: var(--card-background);
 }
 
+.dropdown-project-image {
+  width: 40px;
+  height: 40px;
+  border-radius: 20%;
+  margin-right: 16px;
+  object-fit: cover;
+}
+
+.dropdown-default-image {
+  width: 40px;
+  height: 40px;
+  border-radius: 20%;
+  background-color: var(--accent-color); /* Or any default color */
+  color: var(--text-color);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-weight: bold;
+  margin-right: 16px;
+  background-color: #FE2F00;
+}
+
 .project-dropdown {
-  width: 100%;
+  flex-grow: 1; /* Allow dropdown to take remaining space */
   border: none;
   background-color: transparent;
+  font-family: var(--font-commit-mono);
   color: var(--text-color);
-  /* Removed explicit font-family, will inherit from global styles */
-  font-weight: 400;
   font-size: 16px;
-  line-height: 20pt;
+  line-height: 24px;
+  font-weight: normal;
   outline: none;
   appearance: none;
 }

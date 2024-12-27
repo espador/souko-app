@@ -98,6 +98,7 @@ body.allow-scroll {
   color: var(--text-color);
   font-weight: bold;
   font-size: 14px;
+  background-color: #FE2F00;
 }
 
 .project-name {
