@@ -246,6 +246,7 @@ body.login-page-background {
 
 h1 {
   font-family: var(--font-commit-mono);
+  font-weight: normal;
   color: var(--text-color);
   font-size: 32px;
   line-height: 40px;

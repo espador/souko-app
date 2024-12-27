@@ -1,3 +1,4 @@
+// HomePage.jsx
 import React, { useEffect, useState, useRef } from 'react';
 import { auth, db } from '../services/firebase';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
@@ -27,13 +28,13 @@ const HomePage = () => {
   useEffect(() => {
     console.log('HomePage mounted, adding allow-scroll');
     document.body.classList.add('allow-scroll');
-  
+
     return () => {
       console.log('HomePage unmounted, removing allow-scroll');
       document.body.classList.remove('allow-scroll');
     };
   }, []);
-  
+
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       if (!currentUser) {
@@ -57,6 +58,7 @@ const HomePage = () => {
       const userProjects = projectSnapshot.docs.map((doc) => ({
         id: doc.id,
         name: doc.data().name,
+        imageUrl: doc.data().imageUrl, // Include imageUrl
       }));
       setProjects(userProjects);
 
@@ -128,6 +130,10 @@ const HomePage = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  const getInitials = (name) => {
+    return name.trim().charAt(0).toUpperCase();
+  };
+
   return (
     <div className="homepage">
       <Header title={today} user={user}>
@@ -178,6 +184,22 @@ const HomePage = () => {
                   className="project-item"
                   onClick={() => navigate(`/project/${project.id}`)}
                 >
+                  <div className="project-image-container">
+                    {project.imageUrl ? (
+                      <img
+                        src={project.imageUrl}
+                        alt={project.name}
+                        className="project-image"
+                      />
+                    ) : (
+                      <div
+                        className="default-project-image"
+                        style={{ backgroundColor: '#FE2F00' }}
+                      >
+                        <span>{getInitials(project.name || 'P')}</span>
+                      </div>
+                    )}
+                  </div>
                   <div className="project-name">{project.name}</div>
                   <div className="project-total-time">
                     {formatTime(totalSessionTime[project.name] || 0)}
