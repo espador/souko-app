@@ -1,6 +1,7 @@
 // src/components/Sidebar.jsx
 import React from 'react';
-import './Sidebar.css';
+import '../../styles/components/Sidebar.css';
+
 
 const Sidebar = ({ isOpen, onClose, onLogout }) => {
   return (
@@ -9,10 +10,10 @@ const Sidebar = ({ isOpen, onClose, onLogout }) => {
         <button className="close-button" onClick={onClose}>
           close {/* Or use an icon */}
         </button>
-        <h2>Every journey begins with one moment. Start tracking yours.</h2>
+        <h2>Every journey begins with one moment.</h2>
         <p>Build & designed by Bram</p>
         <button className="signout-button" onClick={onLogout}>
-          Sign Out
+        <span className="signout-button-icon">✕</span> Sign Out
         </button>
       </div>
     </div>

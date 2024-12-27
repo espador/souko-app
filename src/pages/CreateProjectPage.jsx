@@ -109,11 +109,11 @@ const CreateProjectPage = () => {
             />
             <main className="create-project-content">
             <section className="motivational-section">
-                    <p>
+                    <h2>
                             Every journey begins with{' '}
                             <span style={{ color: 'var(--accent-color)' }}>one moment</span>.
                             Tell me about your project ...
-                        </p>
+                        </h2>
         </section>
                 <section className="project-details-section">
                     <h2>Project details</h2>
