@@ -174,7 +174,7 @@ const CreateProjectPage = () => {
         <div className="spinner"></div>
     ) : (
         <>
-            <span className="button-icon">+</span> Create your project
+            <span className="button-icon">✛</span> Create your project
         </>
     )}
 </button>

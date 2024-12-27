@@ -9,16 +9,19 @@ import '../styles/global.css';
 import '../styles/components/HomePage.css';
 import { ReactComponent as StartTimerIcon } from '../styles/components/assets/start-timer.svg';
 import '@fontsource/shippori-mincho';
+import Sidebar from '../components/Layout/Sidebar';
+import '../styles/components/Sidebar.css';
 
 const HomePage = () => {
   const [user, setUser] = useState(null);
   const [projects, setProjects] = useState([]);
   const [totalSessionTime, setTotalSessionTime] = useState({});
   const [loading, setLoading] = useState(true);
-  const [showDropdown, setShowDropdown] = useState(false);
   const [weeklyTrackedTime, setWeeklyTrackedTime] = useState(0);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const navigate = useNavigate();
-  const fabRef = useRef(null); // Create a ref for the FAB
+  const fabRef = useRef(null);
   const [isScrolling, setIsScrolling] = useState(false);
   const scrollTimeout = useRef(null);
 
@@ -88,12 +91,16 @@ const HomePage = () => {
 
   const toggleDropdown = () => setShowDropdown(!showDropdown);
 
+  const openSidebar = () => setIsSidebarOpen(true);
+  const closeSidebar = () => setIsSidebarOpen(false);
+
   const today = new Date().toLocaleDateString('en-GB', {
     weekday: 'short',
     day: 'numeric',
     month: 'long',
     timeZone: 'Europe/Brussels',
   });
+
 
   useEffect(() => {
     const handleScroll = () => {
@@ -125,7 +132,7 @@ const HomePage = () => {
               src={user?.photoURL || '/default-profile.png'}
               alt="Profile"
               className="profile-pic"
-              onClick={toggleDropdown}
+              onClick={openSidebar} // Open the sidebar on click
             />
             {showDropdown && (
               <div className="dropdown-menu">
@@ -141,15 +148,15 @@ const HomePage = () => {
       <main className="homepage-content">
         <section className="motivational-section">
           {weeklyTrackedTime > 0 ? (
-            <p>
+            <h1>
               This moment is progress. You tracked{' '}
               <span className="tracked-time">{formatTime(weeklyTrackedTime)}</span> this week.
-            </p>
+            </h1>
           ) : (
-            <p>
+            <h1>
               Every journey begins with <span className="tracked-time">one moment</span>. Tell me
               about your project ...
-            </p>
+            </h1>
           )}
         </section>
 
@@ -179,10 +186,14 @@ const HomePage = () => {
             className="track-project-button"
             onClick={() => navigate('/create-project')}
           >
-            <span className="button-icon">+</span> Track new project
+            <span className="button-icon">✛</span> Track new project
           </button>
         </section>
       </main>
+
+      <Sidebar isOpen={isSidebarOpen} onClose={closeSidebar} onLogout={handleLogout} />
+
+      {isSidebarOpen && <div className="sidebar-overlay" onClick={closeSidebar}></div>}
 
       {projects.length >= 0 && (
         <button ref={fabRef} className="fab" onClick={() => navigate('/time-tracker')}>
