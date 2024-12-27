@@ -1,29 +1,56 @@
 /* global.css */
-@import "@fontsource/noto-sans/index.css";
-@import "@fontsource/noto-sans/400.css";
-@import "@fontsource/noto-sans/700.css";
-@import '@fontsource/shippori-mincho';
+
+/* Define Commit Mono font faces */
+@font-face {
+  font-family: 'Commit Mono';
+  src: url('../styles/components/fonts/CommitMono-400-Regular.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Commit Mono';
+  src: url('../styles/components/fonts/CommitMono-700-Regular.ttf') format('truetype');
+  font-weight: bold;
+  font-style: normal;
+  font-display: swap;
+}
 
 /* Reset and Global Defaults */
 html {
   height: 100%; /* Ensure html takes up the full viewport height */
 }
 
+body.no-scroll, html.no-scroll { /* Apply to both html and body */
+  overflow: hidden; /* Prevent scrolling when no-scroll is active */
+}
+
 body {
   margin: 0;
   padding: 0;
-  background-color: var(--background-color); /* Keep the default background color */
+  background-color: var(--background-color);
   color: var(--text-color);
-  font-family: var(--font-shippori-mincho);
+  font-family: var(--font-commit-mono), monospace;
   line-height: 1.5;
-  -webkit-font-smoothing: antialised;
+  -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overflow-x: hidden;
   box-sizing: border-box;
-  min-height: 100vh; /* Ensure body is at least the height of the viewport */
+  min-height: 100vh;
 }
 
-/* Apply background image only when the 'login-page-background' class is on the body */
+/* Override global overflow for pages that need scrolling */
+body.allow-scroll > html {
+  overflow: auto; /* Enable scrolling on the html element */
+  height: auto; /* Allow content to expand */
+}
+
+body.allow-scroll {
+  overflow-y: auto; /* Ensure body can also scroll */
+}
+
+/* Apply background image for login page */
 body.login-page-background {
   background-image: url('../styles/components/assets/bg-image.webp');
   background-size: cover;
@@ -33,7 +60,9 @@ body.login-page-background {
 
 #root {
   height: 100%; /* Make root take up the full height of the body */
-  padding: 24px;
+  padding-top: 0px;
+  padding-left: 24px;
+  padding-right: 24px;
 }
 
 *,
@@ -50,8 +79,7 @@ body.login-page-background {
   --accent-color: #00FF00;
   --card-background: #1D1B25;
   --border-color: #25252d;
-  --font-shippori-mincho: 'Shippori Mincho', serif;
-  --font-noto-sans: 'Noto Sans', sans-serif;
+  --font-commit-mono: 'Commit Mono', monospace;
 }
 
 /* Layout Utilities */
@@ -79,13 +107,14 @@ body.login-page-background {
   border: 1px solid var(--card-background);
   border-radius: 12px;
   text-align: center;
-  font-family: var(--font-shippori-mincho);
+  font-family: var(--font-commit-mono);
   font-size: 16px;
   color: var(--text-color);
   cursor: pointer;
   width: 100%;
 }
 
+/* Floating Action Button */
 .fab {
   position: fixed;
   bottom: 64px;
@@ -99,12 +128,12 @@ body.login-page-background {
   align-items: center;
   cursor: pointer;
   padding: 0;
-  transition: opacity 0.3s ease-in-out; /* Add a transition for the fade effect */
-  opacity: 1; /* Ensure it's initially visible */
+  transition: opacity 0.3s ease-in-out;
+  opacity: 1;
 }
 
 .fab.scrolling {
-  opacity: 0.1; /* Example: Fade out slightly while scrolling */
+  opacity: 0.1; /* Fade out slightly while scrolling */
 }
 
 /* Text Utilities */
@@ -123,21 +152,19 @@ body.login-page-background {
   }
 }
 
-/* Login Page - If you still need no scroll on the login page */
+/* Login Page Specific Styles */
 .login-page {
-  overflow: hidden;
+  overflow: hidden; /* Ensure no scroll on login page */
 }
 
 .login-container {
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 100%; /* Use vh to fill the viewport height */
-  /* Remove background styling from here */
+  height: 100%; /* Fill the viewport height */
 }
 
 .background-image {
-  /* Keep the flexbox layout for content positioning */
   width: 100%;
   height: 100%;
   display: flex;
@@ -162,7 +189,7 @@ body.login-page-background {
 }
 
 .login-tagline {
-  font-family: var(--font-shippori-mincho);
+  font-family: var(--font-commit-mono);
   font-size: 16px;
   color: var(--text-color);
   margin-bottom: 16px;
@@ -177,7 +204,7 @@ body.login-page-background {
   border: 1px solid var(--card-background);
   border-radius: 12px;
   color: var(--text-color);
-  font-family: var(--font-noto-sans);
+  font-family: var(--font-commit-mono);
   font-size: 16px;
   font-weight: bold;
   cursor: pointer;
@@ -196,6 +223,7 @@ body.login-page-background {
   fill: var(--accent-color);
 }
 
+/* Fade Transition */
 .fade {
   transition: opacity 0.3s ease-in-out;
 }
@@ -216,12 +244,26 @@ body.login-page-background {
   opacity: 0;
 }
 
-h2 {
-  /* Your desired styles for all h2 elements */
-  font-family: var(--font-shippori-mincho);
+h1 {
+  font-family: var(--font-commit-mono);
   color: var(--text-color);
   font-size: 32px;
   line-height: 40px;
   margin-bottom: 8px;
-  /* ... other styles ... */
 }
+
+h2 {
+  font-family: var(--font-commit-mono);
+  color: var(--text-color);
+  font-size: 16px;
+  line-height: 24px;
+  margin-bottom: 8px;
+}
+
+p {
+  font-family: var(--font-commit-mono);
+  font-weight: 400;
+  color: var(--text-muted);
+  font-size: 16px;
+  line-height: 24px;
+  }

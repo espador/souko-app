@@ -18,7 +18,7 @@
   display: flex;
   flex-direction: column;
   gap: 16px;
-  font-family: var(--font-noto-sans);
+  /* Removed explicit font-family, will inherit from global styles */
 }
 
 .project-details-section h2 {
@@ -62,7 +62,7 @@
   justify-content: center;
   align-items: center;
   color: var(--text-color);
-  font-family: var(--font-noto-sans);
+  /* Removed explicit font-family, will inherit from global styles */
   font-weight: 400;
   font-size: 20px;
 }
@@ -71,7 +71,7 @@
   background-color: transparent;
   border: none;
   color: var(--text-color);
-  font-family: var(--font-noto-sans);
+  /* Removed explicit font-family, will inherit from global styles */
   font-size: 16px;
   flex-grow: 1;
   outline: none;
@@ -100,7 +100,7 @@
   border-radius: 12px;
   padding: 16px;
   cursor: pointer;
-  font-family: var(--font-noto-sans);
+  /* Removed explicit font-family, will inherit from global styles */
   font-size: 16px;
 }
 
@@ -118,7 +118,7 @@
   border: 1px solid var(--card-background);
   border-radius: 12px;
   text-align: center;
-  font-family: var(--font-shippori-mincho);
+  /* Removed explicit font-family, will inherit from global styles */
   font-size: 16px;
   color: var(--text-color);
   padding: 16px;
@@ -142,7 +142,7 @@
 }
 
 h1 { /* Changed from .h1 to h1 */
-font-family: var(--font-shippori-mincho);
+/* Removed explicit font-family, will inherit from global styles */
 color: var(--text-muted);
 font-size: 32px;
 line-height: 40px;
@@ -171,7 +171,7 @@ color: var(--text-color);
 
 .motivational-section {
   margin-bottom: 0px;
-  font-family: var(--font-shippori-mincho);
+  /* Removed explicit font-family, will inherit from global styles */
   color: var(--text-muted);
   font-size: 32px;
   line-height: 40px;

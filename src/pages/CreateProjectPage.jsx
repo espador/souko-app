@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { collection, addDoc } from 'firebase/firestore';
 import { db, auth } from '../services/firebase';
 import { getStorage, ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
@@ -11,9 +11,17 @@ const CreateProjectPage = () => {
     const [projectName, setProjectName] = useState('');
     const [error, setError] = useState('');
     const navigate = useNavigate();
-    const [projectImage, setProjectImage] = useState(null); // This will hold the local preview OR the Firebase URL
+    const [projectImage, setProjectImage] = useState(null);
     const fileInputRef = useRef(null);
     const [uploading, setUploading] = useState(false);
+
+    useEffect(() => {
+        document.body.classList.add('no-scroll');
+
+        return () => {
+            document.body.classList.remove('no-scroll');
+        };
+    }, []);
 
     const handleCreateProject = async (e) => {
         e.preventDefault();
@@ -30,7 +38,7 @@ const CreateProjectPage = () => {
             }
 
             let imageUrl = null;
-            if (projectImage && typeof projectImage !== 'string') { // Check if it's a File object (new upload)
+            if (projectImage && typeof projectImage !== 'string') {
                 setUploading(true);
                 const storage = getStorage();
                 const storageRef = ref(storage, `project-images/${user.uid}/${projectName}-${Date.now()}`);
@@ -39,7 +47,6 @@ const CreateProjectPage = () => {
                 await new Promise((resolve, reject) => {
                     uploadTask.on('state_changed',
                         (snapshot) => {
-                            // You can track progress here if needed
                             const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
                             console.log('Upload is ' + progress + '% done');
                         },
@@ -57,15 +64,14 @@ const CreateProjectPage = () => {
                     );
                 });
             } else if (typeof projectImage === 'string') {
-                imageUrl = projectImage; // Already a Firebase URL
+                imageUrl = projectImage;
             }
 
-            // Add project to Firestore
             await addDoc(collection(db, 'projects'), {
                 name: projectName.trim(),
                 userId: user.uid,
                 trackedTime: 0,
-                imageUrl: imageUrl, // Store the Firebase Storage URL
+                imageUrl: imageUrl,
             });
 
             navigate('/home');
@@ -81,19 +87,19 @@ const CreateProjectPage = () => {
     };
 
     const handleImageChange = (event) => {
-      const file = event.target.files[0];
-      if (file && file.size <= 5 * 1024 * 1024) { // 5MB limit
-          setProjectImage(file); // Ensure you are setting the state here
-          const reader = new FileReader();
-          reader.onloadend = () => {
-              // Optionally, keep a local preview URL if needed
-              // setLocalPreviewUrl(reader.result);
-          };
-          reader.readAsDataURL(file);
-      } else if (file) {
-          alert('Image size should be less than 5MB.');
-      }
-  };
+        const file = event.target.files[0];
+        if (file && file.size <= 5 * 1024 * 1024) {
+            setProjectImage(file);
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                // Optional: Keep a local preview URL if needed
+                // setLocalPreviewUrl(reader.result);
+            };
+            reader.readAsDataURL(file);
+        } else if (file) {
+            alert('Image size should be less than 5MB.');
+        }
+    };
 
     const getInitials = (name) => {
         return name.trim().charAt(0).toUpperCase();
@@ -108,23 +114,23 @@ const CreateProjectPage = () => {
                 hideProfile={true}
             />
             <main className="create-project-content">
-            <section className="motivational-section">
-                    <h2>
-                            Every journey begins with{' '}
-                            <span style={{ color: 'var(--accent-color)' }}>one moment</span>.
-                            Tell me about your project ...
-                        </h2>
-        </section>
+                <section className="motivational-section">
+                    <h1>
+                        Every journey begins with{' '}
+                        <span style={{ color: 'var(--accent-color)' }}>one moment</span>.
+                        Tell me about your project ...
+                    </h1>
+                </section>
                 <section className="project-details-section">
                     <h2>Project details</h2>
                     <div className="project-name-input-wrapper">
                         <div
                             className="project-image-container"
                             onClick={handleImageUploadClick}
-                            >
+                        >
                             {projectImage && typeof projectImage !== 'string' ? (
                                 <img
-                                    src={URL.createObjectURL(projectImage)} // Create temporary URL for preview
+                                    src={URL.createObjectURL(projectImage)}
                                     alt="Project"
                                     className="project-image"
                                 />
@@ -137,8 +143,8 @@ const CreateProjectPage = () => {
                             ) : (
                                 <div
                                     className="default-project-image"
-                                    style={{ backgroundColor: '#FE2F00' }} // Example background color
-                                    >
+                                    style={{ backgroundColor: '#FE2F00' }}
+                                >
                                     <span>{getInitials(projectName || 'P')}</span>
                                 </div>
                             )}
@@ -166,19 +172,18 @@ const CreateProjectPage = () => {
                 {error && <p className="error-message">{error}</p>}
 
                 <button
-    className="create-project-button"
-    onClick={handleCreateProject}
-    disabled={uploading}
->
-    {uploading ? (
-        <div className="spinner"></div>
-    ) : (
-        <>
-            <span className="button-icon">✛</span> Create your project
-        </>
-    )}
-</button>
-
+                    className="create-project-button"
+                    onClick={handleCreateProject}
+                    disabled={uploading}
+                >
+                    {uploading ? (
+                        <div className="spinner"></div>
+                    ) : (
+                        <>
+                            <span className="button-icon">✛</span> Create your project
+                        </>
+                    )}
+                </button>
             </main>
         </div>
     );

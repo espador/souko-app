@@ -11,6 +11,15 @@
   flex-direction: column; /* Ensure content flows vertically */
 }
 
+body.allow-scroll html {
+  overflow: auto;
+  height: auto;
+}
+
+body.allow-scroll {
+  overflow-y: auto;
+}
+
 .homepage-content {
   display: flex;
   flex-direction: column;
@@ -20,7 +29,7 @@
 
 .motivational-section {
   margin-bottom: 0px;
-  font-family: var(--font-shippori-mincho);
+  /* Removed explicit font-family, will inherit from global styles */
   color: var(--text-muted);
   font-size: 32px;
   line-height: 40px;
@@ -31,7 +40,7 @@
 .projects-section {
   display: flex;
   flex-direction: column;
-  font-family: var(--font-noto-sans);
+  /* Removed explicit font-family, will inherit from global styles */
   font-weight: 400;
   font-size: 16px;
   line-height: 20px;
@@ -40,7 +49,7 @@
 
 .projects-list {
   list-style: none;
-  font-family: var(--font-shippori-mincho);
+  /* Removed explicit font-family, will inherit from global styles */
   color: var(--text-color);
   font-size: 20px;
   line-height: 24px;
@@ -57,14 +66,14 @@
   padding: 16px;
   margin-bottom: 16px;
   cursor: pointer; /* Indicate it's clickable */
-  font-family: var(--font-noto-sans);
+  /* Removed explicit font-family, will inherit from global styles */
   font-weight: 400;
   font-size: 16px;
   line-height: 20pt;
 }
 
 .project-total-time {
-  font-family: var(--font-noto-sans);
+  /* Removed explicit font-family, will inherit from global styles */
   font-weight: 400;
   color: var(--text-color);
   font-size: 16px;
@@ -76,7 +85,7 @@
   border: 1px solid var(--card-background);
   border-radius: 12px;
   text-align: center;
-  font-family: var(--font-shippori-mincho);
+  /* Removed explicit font-family, will inherit from global styles */
   font-size: 16px;
   color: var(--text-color);
   padding: 16px;
@@ -123,14 +132,14 @@
 }
 
 .project-label {
-  font-family: var(--font-shippori-mincho);
+  /* Removed explicit font-family, will inherit from global styles */
   font-size: 16px;
   color: var(--text-color);
 }
 
 h2 {
   /* Your desired styles for all h2 elements */
-  font-family: var(--font-noto-sans);
+  /* Removed explicit font-family, will inherit from global styles */
   font-weight: 400;
   color: var(--text-color);
   font-size: 16px;
@@ -139,12 +148,12 @@ h2 {
   /* ... other styles ... */
 }
 
-h1 {
-  /* Your desired styles for all h2 elements */
-  font-family: var(--font-shippori-mincho);
-  color: var(--text-color);
-  font-size: 32px;
-  line-height: 40px;
-  margin-bottom: 8px;
-  /* ... other styles ... */
+/* Override global overflow: hidden for pages that need scrolling */
+body.allow-scroll > html {
+  overflow: auto; /* Or overflow-y: auto; if you only need vertical scrolling */
+  height: auto; /* Reset the height to allow content to expand */
+}
+
+body.allow-scroll {
+  overflow-y: auto; /* Ensure body can also scroll */
 }

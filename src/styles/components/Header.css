@@ -8,8 +8,7 @@
   z-index: 10;
   background-color: transparent;
   position: sticky;
-  top: 0;
-  
+  top: 24px;
 }
 
 .header-left-section {
@@ -19,7 +18,7 @@
 }
 
 .header-title {
-  font-family: var(--font-noto-sans);
+  /* Removed explicit font-family, will inherit from global styles */
   font-weight: 400;
   color: var(--text-muted);
   font-size: 16px;

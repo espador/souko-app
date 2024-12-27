@@ -22,9 +22,18 @@ const HomePage = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const navigate = useNavigate();
   const fabRef = useRef(null);
-  const [isScrolling, setIsScrolling] = useState(false);
   const scrollTimeout = useRef(null);
 
+  useEffect(() => {
+    console.log('HomePage mounted, adding allow-scroll');
+    document.body.classList.add('allow-scroll');
+  
+    return () => {
+      console.log('HomePage unmounted, removing allow-scroll');
+      document.body.classList.remove('allow-scroll');
+    };
+  }, []);
+  
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       if (!currentUser) {
@@ -101,21 +110,17 @@ const HomePage = () => {
     timeZone: 'Europe/Brussels',
   });
 
-
   useEffect(() => {
     const handleScroll = () => {
-      setIsScrolling(true);
       if (fabRef.current) {
         fabRef.current.classList.add('scrolling');
+        clearTimeout(scrollTimeout.current);
+        scrollTimeout.current = setTimeout(() => {
+          if (fabRef.current) {
+            fabRef.current.classList.remove('scrolling');
+          }
+        }, 300); // Adjust the timeout to match the transition duration
       }
-
-      clearTimeout(scrollTimeout.current);
-      scrollTimeout.current = setTimeout(() => {
-        setIsScrolling(false);
-        if (fabRef.current) {
-          fabRef.current.classList.remove('scrolling');
-        }
-      }, 300); // Adjust the timeout to match the transition duration
     };
 
     window.addEventListener('scroll', handleScroll);
@@ -132,15 +137,16 @@ const HomePage = () => {
               src={user?.photoURL || '/default-profile.png'}
               alt="Profile"
               className="profile-pic"
-              onClick={openSidebar} // Open the sidebar on click
+              onClick={openSidebar} // Open the sidebar on profile pic click
             />
-            {showDropdown && (
+            {/* Conditionally render the dropdown if needed */}
+            {/* {showDropdown && (
               <div className="dropdown-menu">
                 <button className="dropdown-item" onClick={handleLogout}>
                   Log Out
                 </button>
               </div>
-            )}
+            )} */}
           </div>
         )}
       </Header>

@@ -19,6 +19,16 @@ const ProjectDetailPage = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    // Add the 'allow-scroll' class to the body when the component mounts
+    document.body.classList.add('allow-scroll');
+
+    // Remove the 'allow-scroll' class when the component unmounts
+    return () => {
+      document.body.classList.remove('allow-scroll');
+    };
+  }, []); // Empty dependency array ensures this runs only on mount and unmount
+
+  useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
         setCurrentUser(user);

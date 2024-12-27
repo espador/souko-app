@@ -35,6 +35,17 @@ const TimeTrackerPage = () => {
   // Dynamic quote state
   const [timerQuote, setTimerQuote] = useState('This moment is yours ...');
 
+  // Make the page unscrollable
+  useEffect(() => {
+    document.body.classList.add('no-scroll');
+    document.documentElement.classList.add('no-scroll');
+
+    return () => {
+      document.body.classList.remove('no-scroll');
+      document.documentElement.classList.remove('no-scroll');
+    };
+  }, []);
+
   useEffect(() => {
     if (timer === 0 && !isRunning) {
       setTimerQuote('This moment is yours ...');

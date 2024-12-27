@@ -5,7 +5,7 @@
   max-width: 600px;
   background-color: var(--background-color);
   color: var(--text-color);
-  font-family: var(--font-shippori-mincho);
+  /* Removed explicit font-family, will inherit from global styles */
   display: flex;
   flex-direction: column; /* Ensure content flows vertically */
 }
@@ -17,7 +17,7 @@
 }
 
 .timer-quote {
-  font-family: var(--font-shippori-mincho);
+  /* Removed explicit font-family, will inherit from global styles */
   font-size: 16px;
   line-height: 24px;
   color: var(--text-muted);
@@ -27,9 +27,9 @@
 }
 
 .timer {
-  font-family: var(--font-shippori-mincho);
-  font-size: 64px;
-  line-height: 80px;
+  /* Removed explicit font-family, will inherit from global styles */
+  font-size: 56px;
+  line-height: 64px;
   margin-bottom: 24px;
   color: var(--accent-color);
   text-align: center;
@@ -72,7 +72,7 @@
   padding: 16px;
   margin-bottom: 16px;
   color: var(--text-color);
-  font-family: var(--font-noto-sans);
+  /* Removed explicit font-family, will inherit from global styles */
   font-weight: 400;
   font-size: 16px;
   line-height: 20pt;
@@ -98,7 +98,7 @@
   border: none;
   background-color: transparent;
   color: var(--text-color);
-  font-family: var(--font-noto-sans);
+  /* Removed explicit font-family, will inherit from global styles */
   font-weight: 400;
   font-size: 16px;
   line-height: 20pt;
@@ -120,7 +120,7 @@
   align-items: center;
   justify-content: flex-end;
   color: var(--text-color);
-  font-family: var(--font-noto-sans);
+  /* Removed explicit font-family, will inherit from global styles */
   font-weight: 400;
   font-size: 16px;
   line-height: 20pt;
@@ -131,7 +131,7 @@
   align-items: center;
   justify-content: space-between;
   position: relative;
-  font-family: var(--font-noto-sans);
+  /* Removed explicit font-family, will inherit from global styles */
   font-weight: 400;
   font-size: 16px;
   line-height: 20pt;
@@ -151,7 +151,7 @@
   border: none;
   background-color: transparent;
   color: var(--text-color);
-  font-family: var(--font-noto-sans);
+  /* Removed explicit font-family, will inherit from global styles */
   font-weight: 400;
   font-size: 16px;
   line-height: 20pt;
