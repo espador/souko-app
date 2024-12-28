@@ -132,7 +132,7 @@ const SessionDetailPage = () => {
     if (confirmDelete) {
       try {
         await deleteDoc(doc(db, 'sessions', sessionId));
-        navigate(`/project/${session.projectId}`); // Navigate back to the project details page
+        navigate('/home'); // Changed navigation to the homepage
       } catch (error) {
         console.error("Error deleting session:", error);
         // Optionally show an error message

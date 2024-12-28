@@ -1,4 +1,4 @@
-// TimeTrackingPage.jsx
+// TimeTrackerPage.jsx
 import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { collection, query, where, getDocs, doc, setDoc, updateDoc, serverTimestamp, Timestamp } from 'firebase/firestore'; // Import Timestamp
@@ -18,6 +18,7 @@ import { ReactComponent as DropdownIcon } from '../styles/components/assets/drop
 import { ReactComponent as RadioActiveIcon } from '../styles/components/assets/radio-active.svg';
 import { ReactComponent as RadioMutedIcon } from '../styles/components/assets/radio-muted.svg';
 import '@fontsource/shippori-mincho';
+import ConfirmModal from '../components/ConfirmModal'; // Import the ConfirmModal component
 
 const TimeTrackerPage = () => {
   const [user, setUser] = useState(null);
@@ -35,16 +36,26 @@ const TimeTrackerPage = () => {
   // Dynamic quote state
   const [timerQuote, setTimerQuote] = useState('This moment is yours ...');
 
+  // Modal visibility states
+  const [showStopConfirmModal, setShowStopConfirmModal] = useState(false);
+  const [showResetConfirmModal, setShowResetConfirmModal] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false); // Track if any modal is open
+
   // Make the page unscrollable
   useEffect(() => {
-    document.body.classList.add('no-scroll');
-    document.documentElement.classList.add('no-scroll');
+    if (!isModalOpen) {
+      document.body.classList.add('no-scroll');
+      document.documentElement.classList.add('no-scroll');
+    } else {
+      document.body.classList.remove('no-scroll');
+      document.documentElement.classList.remove('no-scroll');
+    }
 
     return () => {
       document.body.classList.remove('no-scroll');
       document.documentElement.classList.remove('no-scroll');
     };
-  }, []);
+  }, [isModalOpen]);
 
   useEffect(() => {
     if (timer === 0 && !isRunning) {
@@ -179,9 +190,14 @@ const TimeTrackerPage = () => {
     setIsRunning(true);
   };
 
-  const handleStop = async () => {
-    const confirmSave = window.confirm('Do you want to save this session?');
-    if (!confirmSave) return;
+  const handleStop = () => {
+    setIsModalOpen(true);
+    setShowStopConfirmModal(true); // Open the stop confirmation modal
+  };
+
+  const confirmStopSession = async () => {
+    setIsModalOpen(false);
+    setShowStopConfirmModal(false); // Close the modal
 
     setIsRunning(false);
     setIsPaused(false);
@@ -198,26 +214,42 @@ const TimeTrackerPage = () => {
       }
     }
 
+    localStorage.setItem('lastProjectId', selectedProject?.id || ''); // Store the projectId
+    navigate('/session-overview', { state: { totalTime: timer } });
+
     setTimer(0);
     setSelectedProject(null);
     setSessionNotes('');
     setIsBillable(true);
     setSessionId(null);
     setStartTime(null); // Reset local start time
-    navigate('/home');
+  };
+
+  const cancelStopSession = () => {
+    setIsModalOpen(false);
+    setShowStopConfirmModal(false); // Close the modal
   };
 
   const handleReset = () => {
     if (isRunning || timer > 0) {
-      const confirmReset = window.confirm('Are you sure you want to reset the timer? Any unsaved progress will be lost.');
-      if (confirmReset) {
-        setTimer(0);
-        setIsRunning(false);
-        setIsPaused(false);
-        setSessionId(null);
-        setStartTime(null);
-      }
+      setIsModalOpen(true);
+      setShowResetConfirmModal(true); // Open the reset confirmation modal
     }
+  };
+
+  const confirmResetTimer = () => {
+    setIsModalOpen(false);
+    setShowResetConfirmModal(false);
+    setTimer(0);
+    setIsRunning(false);
+    setIsPaused(false);
+    setSessionId(null);
+    setStartTime(null);
+  };
+
+  const cancelResetTimer = () => {
+    setIsModalOpen(false);
+    setShowResetConfirmModal(false);
   };
 
   const handleBillableToggle = async () => {
@@ -334,6 +366,28 @@ const TimeTrackerPage = () => {
         />
         <EditIcon className="notes-edit-icon" style={{ position: 'absolute', top: '16px', right: '16px' }} />
       </div>
+
+      {/* Confirmation Modal for Stopping Session */}
+      <ConfirmModal
+        show={showStopConfirmModal}
+        onHide={cancelStopSession}
+        title="Stop Timer Session?"
+        body="Do you want to save this session?"
+        onConfirm={confirmStopSession}
+        confirmText="Yes, Stop & Save"
+        cancelText="Cancel"
+      />
+
+      {/* Confirmation Modal for Resetting Timer */}
+      <ConfirmModal
+        show={showResetConfirmModal}
+        onHide={cancelResetTimer}
+        title="Reset Timer?"
+        body="Are you sure you want to reset the timer? Any unsaved progress will be lost."
+        onConfirm={confirmResetTimer}
+        confirmText="Yes, Reset"
+        cancelText="Cancel"
+      />
     </div>
   );
 };
