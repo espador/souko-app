@@ -147,6 +147,7 @@ body.allow-scroll {
   padding: 0; /* Keep padding at 0 */
   transition: opacity 0.3s ease-in-out;
   opacity: 1;
+  color: transparent;
 }
 
 .fab.scrolling {
@@ -156,7 +157,6 @@ body.allow-scroll {
 .fab-icon {
   width: 100%; /* Make the icon take full width of the FAB */
   height: 100%; /* Make the icon take full height of the FAB */
-  fill: var(--text-color); /* Ensure your icon color is set */
 }
 
 .motivational-section .tracked-time {

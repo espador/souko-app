@@ -5,6 +5,7 @@ import HomePage from './pages/HomePage';
 import TimeTrackerPage from './pages/TimeTrackerPage';
 import CreateProjectPage from './pages/CreateProjectPage';
 import ProjectDetailPage from './pages/ProjectDetailPage'; // Import ProjectDetailPage
+import SessionDetailPage from './pages/SessionDetailPage'; // Import SessionDetailPage
 
 const App = () => {
   return (
@@ -15,6 +16,7 @@ const App = () => {
         <Route path="/time-tracker" element={<TimeTrackerPage />} />
         <Route path="/create-project" element={<CreateProjectPage />} />
         <Route path="/project/:projectId" element={<ProjectDetailPage />} /> {/* Project detail route */}
+        <Route path="/session/:sessionId" element={<SessionDetailPage />} /> {/* Session detail route */}
       </Routes>
     </Router>
   );

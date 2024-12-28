@@ -68,19 +68,16 @@
   gap: 16px; /* Spacing between session tiles */
 }
 
-.session-item {
-  background-color: var(--card-background); /* Match homepage project tiles */
-  border-radius: 12px;
+.session-item.input-tile {
   padding: 16px;
-  display: flex;
-  justify-content: space-between;
+  margin-bottom: 0; /* Remove default margin for input-tile */
+  cursor: default; /* Remove hover effect from previous implementation */
   align-items: center;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
+  justify-content: space-between;
 }
 
-.session-item:hover {
-  background-color: #25252d; /* Slightly darker on hover */
+.session-item.input-tile:hover {
+  background-color: var(--card-background); /* Reset hover effect */
 }
 
 .session-details {
@@ -89,11 +86,17 @@
   font-weight: 400;
   font-size: 16px;
   line-height: 1.4;
+  /* Removed specific styling for session details as it's now inline */
+}
+
+.session-start-time {
+  color: var(--text-color);
+  font-size: 16px;
 }
 
 .session-time {
-  color: var(--text-muted);
-  font-size: 14px;
+  font-size: 16px;
+  /* Color is now applied inline based on isBillable status */
 }
 
 .billable {
@@ -101,6 +104,7 @@
   font-size: 12px;
   font-style: italic;
   margin-left: 16px; /* Separate from time */
+  /* Removed as this is now handled in the new structure */
 }
 
 .notes {
@@ -108,6 +112,7 @@
   font-size: 14px;
   margin-top: 8px;
   font-style: italic;
+  /* Removed as this is no longer part of the tile */
 }
 
 .button {
@@ -141,4 +146,100 @@
 .error-title {
   color: var(--text-color);
   text-align: center;
+}
+
+/* Additions for the top tile and total time */
+.project-dropdown-container.top-tile {
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 24px;
+  margin-top: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
+  background-color: var(--card-background);
+}
+
+.dropdown-project-image {
+  width: 40px;
+  height: 40px;
+  border-radius: 20%;
+  margin-right: 16px;
+  object-fit: cover;
+}
+
+.dropdown-default-image {
+  width: 40px;
+  height: 40px;
+  border-radius: 20%;
+  background-color: var(--accent-color); /* Or any default color */
+  color: var(--background-color);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-weight: bold;
+  margin-right: 16px;
+  background-color: #FE2F00;
+}
+
+.project-dropdown {
+  flex-grow: 1;
+  border: none;
+  background-color: transparent;
+  font-family: var(--font-commit-mono);
+  color: var(--text-color);
+  font-size: 16px;
+  line-height: 24px;
+  font-weight: normal;
+  outline: none;
+  appearance: none;
+}
+
+.dropdown-arrow {
+  position: absolute;
+  right: 16px;
+  width: 24px;
+  height: 24px;
+  pointer-events: none;
+}
+
+.timer-quote.project-total-time {
+  font-family: var(--font-commit-mono);
+  font-weight: 400;
+  font-size: 14px;
+  line-height: 24px;
+  color: var(--text-muted);
+  text-align: center;
+  margin-top: 0;
+  margin-bottom: 8px;
+}
+
+.timer.project-time {
+  font-size: 40px;
+  line-height: 48px;
+  margin-bottom: 24px;
+  color: var(--accent-color);
+  text-align: center;
+  transition: color 0.3s ease;
+}
+
+.session-link {
+  text-decoration: none;
+  color: inherit;
+  display: block; /* Make the link a block-level element */
+}
+
+.session-item.input-tile {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  border-radius: 12px;
+  background-color: var(--card-background);
+  margin-bottom: 8px;
+}
+
+.session-link:hover .session-item.input-tile { /* Apply hover to the tile */
+  background-color: var(--border-color);
 }

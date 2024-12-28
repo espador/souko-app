@@ -48,11 +48,11 @@ const TimeTrackerPage = () => {
 
   useEffect(() => {
     if (timer === 0 && !isRunning) {
-      setTimerQuote('This moment is yours ...');
+      setTimerQuote('This moment is yours');
     } else if (isRunning && !isPaused) {
-      setTimerQuote('Moment in progress ...');
+      setTimerQuote('Moment in progress');
     } else if (isPaused) {
-      setTimerQuote('Taking a moment ...');
+      setTimerQuote('Taking a moment');
     }
   }, [timer, isRunning, isPaused]);
 
@@ -312,7 +312,9 @@ const TimeTrackerPage = () => {
       </div>
 
       <div className="input-tile billable-tile" onClick={handleBillableToggle} style={{ cursor: 'pointer' }}>
-        <span className="input-label billable-label">Billable</span>
+        <span className="input-label billable-label">
+          {isBillable ? 'Billable' : 'Non-billable'}
+        </span>
         <div className="billable-radio">
           {isBillable ? (
             <RadioActiveIcon />

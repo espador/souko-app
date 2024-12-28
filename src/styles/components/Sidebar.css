@@ -34,7 +34,7 @@
 
 .close-button-container {
   display: flex; /* Or other layout method */
-  justify-content: flex-start; /* Changed to flex-start for left alignment */
+  justify-content: flex-end; /* Example: Align to the right */
   margin-bottom: 20px; /* Add margin below the close button */
   }
 
@@ -58,8 +58,8 @@
 /* ... your existing styles ... */
 
 .signout-button {
-background-color: transparent;
-border: 1px solid var(--card-background);
+background-color: var(--background-color);
+border: 1px solid var(--border-color);
 border-radius: 12px;
 text-align: center;
 /* Removed explicit font-family, will inherit from global styles */

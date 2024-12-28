@@ -6,12 +6,16 @@
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  padding-top: 64px; /* Match the header's height */
+  position: relative; /* Optional, but good practice for stacking context */
+  z-index: 0;      /* Ensure it's below the header's z-index */
 }
 
 .create-project-content {
   display: flex;
   flex-direction: column;
   gap: 16px;
+  /* You can remove any top margins here if they are present and causing issues */
 }
 
 .project-details-section {
@@ -33,8 +37,9 @@
   align-items: center;
   background-color: var(--card-background);
   border-radius: 12px;
-  padding: 8px;
+  padding: 16px;
   position: relative; /* Add this line */
+  gap: 16px;
 }
 
 .project-image-container {
@@ -46,7 +51,6 @@
   justify-content: center;
   align-items: center;
   cursor: pointer;
-  margin-right: 8px;
 }
 
 .project-image {
@@ -75,7 +79,6 @@
   font-size: 16px;
   flex-grow: 1;
   outline: none;
-  padding: 8px;
 }
 
 /* Remove these styles from .edit-button as it's no longer used as a button */
