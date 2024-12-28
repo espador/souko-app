@@ -117,7 +117,7 @@
 
 .button {
   /* Keeping the existing button style, can be further aligned if needed */
-  margin-top: 24px;
+  margin-top: 16px;
   padding: 12px 24px; /* Adjust padding */
   background-color: var(--accent-color); /* Consistent with other interactive elements */
   color: var(--background-color);

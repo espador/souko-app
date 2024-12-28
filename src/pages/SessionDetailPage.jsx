@@ -1,45 +1,38 @@
-// ProjectDetailPage.jsx
+// SessionDetailPage.jsx
 import React, { useEffect, useState, useCallback } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom'; // Import Link
-import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
+import { useParams, useNavigate } from 'react-router-dom';
+import { doc, getDoc, updateDoc, deleteDoc, collection, query, where, getDocs, Timestamp } from 'firebase/firestore';
 import { db, auth } from '../services/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
-import { formatTime } from '../utils/formatTime';
+import { formatTime } from '../utils/formatTime'; // You might already have this, if not, keep it
 import Header from '../components/Layout/Header';
 import '../styles/global.css';
-import '../styles/components/ProjectDetailPage.css';
-import { Timestamp } from 'firebase/firestore';
+import '../styles/components/SessionDetailPage.css';
+import { ReactComponent as EditIcon } from '../styles/components/assets/edit.svg';
 import { ReactComponent as DropdownIcon } from '../styles/components/assets/dropdown.svg';
+import { ReactComponent as RadioActiveIcon } from '../styles/components/assets/radio-active.svg';
+import { ReactComponent as RadioMutedIcon } from '../styles/components/assets/radio-muted.svg';
+import { ReactComponent as SaveIcon } from '../styles/components/assets/save.svg';
+import { ReactComponent as EraseIcon } from '../styles/components/assets/erase.svg';
 
-const ProjectDetailPage = () => {
-  const { projectId: routeProjectId } = useParams();
-  const [project, setProject] = useState(null);
-  const [sessions, setSessions] = useState([]);
-  const [totalTime, setTotalTime] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [currentUser, setCurrentUser] = useState(null);
+const SessionDetailPage = () => {
+  const { sessionId } = useParams();
   const navigate = useNavigate();
+  const [user, setUser] = useState(null);
+  const [session, setSession] = useState(null);
   const [projects, setProjects] = useState([]);
-  const [selectedProjectId, setSelectedProjectId] = useState(routeProjectId);
+  const [selectedProject, setSelectedProject] = useState(null);
+  const [sessionNotes, setSessionNotes] = useState('');
+  const [isBillable, setIsBillable] = useState(true);
+  const [loading, setLoading] = useState(true);
+  const [isSaveActive, setIsSaveActive] = useState(false);
 
   useEffect(() => {
-    document.body.classList.add('allow-scroll');
-    return () => {
-      document.body.classList.remove('allow-scroll');
-    };
-  }, []);
-
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        setCurrentUser(user);
-      } else {
-        navigate('/');
-      }
-      setLoading(false);
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
     });
     return () => unsubscribe();
-  }, [navigate]);
+  }, []);
 
   const fetchProjects = useCallback(async (uid) => {
     try {
@@ -53,214 +46,181 @@ const ProjectDetailPage = () => {
       }));
       setProjects(userProjects);
     } catch (error) {
-      console.error('Error fetching projects for dropdown:', error);
+      console.error('Error fetching projects:', error);
     }
   }, []);
 
-  useEffect(() => {
-    if (currentUser) {
-      fetchProjects(currentUser.uid);
-    }
-  }, [currentUser, fetchProjects]);
-
-  const fetchProjectDetails = useCallback(async (projectId) => {
-    if (!currentUser || !projectId) return;
-
+  const fetchSessionDetails = useCallback(async () => {
+    if (!sessionId || !user) return;
     setLoading(true);
-    setProject(null);
-    setSessions([]);
-    setTotalTime(0);
-
     try {
-      const projectRef = doc(db, 'projects', projectId);
-      const projectSnapshot = await getDoc(projectRef);
+      const sessionRef = doc(db, 'sessions', sessionId);
+      const sessionSnap = await getDoc(sessionRef);
+      if (sessionSnap.exists()) {
+        const sessionData = sessionSnap.data();
+        setSession(sessionData);
+        setSessionNotes(sessionData.sessionNotes || '');
+        setIsBillable(sessionData.isBillable);
 
-      if (!projectSnapshot.exists()) {
-        console.error("Project not found in Firestore.");
-        setProject(null);
-      } else if (projectSnapshot.data().userId !== currentUser.uid) {
-        console.error("Project belongs to a different user.");
-        setProject(null);
+        // Find and set the selected project object
+        const project = projects.find(p => p.name === sessionData.project);
+        setSelectedProject(project);
       } else {
-        const projectData = projectSnapshot.data();
-        setProject(projectData);
-
-        const sessionsRef = collection(db, 'sessions');
-        const q = query(
-          sessionsRef,
-          where('project', '==', projectData.name),
-          where('userId', '==', currentUser.uid)
-        );
-        const sessionsSnapshot = await getDocs(q);
-
-        const fetchedSessions = sessionsSnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
-        setSessions(fetchedSessions);
-        const totalElapsedTime = fetchedSessions.reduce((sum, session) => sum + (session.elapsedTime || 0), 0);
-        setTotalTime(totalElapsedTime);
+        console.error("Session not found");
+        // Optionally redirect or show an error message
       }
     } catch (error) {
-      console.error("Error fetching project or sessions:", error);
-      setProject(null);
+      console.error("Error fetching session details:", error);
     } finally {
       setLoading(false);
     }
-  }, [currentUser]);
+  }, [sessionId, user, projects]);
 
   useEffect(() => {
-    if (currentUser && routeProjectId) {
-      fetchProjectDetails(routeProjectId);
-      setSelectedProjectId(routeProjectId);
+    if (user) {
+      fetchProjects(user.uid);
     }
-  }, [currentUser, routeProjectId, fetchProjectDetails]);
+  }, [user, fetchProjects]);
+
+  useEffect(() => {
+    fetchSessionDetails();
+  }, [fetchSessionDetails]);
+
+  useEffect(() => {
+    if (session) {
+      const hasChanged =
+        selectedProject?.name !== session.project ||
+        isBillable !== session.isBillable ||
+        sessionNotes !== session.sessionNotes;
+      setIsSaveActive(hasChanged);
+    }
+  }, [selectedProject, isBillable, sessionNotes, session]);
 
   const handleProjectChange = (e) => {
-    const newProjectId = e.target.value;
-    navigate(`/project/${newProjectId}`);
+    const projectName = e.target.value;
+    const project = projects.find(p => p.name === projectName);
+    setSelectedProject(project);
   };
 
-  const sessionsByDate = sessions.reduce((acc, session) => {
-    let date;
-    if (session.startTime instanceof Timestamp) {
-      try {
-        date = session.startTime.toDate().toLocaleDateString('en-US', {
-          weekday: 'long',
-          month: 'long',
-          day: 'numeric',
-        });
-      } catch (error) {
-        console.error("Error converting Timestamp to Date:", error, session.startTime);
-        date = "Invalid Date";
-      }
-    } else {
-      console.warn("Invalid startTime for session:", session.id, session.startTime);
-      date = "Invalid Date";
-    }
+  const handleBillableToggle = () => {
+    setIsBillable(!isBillable);
+  };
 
-    if (!acc[date]) {
-      acc[date] = [];
-    }
-    acc[date].push(session);
-    return acc;
-  }, {});
+  const handleNotesChange = (e) => {
+    setSessionNotes(e.target.value);
+  };
 
-  const sortedDates = Object.keys(sessionsByDate).sort((a, b) => {
-    if (a === "Invalid Date") return 1;
-    if (b === "Invalid Date") return -1;
+  const handleSaveSession = async () => {
+    if (!sessionId || !isSaveActive) return;
     try {
-      return new Date(b) - new Date(a);
+      const sessionRef = doc(db, 'sessions', sessionId);
+      await updateDoc(sessionRef, {
+        project: selectedProject.name,
+        isBillable: isBillable,
+        sessionNotes: sessionNotes,
+      });
+      setIsSaveActive(false);
+      // Optionally show a success message
     } catch (error) {
-      console.error("Error comparing dates:", error);
-      return 0;
+      console.error("Error updating session:", error);
+      // Optionally show an error message
     }
-  });
+  };
 
-  const formatStartTime = (startTime) => {
-    if (startTime instanceof Timestamp) {
+  const handleDeleteSession = async () => {
+    const confirmDelete = window.confirm("Are you sure you want to delete this session?");
+    if (confirmDelete) {
       try {
-        const date = startTime.toDate();
-        const hours = String(date.getHours()).padStart(2, '0');
-        const minutes = String(date.getMinutes()).padStart(2, '0');
-        return `${hours}:${minutes}`;
+        await deleteDoc(doc(db, 'sessions', sessionId));
+        navigate(`/project/${session.projectId}`); // Navigate back to the project details page
       } catch (error) {
-        console.error("Error formatting start time:", error, startTime);
-        return "N/A";
+        console.error("Error deleting session:", error);
+        // Optionally show an error message
       }
     }
-    return "N/A";
   };
 
   if (loading) {
-    return <p className="loading">Loading project details...</p>;
+    return <p className="loading">Loading session details...</p>;
   }
 
-  if (!project) {
-    return (
-      <div className="project-container">
-        <h1 className="error-title">Project not found</h1>
-        <button className="button" onClick={() => navigate('/home')}>
-          Return to Homepage
-        </button>
-      </div>
-    );
+  if (!session) {
+    return <p className="error">Session not found.</p>;
   }
 
   return (
-    <div className="project-container">
+    <div className="session-detail-page">
       <Header
         showBackArrow={true}
-        onBack={() => navigate('/home')}
+        onBack={() => navigate(`/project/${session.projectId}`)}
         hideProfile={true}
       />
-      <div className="project-dropdown-container top-tile">
-        {project?.imageUrl ? (
+
+      <div className="timer-quote">This moment was yours</div>
+      <div className="timer">{new Date(session.elapsedTime * 1000).toISOString().substr(11, 8)}</div>
+
+      <h2 className="projects-label">Details</h2>
+      <div className="project-dropdown-container">
+        {selectedProject?.imageUrl ? (
           <img
-            src={project.imageUrl}
-            alt={project.name}
+            src={selectedProject.imageUrl}
+            alt={selectedProject.name}
             className="dropdown-project-image"
           />
-        ) : project?.name ? (
+        ) : selectedProject?.name ? (
           <div className="dropdown-default-image">
-            {project.name.charAt(0).toUpperCase()}
+            {selectedProject.name.charAt(0).toUpperCase()}
           </div>
         ) : null}
         <select
           className="project-dropdown"
-          value={selectedProjectId}
+          value={selectedProject?.name || ''}
           onChange={handleProjectChange}
         >
-          {projects.map((p) => (
-            <option key={p.id} value={p.id}>
-              {p.name}
+          {projects.map((project) => (
+            <option key={project.id} value={project.name}>
+              {project.name}
             </option>
           ))}
         </select>
         <DropdownIcon className="dropdown-arrow" />
       </div>
 
-      <div className="timer-quote project-total-time">Total time</div>
-      <h1 className="timer project-time">{formatTime(totalTime)}</h1>
-
-      <div className="sessions-container">
-        {sortedDates.length > 0 ? (
-          sortedDates.map(date => (
-            <div key={date} className="sessions-by-day">
-              <h2>
-                {date === "Invalid Date"
-                  ? "Invalid Date"
-                  : new Date(date).toLocaleDateString('en-US', {
-                      weekday: 'long',
-                      month: 'long',
-                      day: 'numeric',
-                    })}
-              </h2>
-              <ul className="sessions-list">
-                {sessionsByDate[date].map((session) => (
-                  <li key={session.id} className="session-item input-tile">
-                    <Link to={`/session/${session.id}`} className="session-link"> {/* Wrap with Link */}
-                      <span className="session-start-time">
-                        {formatStartTime(session.startTime)}
-                      </span>
-                      <span
-                        className="session-time"
-                        style={{ color: session.isBillable ? 'var(--accent-color)' : 'var(--text-muted)' }}
-                      >
-                        {formatTime(session.elapsedTime)}
-                      </span>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))
-        ) : (
-          <p>No sessions tracked for this project yet.</p>
-        )}
+      <div className="input-tile billable-tile" onClick={handleBillableToggle} style={{ cursor: 'pointer' }}>
+        <span className="input-label billable-label">
+          {isBillable ? 'Billable' : 'Non-billable'}
+        </span>
+        <div className="billable-radio">
+          {isBillable ? <RadioActiveIcon /> : <RadioMutedIcon />}
+        </div>
       </div>
+
+      <div className="input-tile notes-input-tile">
+        <textarea
+          id="session-notes"
+          className="notes-textarea"
+          placeholder="Add notes for this session"
+          value={sessionNotes}
+          onChange={handleNotesChange}
+        />
+        <EditIcon className="notes-edit-icon" />
+      </div>
+
+      <button
+        className={`button save-button ${isSaveActive ? 'active' : ''}`}
+        onClick={handleSaveSession}
+        disabled={!isSaveActive}
+      >
+        <SaveIcon className="button-icon" style={{ fill: isSaveActive ? 'var(--text-color)' : 'var(--text-muted)' }} />
+        Save this moment
+      </button>
+
+      <button className="button erase-button" onClick={handleDeleteSession}>
+        <EraseIcon className="button-icon" />
+        Erase your moment
+      </button>
     </div>
   );
 };
 
-export default ProjectDetailPage;
+export default SessionDetailPage;
