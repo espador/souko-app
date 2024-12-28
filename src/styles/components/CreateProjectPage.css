@@ -66,7 +66,6 @@
   justify-content: center;
   align-items: center;
   color: var(--text-color);
-  /* Removed explicit font-family, will inherit from global styles */
   font-weight: 400;
   font-size: 20px;
 }
@@ -75,25 +74,16 @@
   background-color: transparent;
   border: none;
   color: var(--text-color);
-  /* Removed explicit font-family, will inherit from global styles */
+  font-family: var(--font-commit-mono);
+  font-weight: 400;
   font-size: 16px;
   flex-grow: 1;
   outline: none;
 }
 
-/* Remove these styles from .edit-button as it's no longer used as a button */
-/*.edit-button {*/
-/*  background: none;*/
-/*  border: none;*/
-/*  cursor: pointer;*/
-/*  padding: 8px;*/
-/*}*/
-
-/*.edit-icon {*/
-/*  width: 20px;*/
-/*  height: 20px;*/
-/*  fill: var(--text-color);*/
-/*}*/
+.project-name-input::placeholder {
+  color: var(--text-muted);
+}
 
 .billable-option {
   display: flex;
@@ -144,8 +134,7 @@
   margin-top: -8px;
 }
 
-h1 { /* Changed from .h1 to h1 */
-/* Removed explicit font-family, will inherit from global styles */
+h1 { 
 color: var(--text-muted);
 font-size: 32px;
 line-height: 40px;

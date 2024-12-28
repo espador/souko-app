@@ -161,7 +161,7 @@ body.allow-scroll {
 
 .motivational-section .tracked-time {
   color: var(--accent-color);
-  font-weight: bold;
+  font-weight: 400;
 }
 
 .project-label {

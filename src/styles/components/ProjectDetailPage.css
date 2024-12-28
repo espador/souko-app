@@ -150,15 +150,13 @@
 
 /* Additions for the top tile and total time */
 .project-dropdown-container.top-tile {
-  border-radius: 12px;
-  padding: 16px;
-  margin-bottom: 24px;
-  margin-top: 16px;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  position: relative;
   background-color: var(--card-background);
+  border-radius: 12px;
+  padding: 16px;
+  position: relative; /* Add this line */
+  gap: 16px;
 }
 
 .dropdown-project-image {

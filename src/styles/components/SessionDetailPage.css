@@ -35,14 +35,14 @@
   align-items: center;
   background-color: var(--card-background);
   border-radius: 12px;
-  padding: 0 16px;
+  padding: 16px;
   margin-bottom: 16px;
   cursor: pointer;
 }
 
 .dropdown-project-image {
-  width: 32px;
-  height: 32px;
+  width: 40px;
+  height: 40px;
   border-radius: 8px;
   margin-right: 8px;
 }
@@ -67,7 +67,6 @@
   border: none;
   font-family: var(--font-commit-mono);
   font-size: 16px;
-  padding: 16px 0;
   appearance: none; /* Remove default arrow in some browsers */
   -webkit-appearance: none;
   -moz-appearance: none;
@@ -82,8 +81,8 @@
   right: 16px;
   top: 50%;
   transform: translateY(-50%);
-  width: 16px;
-  height: 16px;
+  width: 20px;
+  height: 20px;
   fill: transparent;
 }
 

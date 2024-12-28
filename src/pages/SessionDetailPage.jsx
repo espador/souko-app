@@ -152,7 +152,7 @@ const SessionDetailPage = () => {
     <div className="session-detail-page">
       <Header
         showBackArrow={true}
-        onBack={() => navigate(`/project/${session.projectId}`)}
+        onBack={session && session.projectId ? () => navigate(`/project/${session.projectId}`) : undefined}
         hideProfile={true}
       />
 
