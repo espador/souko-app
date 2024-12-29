@@ -9,12 +9,12 @@
   background-color: var(--background-color);
   position: sticky;
   top: 0px;
+  /* Remove justify-content: space-between if you want the left section to stay on the left */
 }
 
 .header-left-section {
   display: flex;
-  align-items: center;
-  gap: 16px; /* Adjust the spacing between back button and title */
+  align-items: center; /* Align items vertically in the center */
 }
 
 .header-title {
@@ -23,12 +23,13 @@
   color: var(--text-muted);
   font-size: 16px;
   line-height: 20px;
-  margin: 0; /* Reset default margin for h1 */
+  margin: 0px;
 }
 
 .header-profile {
   display: flex;
   align-items: center;
+  margin-right: 16px; /* Add some right margin for spacing */
 }
 
 .profile-pic {
@@ -39,19 +40,22 @@
 }
 
 .back-button {
+  display: flex; /* Keep your flexbox alignment if you're using it */
+  justify-content: flex-start;
   align-items: center;
-  justify-content: center;
   width: 40px;
   height: 40px;
   border: none;
   background: none;
   cursor: pointer;
+  padding: 0; /* Remove the padding */
 }
 
 .back-button svg {
-  width: 40px;
-  height: 40px;
+  width: 24px;
+  height: 24px;
   fill: var(--text-color);
+  padding-left: 0px; /* You might experiment with this, but flexbox is better */
 }
 
 .profile-placeholder {

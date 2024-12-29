@@ -69,18 +69,16 @@
 }
 
 .input-tile {
+  min-height: 40px; /* Adjust this value based on the desired height */
   background-color: var(--card-background);
   border-radius: 12px;
   padding: 16px;
-  margin-bottom: 16px;
   color: var(--text-color);
-  /* Removed explicit font-family, will inherit from global styles */
   font-weight: 400;
   font-size: 16px;
   line-height: 20pt;
   display: flex;
   align-items: center;
-  justify-content: space-between;
 }
 
 .project-dropdown-container {
@@ -142,7 +140,6 @@
   align-items: center;
   justify-content: flex-end;
   color: var(--text-color);
-  /* Removed explicit font-family, will inherit from global styles */
   font-weight: 400;
   font-size: 16px;
   line-height: 20pt;
@@ -153,7 +150,6 @@
   align-items: center;
   justify-content: space-between;
   position: relative;
-  /* Removed explicit font-family, will inherit from global styles */
   font-weight: 400;
   font-size: 16px;
   line-height: 20pt;
@@ -173,7 +169,6 @@
   border: none;
   background-color: transparent;
   color: var(--text-color);
-  /* Removed explicit font-family, will inherit from global styles */
   font-weight: 400;
   font-size: 16px;
   line-height: 20pt;
@@ -184,4 +179,19 @@
 
 .notes-textarea::placeholder {
   color: var(--text-muted);
+}
+
+.notes-textarea {
+  width: 100%;
+  border: none;
+  background-color: transparent;
+  color: var(--text-color);
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 20pt;
+  resize: none;
+  outline: none;
+  padding: 0;
+  height: 0px; /* Adjust this value based on how many lines you want to show initially */
+  overflow: hidden; /* Optional: Hide overflow if you don't want scrollbars */
 }

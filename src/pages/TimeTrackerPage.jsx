@@ -198,25 +198,29 @@ const TimeTrackerPage = () => {
   const confirmStopSession = async () => {
     setIsModalOpen(false);
     setShowStopConfirmModal(false); // Close the modal
-
+  
     setIsRunning(false);
     setIsPaused(false);
-
-    if (sessionId) {
+  
+    if (sessionId && selectedProject) { // Ensure sessionId and selectedProject are available
       try {
         const sessionRef = doc(db, 'sessions', sessionId);
         await updateDoc(sessionRef, {
           elapsedTime: timer,
           endTime: serverTimestamp(),
+          project: selectedProject.name, // Update with the current project name
+          // Optional: If you want to store the project ID as well
+          // projectId: selectedProject.id,
         });
       } catch (error) {
         console.error('Error stopping session:', error);
       }
+    } else {
+      console.warn("Session ID or selected project not available during stop.");
     }
-
     localStorage.setItem('lastProjectId', selectedProject?.id || ''); // Store the projectId
-    navigate('/session-overview', { state: { totalTime: timer } });
-
+    navigate('/session-overview', { state: { totalTime: timer, projectId: selectedProject?.id } });
+  
     setTimer(0);
     setSelectedProject(null);
     setSessionNotes('');

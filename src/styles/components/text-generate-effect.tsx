@@ -27,7 +27,7 @@ export const TextGenerateEffect = ({
         filter: filter ? "blur(0px)" : "none",
       }, {
         duration: duration ? duration : 1,
-        delay: stagger(0.2),
+        delay: stagger(0.3),
       });
     }
   }, [scope.current, animate, filter, duration, linesArray.length]);

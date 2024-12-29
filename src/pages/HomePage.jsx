@@ -169,9 +169,9 @@ const HomePage = () => {
           {startAnimation && ( // Conditionally render TextGenerateEffect
             weeklyTrackedTime > 0 ? (
               <TextGenerateEffect
-                words={`This moment is progress.\nYou tracked <span class="accent-text">${formatTime(
+                words={`This moment is\n progress. You\n tracked <span class="accent-text">${formatTime(
                   weeklyTrackedTime
-                )}</span> this week.`}
+                )}</span>\n this week.`}
               />
             ) : (
               <TextGenerateEffect
