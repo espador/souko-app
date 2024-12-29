@@ -3,27 +3,34 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  height: 100%;
+  justify-content: flex-start;
+  min-height: 100vh;
+  background-color: var(--background-color);
+  color: var(--text-color);
+  padding: 24px;
+  margin-top: 40px;
+  box-sizing: border-box;
 }
 
 .overview-container {
   width: 100%;
   max-width: 600px;
-  text-align: center;
+  /* Removed text-align: center; assuming TextGenerateEffect handles it */
+  margin-top: 64px; /* Adjust as needed */
+  margin-bottom: 24px; /* Add some bottom margin */
 }
 
 .overview-quote {
-  text-align: left;
-  font-family: var(--font-commit-mono);
+  /* Removed specific font-family to inherit from global styles */
   font-weight: normal;
   color: var(--text-color);
   font-size: 32px;
   line-height: 40px;
-  margin-top: 80px;
+  margin-top: 0;
+  margin-bottom: 24px;
 }
 
-.overview-time {
+.overview-quote .overview-time {
   color: var(--accent-color);
 }
 
@@ -31,11 +38,12 @@
   display: flex;
   flex-direction: column;
   width: 100%;
+  margin-top: 24px; /* Add some top margin */
 }
 
-/* Button Styles - Copied from SessionDetailPage.css */
+/* Button Styles - Consistent with HomePage and general button styles */
 .button {
-  font-family: var(--font-commit-mono);
+  font-family: inherit; /* Inherit font from body or global styles */
   font-weight: 400;
   padding: 16px;
   border-radius: 12px;
@@ -45,10 +53,12 @@
   box-sizing: border-box;
   border: 1px solid var(--border-color);
   background-color: transparent;
+  font-size: 16px; /* Consistent button font size */
 }
 
 .primary-button {
   color: var(--text-color);
+  /* You might add specific primary button styles here if needed */
 }
 
 .secondary-button {
@@ -56,11 +66,17 @@
 }
 
 .secondary-button:hover:not(.disabled) {
-  background-color: var(--border-color);
+  background-color: var(--card-background); /* Use card background on hover */
 }
 
 .disabled {
   color: var(--text-muted);
   cursor: not-allowed;
+  font-weight: 400;
+  opacity: 0.6; /* Indicate disabled state */
+}
+
+.motivational-section .tracked-time {
+  color: var(--accent-color);
   font-weight: 400;
 }

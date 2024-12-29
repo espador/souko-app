@@ -1,5 +1,5 @@
 // TimeTrackerPage.jsx
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { collection, query, where, getDocs, doc, setDoc, updateDoc, serverTimestamp, Timestamp } from 'firebase/firestore'; // Import Timestamp
 import { db, auth } from '../services/firebase';
@@ -32,6 +32,7 @@ const TimeTrackerPage = () => {
   const [sessionId, setSessionId] = useState(null);
   const [startTime, setStartTime] = useState(null);
   const navigate = useNavigate();
+  const timerRef = useRef(null); // Create a ref for the timer element
 
   // Dynamic quote state
   const [timerQuote, setTimerQuote] = useState('This moment is yours ...');
@@ -198,19 +199,17 @@ const TimeTrackerPage = () => {
   const confirmStopSession = async () => {
     setIsModalOpen(false);
     setShowStopConfirmModal(false); // Close the modal
-  
+
     setIsRunning(false);
     setIsPaused(false);
-  
-    if (sessionId && selectedProject) { // Ensure sessionId and selectedProject are available
+
+    if (sessionId && selectedProject) {
       try {
         const sessionRef = doc(db, 'sessions', sessionId);
         await updateDoc(sessionRef, {
           elapsedTime: timer,
           endTime: serverTimestamp(),
-          project: selectedProject.name, // Update with the current project name
-          // Optional: If you want to store the project ID as well
-          // projectId: selectedProject.id,
+          project: selectedProject.name,
         });
       } catch (error) {
         console.error('Error stopping session:', error);
@@ -220,7 +219,7 @@ const TimeTrackerPage = () => {
     }
     localStorage.setItem('lastProjectId', selectedProject?.id || ''); // Store the projectId
     navigate('/session-overview', { state: { totalTime: timer, projectId: selectedProject?.id } });
-  
+
     setTimer(0);
     setSelectedProject(null);
     setSessionNotes('');
@@ -279,9 +278,12 @@ const TimeTrackerPage = () => {
 
       <div className="timer-quote">{timerQuote}</div>
 
-      <div className={`timer ${isPaused ? 'paused' : ''}`}>{
-        new Date(timer * 1000).toISOString().substr(11, 8) /* Display time in HH:MM:SS format */
-      }</div>
+      <div
+        ref={timerRef}
+        className={`timer ${isPaused ? 'paused' : ''}`}
+      >
+        {new Date(timer * 1000).toISOString().substr(11, 8) /* Display time in HH:MM:SS format */}
+      </div>
 
       <div className="controls">
         {/* Reset Button */}
@@ -367,6 +369,9 @@ const TimeTrackerPage = () => {
           placeholder="Take a moment to note"
           value={sessionNotes}
           onChange={(e) => setSessionNotes(e.target.value.slice(0, 140))}
+          onBlur={() => {
+            timerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }}
         />
         <EditIcon className="notes-edit-icon" style={{ position: 'absolute', top: '16px', right: '16px' }} />
       </div>

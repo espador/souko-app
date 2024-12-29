@@ -195,6 +195,10 @@ const ProjectDetailPage = () => {
         onBack={() => navigate('/home')}
         hideProfile={true}
       />
+
+      <div className="timer-quote project-total-time">Total time</div>
+      <h1 className="timer project-time">{formatTime(totalTime)}</h1>
+
       <div className="project-dropdown-container top-tile">
         {project?.imageUrl ? (
           <img
@@ -220,9 +224,6 @@ const ProjectDetailPage = () => {
         </select>
         <DropdownIcon className="dropdown-arrow" />
       </div>
-
-      <div className="timer-quote project-total-time">Total time</div>
-      <h1 className="timer project-time">{formatTime(totalTime)}</h1>
 
       <div className="sessions-container">
         {sortedDates.length > 0 ? (

@@ -13,6 +13,7 @@ const CreateProjectPage = () => {
     const navigate = useNavigate();
     const [projectImage, setProjectImage] = useState(null);
     const fileInputRef = useRef(null);
+    const projectNameInputRef = useRef(null); // Ref for the project name input
     const [uploading, setUploading] = useState(false);
 
     useEffect(() => {
@@ -155,6 +156,10 @@ const CreateProjectPage = () => {
                             value={projectName}
                             onChange={(e) => setProjectName(e.target.value)}
                             className="project-name-input"
+                            ref={projectNameInputRef} // Attach the ref
+                            onBlur={() => {
+                                projectNameInputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            }}
                         />
                         <input
                             type="file"
