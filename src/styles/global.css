@@ -267,3 +267,7 @@ p {
   font-size: 16px;
   line-height: 24px;
   }
+
+  .accent-text {
+    color: var(--accent-color);
+  }

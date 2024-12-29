@@ -12,6 +12,13 @@ import { ReactComponent as StartTimerIcon } from '../styles/components/assets/st
 import '@fontsource/shippori-mincho';
 import Sidebar from '../components/Layout/Sidebar';
 import '../styles/components/Sidebar.css';
+import { clsx } from "clsx";
+import { twMerge } from "tailwind-merge";
+import { TextGenerateEffect } from "../styles/components/text-generate-effect.tsx";
+
+export function cn(...inputs) {
+  return twMerge(clsx(inputs));
+}
 
 const HomePage = () => {
   const [user, setUser] = useState(null);
@@ -20,6 +27,7 @@ const HomePage = () => {
   const [loading, setLoading] = useState(true);
   const [weeklyTrackedTime, setWeeklyTrackedTime] = useState(0);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [startAnimation, setStartAnimation] = useState(false);
   const navigate = useNavigate();
   const fabRef = useRef(null);
   const scrollTimeout = useRef(null);
@@ -35,6 +43,13 @@ const HomePage = () => {
   }, []);
 
   useEffect(() => {
+    const h1 = document.querySelector('.motivational-section h1');
+    if (h1) {
+      h1.classList.add('loaded');
+    }
+  }, []);
+
+  useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       if (!currentUser) {
         navigate('/');
@@ -46,6 +61,8 @@ const HomePage = () => {
 
     return () => unsubscribe();
   }, [navigate]);
+
+
 
   const fetchData = async (uid) => {
     setLoading(true);
@@ -87,6 +104,7 @@ const HomePage = () => {
       console.error('Error fetching data:', error.message);
     } finally {
       setLoading(false);
+      setStartAnimation(true);
     }
   };
 
@@ -148,16 +166,18 @@ const HomePage = () => {
 
       <main className="homepage-content">
         <section className="motivational-section">
-          {weeklyTrackedTime > 0 ? (
-            <h1>
-              This moment is progress. You tracked{' '}
-              <span className="tracked-time">{formatTime(weeklyTrackedTime)}</span> this week.
-            </h1>
-          ) : (
-            <h1>
-              Every journey begins with <span className="tracked-time">one moment</span>. Tell me
-              about your project ...
-            </h1>
+          {startAnimation && ( // Conditionally render TextGenerateEffect
+            weeklyTrackedTime > 0 ? (
+              <TextGenerateEffect
+                words={`This moment is progress.\nYou tracked <span class="accent-text">${formatTime(
+                  weeklyTrackedTime
+                )}</span> this week.`}
+              />
+            ) : (
+              <TextGenerateEffect
+                words={`Every journey begins with one moment.\nTell me about your project ...`}
+              />
+            )
           )}
         </section>
 

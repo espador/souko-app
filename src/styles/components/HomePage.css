@@ -35,6 +35,73 @@ body.allow-scroll {
   line-height: 40px;
   text-align: left;
   color: var(--text-color);
+  overflow: hidden; /* Added for text generate effect */
+}
+
+.motivational-section h1 {
+  margin: 0; /* Reset default h1 margins if needed */
+}
+
+.motivational-section .word {
+  display: inline-block;
+  margin-right: 0.1em;
+}
+
+.motivational-section .letter {
+  display: inline-block;
+  opacity: 0;
+  transform: translateY(100%);
+  transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
+}
+
+.motivational-section h1.loaded .word .letter {
+  opacity: 1;
+  transform: translateY(0%);
+}
+
+/* Example for staggering effect */
+.motivational-section h1 .word:nth-child(1) .letter {
+  transition-delay: 0.05s;
+}
+.motivational-section h1 .word:nth-child(2) .letter {
+  transition-delay: 0.1s;
+}
+.motivational-section h1 .word:nth-child(3) .letter {
+  transition-delay: 0.15s;
+}
+.motivational-section h1 .word:nth-child(4) .letter {
+  transition-delay: 0.20s;
+}
+.motivational-section h1 .word:nth-child(5) .letter {
+  transition-delay: 0.25s;
+}
+.motivational-section h1 .word:nth-child(6) .letter {
+  transition-delay: 0.30s;
+}
+.motivational-section h1 .word:nth-child(7) .letter {
+  transition-delay: 0.35s;
+  color: var(--accent-color);
+}
+.motivational-section h1 .word:nth-child(8) .letter {
+  transition-delay: 0.40s;
+}
+.motivational-section h1 .word:nth-child(9) .letter {
+  transition-delay: 0.45s;
+}
+.motivational-section h1 .word:nth-child(10) .letter {
+  transition-delay: 0.50s;
+}
+/* Add more nth-child selectors as needed */
+
+/* Specific styling for the tracked-time span */
+.motivational-section h1 .tracked-time {
+  display: inline-block; /* Or consider other display properties */
+  color: var(--accent-color);
+  font-weight: 400;
+  /* Add any specific styling for the time here */
+}
+.motivational-section h1 .tracked-time .letter {
+    transition-delay: 0.6s; /* Example delay after the preceding text */
 }
 
 .projects-section {
