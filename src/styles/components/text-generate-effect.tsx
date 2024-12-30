@@ -27,10 +27,10 @@ export const TextGenerateEffect = ({
         filter: filter ? "blur(0px)" : "none",
       }, {
         duration: duration ? duration : 1,
-        delay: stagger(0.3),
+        delay: stagger(0.2),
       });
     }
-  }, [scope.current, animate, filter, duration, linesArray.length]);
+  }, [scope, animate, filter, duration, linesArray.length]); // Added scope to the dependency array
 
   const renderLines = () => {
     return (
@@ -47,7 +47,7 @@ export const TextGenerateEffect = ({
           const after = middleParts.length > 1 ? middleParts[1] : "";
 
           return (
-            <motion.div key={idx} className="dark:text-white text-black" style={{ filter: filter ? "blur(10px)" : "none" }}>
+            <motion.div key={idx} className="dark:text-white text-black" style={{ filter: filter ? "blur(5px)" : "none" }}>
               {before}
               {middle && <span className="accent-text">{middle}</span>}
               {after}
