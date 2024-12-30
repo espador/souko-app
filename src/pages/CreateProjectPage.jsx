@@ -16,13 +16,12 @@ const CreateProjectPage = () => {
     const projectNameInputRef = useRef(null); // Ref for the project name input
     const [uploading, setUploading] = useState(false);
 
-    useEffect(() => {
-        document.body.classList.add('no-scroll');
-
-        return () => {
-            document.body.classList.remove('no-scroll');
-        };
-    }, []);
+    // Image upload limits
+    const MAX_FILE_SIZE_KB = 500;
+    const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_KB * 1024;
+    const ALLOWED_FILE_TYPES = ['image/jpeg', 'image/png', 'image/gif'];
+    const MAX_IMAGE_WIDTH = 1080; // Aiming for slightly larger than display size for quality
+    const MAX_IMAGE_HEIGHT = 1080;
 
     const handleCreateProject = async (e) => {
         e.preventDefault();
@@ -89,17 +88,39 @@ const CreateProjectPage = () => {
 
     const handleImageChange = (event) => {
         const file = event.target.files[0];
-        if (file && file.size <= 5 * 1024 * 1024) {
-            setProjectImage(file);
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                // Optional: Keep a local preview URL if needed
-                // setLocalPreviewUrl(reader.result);
-            };
-            reader.readAsDataURL(file);
-        } else if (file) {
-            alert('Image size should be less than 5MB.');
+
+        if (!file) {
+            return;
         }
+
+        if (!ALLOWED_FILE_TYPES.includes(file.type)) {
+            alert(`Please select a valid image file type: ${ALLOWED_FILE_TYPES.join(', ')}`);
+            event.target.value = ''; // Clear the selected file
+            return;
+        }
+
+        if (file.size > MAX_FILE_SIZE_BYTES) {
+            alert(`Image size should be less than ${MAX_FILE_SIZE_KB} KB.`);
+            event.target.value = ''; // Clear the selected file
+            return;
+        }
+
+        const img = new Image();
+        img.onload = () => {
+            if (img.width > MAX_IMAGE_WIDTH || img.height > MAX_IMAGE_HEIGHT) {
+                alert(`Image dimensions should not exceed ${MAX_IMAGE_WIDTH}x${MAX_IMAGE_HEIGHT} pixels.`);
+                setProjectImage(null); // Clear the project image state
+                event.target.value = ''; // Clear the selected file
+                return;
+            }
+            setProjectImage(file);
+        };
+        img.onerror = () => {
+            alert('Error loading image.');
+            setProjectImage(null); // Clear the project image state in case of error
+            event.target.value = ''; // Clear the selected file
+        };
+        img.src = URL.createObjectURL(file);
     };
 
     const getInitials = (name) => {
@@ -163,7 +184,7 @@ const CreateProjectPage = () => {
                         />
                         <input
                             type="file"
-                            accept="image/*"
+                            accept="image/jpeg, image/png, image/gif"
                             onChange={handleImageChange}
                             ref={fileInputRef}
                             style={{ display: 'none' }}

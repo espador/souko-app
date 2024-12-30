@@ -23,13 +23,6 @@ const ProjectDetailPage = () => {
   const [selectedProjectId, setSelectedProjectId] = useState(routeProjectId);
 
   useEffect(() => {
-    document.body.classList.add('allow-scroll');
-    return () => {
-      document.body.classList.remove('allow-scroll');
-    };
-  }, []);
-
-  useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
         setCurrentUser(user);

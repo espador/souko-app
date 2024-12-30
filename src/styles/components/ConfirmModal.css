@@ -5,7 +5,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.9);
+  background-color: rgba(29, 27, 37, 0.9);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -13,8 +13,9 @@
 }
 
 .modal-content {
-  background-color: var(--card-background);
-  padding: 20px;
+  background-color: var(--background-color);
+  margin:24px;
+  padding: 24px;
   border-radius: 8px;
 }
 

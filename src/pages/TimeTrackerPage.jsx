@@ -42,22 +42,6 @@ const TimeTrackerPage = () => {
   const [showResetConfirmModal, setShowResetConfirmModal] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false); // Track if any modal is open
 
-  // Make the page unscrollable
-  useEffect(() => {
-    if (!isModalOpen) {
-      document.body.classList.add('no-scroll');
-      document.documentElement.classList.add('no-scroll');
-    } else {
-      document.body.classList.remove('no-scroll');
-      document.documentElement.classList.remove('no-scroll');
-    }
-
-    return () => {
-      document.body.classList.remove('no-scroll');
-      document.documentElement.classList.remove('no-scroll');
-    };
-  }, [isModalOpen]);
-
   useEffect(() => {
     if (timer === 0 && !isRunning) {
       setTimerQuote('This moment is yours');

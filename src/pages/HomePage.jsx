@@ -33,16 +33,6 @@ const HomePage = () => {
   const scrollTimeout = useRef(null);
 
   useEffect(() => {
-    console.log('HomePage mounted, adding allow-scroll');
-    document.body.classList.add('allow-scroll');
-
-    return () => {
-      console.log('HomePage unmounted, removing allow-scroll');
-      document.body.classList.remove('allow-scroll');
-    };
-  }, []);
-
-  useEffect(() => {
     const h1 = document.querySelector('.motivational-section h1');
     if (h1) {
       h1.classList.add('loaded');

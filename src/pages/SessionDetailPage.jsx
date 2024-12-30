@@ -14,6 +14,7 @@ import { ReactComponent as RadioActiveIcon } from '../styles/components/assets/r
 import { ReactComponent as RadioMutedIcon } from '../styles/components/assets/radio-muted.svg';
 import { ReactComponent as SaveIcon } from '../styles/components/assets/save.svg';
 import { ReactComponent as EraseIcon } from '../styles/components/assets/erase.svg';
+import ConfirmModal from '../components/ConfirmModal'; // Import the ConfirmModal component
 
 const SessionDetailPage = () => {
   const { sessionId } = useParams();
@@ -26,6 +27,7 @@ const SessionDetailPage = () => {
   const [isBillable, setIsBillable] = useState(true);
   const [loading, setLoading] = useState(true);
   const [isSaveActive, setIsSaveActive] = useState(false);
+  const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false); // State for delete confirmation modal
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -127,17 +129,23 @@ const SessionDetailPage = () => {
     }
   };
 
-  const handleDeleteSession = async () => {
-    const confirmDelete = window.confirm("Are you sure you want to delete this session?");
-    if (confirmDelete) {
-      try {
-        await deleteDoc(doc(db, 'sessions', sessionId));
-        navigate('/home'); // Changed navigation to the homepage
-      } catch (error) {
-        console.error("Error deleting session:", error);
-        // Optionally show an error message
-      }
+  const handleDeleteSession = () => {
+    setShowDeleteConfirmModal(true); // Open the delete confirmation modal
+  };
+
+  const confirmDeleteSession = async () => {
+    setShowDeleteConfirmModal(false);
+    try {
+      await deleteDoc(doc(db, 'sessions', sessionId));
+      navigate('/home'); // Changed navigation to the homepage
+    } catch (error) {
+      console.error("Error deleting session:", error);
+      // Optionally show an error message
     }
+  };
+
+  const cancelDeleteSession = () => {
+    setShowDeleteConfirmModal(false);
   };
 
   if (loading) {
@@ -219,6 +227,17 @@ const SessionDetailPage = () => {
         <EraseIcon className="button-icon" />
         Erase your moment
       </button>
+
+      {/* Confirmation Modal for Deleting Session */}
+      <ConfirmModal
+        show={showDeleteConfirmModal}
+        onHide={cancelDeleteSession}
+        title="Erase this moment?"
+        body="Are you sure you want to delete this session? This action cannot be undone."
+        onConfirm={confirmDeleteSession}
+        confirmText="Yes, Erase"
+        cancelText="Cancel"
+      />
     </div>
   );
 };

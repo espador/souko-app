@@ -2,8 +2,8 @@
 .header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  height: 64px;
+  margin-top: 24px;
+  height: 88px;
   width: 100%;
   z-index: 10;
   background-color: var(--background-color);
@@ -14,7 +14,7 @@
 
 .header-left-section {
   display: flex;
-  align-items: center; /* Align items vertically in the center */
+  align-items: center;
 }
 
 .header-title {
