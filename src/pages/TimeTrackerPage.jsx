@@ -1,10 +1,26 @@
 // TimeTrackerPage.jsx
-import React, { useEffect, useState, useCallback, useRef } from 'react';
+import React, {
+  useEffect,
+  useState,
+  useCallback,
+  useRef,
+  useMemo,
+} from 'react';
 import { useNavigate } from 'react-router-dom';
-import { collection, query, where, getDocs, doc, setDoc, updateDoc, serverTimestamp, Timestamp } from 'firebase/firestore'; // Import Timestamp
+import {
+  collection,
+  query,
+  where,
+  getDocs,
+  doc,
+  setDoc,
+  updateDoc,
+  serverTimestamp,
+  Timestamp,
+} from 'firebase/firestore';
 import { db, auth } from '../services/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
-import Header from '../components/Layout/Header';
+import Header from '../components/Layout/Header'; // Assuming Header is the correct export
 import '../styles/global.css';
 import '../styles/components/TimeTrackerPage.css';
 import { ReactComponent as ResetMuteIcon } from '../styles/components/assets/reset-mute.svg';
@@ -18,12 +34,12 @@ import { ReactComponent as DropdownIcon } from '../styles/components/assets/drop
 import { ReactComponent as RadioActiveIcon } from '../styles/components/assets/radio-active.svg';
 import { ReactComponent as RadioMutedIcon } from '../styles/components/assets/radio-muted.svg';
 import '@fontsource/shippori-mincho';
-import ConfirmModal from '../components/ConfirmModal'; // Import the ConfirmModal component
+import ConfirmModal from '../components/ConfirmModal'; // Assuming ConfirmModal is the correct export
 
-const TimeTrackerPage = () => {
+const TimeTrackerPage = React.memo(() => {
   const [user, setUser] = useState(null);
   const [projects, setProjects] = useState([]);
-  const [selectedProject, setSelectedProject] = useState(null); // Initialize as null
+  const [selectedProject, setSelectedProject] = useState(null);
   const [sessionNotes, setSessionNotes] = useState('');
   const [isBillable, setIsBillable] = useState(true);
   const [timer, setTimer] = useState(0);
@@ -32,27 +48,21 @@ const TimeTrackerPage = () => {
   const [sessionId, setSessionId] = useState(null);
   const [startTime, setStartTime] = useState(null);
   const navigate = useNavigate();
-  const timerRef = useRef(null); // Create a ref for the timer element
-
-  // Dynamic quote state
-  const [timerQuote, setTimerQuote] = useState('This moment is yours ...');
-
-  // Modal visibility states
+  const timerRef = useRef(null);
   const [showStopConfirmModal, setShowStopConfirmModal] = useState(false);
   const [showResetConfirmModal, setShowResetConfirmModal] = useState(false);
-  const [isModalOpen, setIsModalOpen] = useState(false); // Track if any modal is open
 
-  useEffect(() => {
+  const timerQuote = useMemo(() => {
     if (timer === 0 && !isRunning) {
-      setTimerQuote('This moment is yours');
+      return 'This moment is yours';
     } else if (isRunning && !isPaused) {
-      setTimerQuote('Moment in progress');
+      return 'Moment in progress';
     } else if (isPaused) {
-      setTimerQuote('Taking a moment');
+      return 'Taking a moment';
     }
+    return 'This moment is yours ...'; // Default fallback
   }, [timer, isRunning, isPaused]);
 
-  // Fetch user and projects
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       if (!currentUser) {
@@ -62,7 +72,6 @@ const TimeTrackerPage = () => {
         fetchData(currentUser.uid);
       }
     });
-
     return () => unsubscribe();
   }, [navigate]);
 
@@ -74,14 +83,10 @@ const TimeTrackerPage = () => {
       const userProjects = projectSnapshot.docs.map((doc) => ({
         id: doc.id,
         name: doc.data().name,
-        imageUrl: doc.data().imageUrl, // Fetch imageUrl
+        imageUrl: doc.data().imageUrl,
       }));
       setProjects(userProjects);
-
-      // Prefill with the most recent project object
-      if (userProjects.length > 0) {
-        setSelectedProject(userProjects[0]);
-      }
+      setSelectedProject(userProjects[0] || null);
 
       const sessionRef = collection(db, 'sessions');
       const activeSessionQuery = query(
@@ -95,15 +100,17 @@ const TimeTrackerPage = () => {
         const activeSession = activeSessionSnapshot.docs[0];
         const sessionData = activeSession.data();
         setSessionId(activeSession.id);
-        setSelectedProject(userProjects.find(proj => proj.name === sessionData.project) || null);
+        setSelectedProject(
+          userProjects.find((proj) => proj.name === sessionData.project) || null
+        );
         setSessionNotes(sessionData.sessionNotes || '');
         setIsBillable(sessionData.isBillable || true);
-
-        // Keep startTime as a Timestamp object
         setStartTime(sessionData.startTime);
         const now = Date.now();
-        // Ensure sessionData.startTime is a Timestamp before calling toDate()
-        const sessionStartTime = sessionData.startTime instanceof Timestamp ? sessionData.startTime.toDate().getTime() : 0;
+        const sessionStartTime =
+          sessionData.startTime instanceof Timestamp
+            ? sessionData.startTime.toDate().getTime()
+            : 0;
         const elapsedSeconds = Math.floor((now - sessionStartTime) / 1000);
         setTimer(elapsedSeconds + (sessionData.elapsedTime || 0));
         setIsRunning(true);
@@ -114,7 +121,6 @@ const TimeTrackerPage = () => {
     }
   }, []);
 
-  // Timer logic
   useEffect(() => {
     let interval = null;
     if (isRunning && !isPaused) {
@@ -127,13 +133,11 @@ const TimeTrackerPage = () => {
     return () => clearInterval(interval);
   }, [isRunning, isPaused]);
 
-  // Handlers
-  const handleStart = async () => {
+  const handleStart = useCallback(async () => {
     if (!selectedProject) {
       alert('Please select a project to start the timer.');
       return;
     }
-
     if (!sessionId) {
       try {
         const sessionRef = doc(collection(db, 'sessions'));
@@ -142,24 +146,22 @@ const TimeTrackerPage = () => {
           project: selectedProject.name,
           sessionNotes,
           isBillable,
-          startTime: serverTimestamp(), // Use serverTimestamp() here
+          startTime: serverTimestamp(),
           endTime: null,
           elapsedTime: 0,
         });
         setSessionId(sessionRef.id);
-        setStartTime(new Date()); // Keep track of start time locally as a Date object
+        setStartTime(new Date());
       } catch (error) {
         console.error('Error starting session:', error);
       }
     }
-
     setIsRunning(true);
     setIsPaused(false);
-  };
+  }, [selectedProject, sessionId, user, sessionNotes, isBillable]);
 
-  const handlePause = async () => {
+  const handlePause = useCallback(async () => {
     setIsPaused(true);
-
     if (sessionId) {
       try {
         const sessionRef = doc(db, 'sessions', sessionId);
@@ -168,22 +170,19 @@ const TimeTrackerPage = () => {
         console.error('Error pausing session:', error);
       }
     }
-  };
+  }, [sessionId, timer]);
 
-  const handleResume = () => {
+  const handleResume = useCallback(() => {
     setIsPaused(false);
     setIsRunning(true);
-  };
+  }, []);
 
-  const handleStop = () => {
-    setIsModalOpen(true);
-    setShowStopConfirmModal(true); // Open the stop confirmation modal
-  };
+  const handleStop = useCallback(() => {
+    setShowStopConfirmModal(true);
+  }, []);
 
-  const confirmStopSession = async () => {
-    setIsModalOpen(false);
-    setShowStopConfirmModal(false); // Close the modal
-
+  const confirmStopSession = useCallback(async () => {
+    setShowStopConfirmModal(false);
     setIsRunning(false);
     setIsPaused(false);
 
@@ -199,47 +198,44 @@ const TimeTrackerPage = () => {
         console.error('Error stopping session:', error);
       }
     } else {
-      console.warn("Session ID or selected project not available during stop.");
+      console.warn('Session ID or selected project not available during stop.');
     }
-    localStorage.setItem('lastProjectId', selectedProject?.id || ''); // Store the projectId
-    navigate('/session-overview', { state: { totalTime: timer, projectId: selectedProject?.id } });
-
+    localStorage.setItem('lastProjectId', selectedProject?.id || '');
+    navigate('/session-overview', {
+      state: { totalTime: timer, projectId: selectedProject?.id },
+    });
     setTimer(0);
     setSelectedProject(null);
     setSessionNotes('');
     setIsBillable(true);
     setSessionId(null);
-    setStartTime(null); // Reset local start time
-  };
+    setStartTime(null);
+  }, [navigate, sessionId, selectedProject, timer]);
 
-  const cancelStopSession = () => {
-    setIsModalOpen(false);
-    setShowStopConfirmModal(false); // Close the modal
-  };
+  const cancelStopSession = useCallback(() => {
+    setShowStopConfirmModal(false);
+  }, []);
 
-  const handleReset = () => {
+  const handleReset = useCallback(() => {
     if (isRunning || timer > 0) {
-      setIsModalOpen(true);
-      setShowResetConfirmModal(true); // Open the reset confirmation modal
+      setShowResetConfirmModal(true);
     }
-  };
+  }, [isRunning, timer]);
 
-  const confirmResetTimer = () => {
-    setIsModalOpen(false);
+  const confirmResetTimer = useCallback(() => {
     setShowResetConfirmModal(false);
     setTimer(0);
     setIsRunning(false);
     setIsPaused(false);
     setSessionId(null);
     setStartTime(null);
-  };
+  }, []);
 
-  const cancelResetTimer = () => {
-    setIsModalOpen(false);
+  const cancelResetTimer = useCallback(() => {
     setShowResetConfirmModal(false);
-  };
+  }, []);
 
-  const handleBillableToggle = async () => {
+  const handleBillableToggle = useCallback(async () => {
     const newIsBillable = !isBillable;
     setIsBillable(newIsBillable);
     if (sessionId) {
@@ -250,45 +246,46 @@ const TimeTrackerPage = () => {
         console.error('Error updating billable status:', error);
       }
     }
-  };
+  }, [isBillable, sessionId]);
+
+  const handleProjectChange = useCallback(
+    (e) => {
+      const projectName = e.target.value;
+      const selectedProj = projects.find((proj) => proj.name === projectName);
+      setSelectedProject(selectedProj);
+    },
+    [projects]
+  );
 
   return (
     <div className="time-tracker-page">
-      <Header
-        showBackArrow={true}
-        onBack={() => navigate('/home')}
-        hideProfile={true} // You can remove this, or set it to false
-      />
-
+      <Header showBackArrow={true} onBack={() => navigate('/home')} hideProfile={true} />
       <div className="timer-quote">{timerQuote}</div>
-
-      <div
-        ref={timerRef}
-        className={`timer ${isPaused ? 'paused' : ''}`}
-      >
-        {new Date(timer * 1000).toISOString().substr(11, 8) /* Display time in HH:MM:SS format */}
+      <div ref={timerRef} className={`timer ${isPaused ? 'paused' : ''}`}>
+        {new Date(timer * 1000).toISOString().substr(11, 8)}
       </div>
-
       <div className="controls">
-        {/* Reset Button */}
-        <button className="control-button small" onClick={handleReset} disabled={!(isRunning || timer > 0)}>
+        <button
+          className="control-button small"
+          onClick={handleReset}
+          disabled={!(isRunning || timer > 0)}
+        >
           {isRunning || timer > 0 ? (
             <ResetActiveIcon style={{ width: '32px', height: '32px', fill: 'var(--text-color)' }} />
           ) : (
             <ResetMuteIcon style={{ width: '32px', height: '32px', fill: 'var(--text-muted)' }} />
           )}
         </button>
-
-        {/* Start/Stop Button */}
-        <button className="control-button fab-like" onClick={isRunning ? handleStop : handleStart}>
+        <button
+          className="control-button fab-like"
+          onClick={isRunning ? handleStop : handleStart}
+        >
           {isRunning ? (
             <StopTimerIcon style={{ width: '64px', height: '64px' }} />
           ) : (
             <StartTimerIcon style={{ width: '64px', height: '64px' }} />
           )}
         </button>
-
-        {/* Pause/Play Button */}
         <button
           className="control-button small"
           onClick={isRunning && !isPaused ? handlePause : isPaused ? handleResume : undefined}
@@ -318,11 +315,7 @@ const TimeTrackerPage = () => {
         <select
           className="project-dropdown"
           value={selectedProject?.name || ''}
-          onChange={(e) => {
-            const projectName = e.target.value;
-            const selectedProj = projects.find(proj => proj.name === projectName);
-            setSelectedProject(selectedProj);
-          }}
+          onChange={handleProjectChange}
         >
           {projects.map((project) => (
             <option key={project.id} value={project.name}>
@@ -332,20 +325,14 @@ const TimeTrackerPage = () => {
         </select>
         <DropdownIcon className="dropdown-arrow" />
       </div>
-
-      <div className="input-tile billable-tile" onClick={handleBillableToggle} style={{ cursor: 'pointer' }}>
+      <div className="input-tile billable-tile" onClick={handleBillableToggle}>
         <span className="input-label billable-label">
           {isBillable ? 'Billable' : 'Non-billable'}
         </span>
         <div className="billable-radio">
-          {isBillable ? (
-            <RadioActiveIcon />
-          ) : (
-            <RadioMutedIcon />
-          )}
+          {isBillable ? <RadioActiveIcon /> : <RadioMutedIcon />}
         </div>
       </div>
-
       <div className="input-tile notes-input-tile">
         <textarea
           id="session-notes"
@@ -359,8 +346,6 @@ const TimeTrackerPage = () => {
         />
         <EditIcon className="notes-edit-icon" style={{ position: 'absolute', top: '16px', right: '16px' }} />
       </div>
-
-      {/* Confirmation Modal for Stopping Session */}
       <ConfirmModal
         show={showStopConfirmModal}
         onHide={cancelStopSession}
@@ -370,8 +355,6 @@ const TimeTrackerPage = () => {
         confirmText="Yes, Stop & Save"
         cancelText="Cancel"
       />
-
-      {/* Confirmation Modal for Resetting Timer */}
       <ConfirmModal
         show={showResetConfirmModal}
         onHide={cancelResetTimer}
@@ -383,6 +366,8 @@ const TimeTrackerPage = () => {
       />
     </div>
   );
-};
+});
+
+TimeTrackerPage.displayName = 'TimeTrackerPage';
 
 export default TimeTrackerPage;

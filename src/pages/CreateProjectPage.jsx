@@ -1,29 +1,28 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useCallback, useMemo } from 'react';
 import { collection, addDoc } from 'firebase/firestore';
 import { db, auth } from '../services/firebase';
 import { getStorage, ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { useNavigate } from 'react-router-dom';
 import Header from '../components/Layout/Header';
-import '../styles/components/CreateProjectPage.css'; // Corrected import path
+import '../styles/components/CreateProjectPage.css';
 import { ReactComponent as EditIcon } from '../styles/components/assets/edit.svg';
 
-const CreateProjectPage = () => {
+const MAX_FILE_SIZE_KB = 500;
+const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_KB * 1024;
+const ALLOWED_FILE_TYPES = ['image/jpeg', 'image/png', 'image/gif'];
+const MAX_IMAGE_WIDTH = 1080;
+const MAX_IMAGE_HEIGHT = 1080;
+
+const CreateProjectPage = React.memo(() => {
     const [projectName, setProjectName] = useState('');
     const [error, setError] = useState('');
     const navigate = useNavigate();
     const [projectImage, setProjectImage] = useState(null);
     const fileInputRef = useRef(null);
-    const projectNameInputRef = useRef(null); // Ref for the project name input
+    const projectNameInputRef = useRef(null);
     const [uploading, setUploading] = useState(false);
 
-    // Image upload limits
-    const MAX_FILE_SIZE_KB = 500;
-    const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_KB * 1024;
-    const ALLOWED_FILE_TYPES = ['image/jpeg', 'image/png', 'image/gif'];
-    const MAX_IMAGE_WIDTH = 1080; // Aiming for slightly larger than display size for quality
-    const MAX_IMAGE_HEIGHT = 1080;
-
-    const handleCreateProject = async (e) => {
+    const handleCreateProject = useCallback(async (e) => {
         e.preventDefault();
 
         if (!projectName.trim()) {
@@ -80,28 +79,26 @@ const CreateProjectPage = () => {
             console.error('Error creating project:', err);
             setError('Failed to create the project. Please try again.');
         }
-    };
+    }, [projectName, projectImage, navigate]);
 
-    const handleImageUploadClick = () => {
+    const handleImageUploadClick = useCallback(() => {
         fileInputRef.current.click();
-    };
+    }, []);
 
-    const handleImageChange = (event) => {
+    const handleImageChange = useCallback((event) => {
         const file = event.target.files[0];
 
-        if (!file) {
-            return;
-        }
+        if (!file) return;
 
         if (!ALLOWED_FILE_TYPES.includes(file.type)) {
             alert(`Please select a valid image file type: ${ALLOWED_FILE_TYPES.join(', ')}`);
-            event.target.value = ''; // Clear the selected file
+            event.target.value = '';
             return;
         }
 
         if (file.size > MAX_FILE_SIZE_BYTES) {
             alert(`Image size should be less than ${MAX_FILE_SIZE_KB} KB.`);
-            event.target.value = ''; // Clear the selected file
+            event.target.value = '';
             return;
         }
 
@@ -109,23 +106,40 @@ const CreateProjectPage = () => {
         img.onload = () => {
             if (img.width > MAX_IMAGE_WIDTH || img.height > MAX_IMAGE_HEIGHT) {
                 alert(`Image dimensions should not exceed ${MAX_IMAGE_WIDTH}x${MAX_IMAGE_HEIGHT} pixels.`);
-                setProjectImage(null); // Clear the project image state
-                event.target.value = ''; // Clear the selected file
+                setProjectImage(null);
+                event.target.value = '';
                 return;
             }
             setProjectImage(file);
         };
         img.onerror = () => {
             alert('Error loading image.');
-            setProjectImage(null); // Clear the project image state in case of error
-            event.target.value = ''; // Clear the selected file
+            setProjectImage(null);
+            event.target.value = '';
         };
         img.src = URL.createObjectURL(file);
-    };
+    }, []);
 
-    const getInitials = (name) => {
+    const getInitials = useCallback((name) => {
         return name.trim().charAt(0).toUpperCase();
-    };
+    }, []);
+
+    const memoizedProjectImage = useMemo(() => {
+        if (projectImage && typeof projectImage !== 'string') {
+            return <img src={URL.createObjectURL(projectImage)} alt="Project" className="project-image" />;
+        } else if (projectImage && typeof projectImage === 'string') {
+            return <img src={projectImage} alt="Project" className="project-image" />;
+        } else {
+            return (
+                <div
+                    className="default-project-image"
+                    style={{ backgroundColor: '#FE2F00' }}
+                >
+                    <span>{getInitials(projectName || 'P')}</span>
+                </div>
+            );
+        }
+    }, [projectImage, projectName, getInitials]);
 
     return (
         <div className="create-project-page">
@@ -150,26 +164,7 @@ const CreateProjectPage = () => {
                             className="project-image-container"
                             onClick={handleImageUploadClick}
                         >
-                            {projectImage && typeof projectImage !== 'string' ? (
-                                <img
-                                    src={URL.createObjectURL(projectImage)}
-                                    alt="Project"
-                                    className="project-image"
-                                />
-                            ) : projectImage && typeof projectImage === 'string' ? (
-                                <img
-                                    src={projectImage}
-                                    alt="Project"
-                                    className="project-image"
-                                />
-                            ) : (
-                                <div
-                                    className="default-project-image"
-                                    style={{ backgroundColor: '#FE2F00' }}
-                                >
-                                    <span>{getInitials(projectName || 'P')}</span>
-                                </div>
-                            )}
+                            {memoizedProjectImage}
                         </div>
                         <input
                             type="text"
@@ -177,7 +172,7 @@ const CreateProjectPage = () => {
                             value={projectName}
                             onChange={(e) => setProjectName(e.target.value)}
                             className="project-name-input"
-                            ref={projectNameInputRef} // Attach the ref
+                            ref={projectNameInputRef}
                             onBlur={() => {
                                 projectNameInputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
                             }}
@@ -213,6 +208,8 @@ const CreateProjectPage = () => {
             </main>
         </div>
     );
-};
+});
+
+CreateProjectPage.displayName = 'CreateProjectPage'; // Helps with React DevTools
 
 export default CreateProjectPage;

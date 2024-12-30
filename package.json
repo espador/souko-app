@@ -9,16 +9,11 @@
         "eject": "react-scripts eject"
     },
     "dependencies": {
-        "@fontsource/noto-sans": "^5.1.0",
         "@fontsource/shippori-mincho": "^5.1.0",
-        "bootstrap": "^5.3.3",
         "clsx": "^2.1.1",
         "firebase": "^11.1.0",
         "framer-motion": "^11.15.0",
-        "nth-check": "^2.0.1",
-        "postcss": "^8.4.31",
         "react": "^18.2.0",
-        "react-bootstrap": "^2.10.7",
         "react-dom": "^18.2.0",
         "react-router-dom": "^7.1.0",
         "react-scripts": "^5.0.1",
@@ -43,7 +38,8 @@
         ]
     },
     "devDependencies": {
-        "@babel/plugin-proposal-private-property-in-object": "^7.21.11"
+        "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
+        "eslint-config-react-app": "^7.0.1"
     },
     "resolutions": {
         "nth-check": "2.1.1"

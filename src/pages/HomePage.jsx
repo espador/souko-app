@@ -1,5 +1,11 @@
 // HomePage.jsx
-import React, { useEffect, useState, useRef } from 'react';
+import React, {
+  useEffect,
+  useState,
+  useRef,
+  useCallback,
+  useMemo,
+} from 'react';
 import { auth, db } from '../services/firebase';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { collection, getDocs, query, where } from 'firebase/firestore';
@@ -12,30 +18,46 @@ import { ReactComponent as StartTimerIcon } from '../styles/components/assets/st
 import '@fontsource/shippori-mincho';
 import Sidebar from '../components/Layout/Sidebar';
 import '../styles/components/Sidebar.css';
-import { clsx } from "clsx";
-import { twMerge } from "tailwind-merge";
-import { TextGenerateEffect } from "../styles/components/text-generate-effect.tsx";
+import { clsx } from 'clsx';
+import { twMerge } from 'tailwind-merge';
+import { TextGenerateEffect } from '../styles/components/text-generate-effect.tsx';
 
-export function cn(...inputs) {
-  return twMerge(clsx(inputs));
-}
+export const cn = (...inputs) => twMerge(clsx(inputs));
 
-const HomePage = () => {
+const HomePage = React.memo(() => {
   const [user, setUser] = useState(null);
   const [projects, setProjects] = useState([]);
-  const [totalSessionTime, setTotalSessionTime] = useState({});
+  const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [weeklyTrackedTime, setWeeklyTrackedTime] = useState(0);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [startAnimation, setStartAnimation] = useState(false);
   const navigate = useNavigate();
   const fabRef = useRef(null);
   const scrollTimeout = useRef(null);
+  const motivationalSectionRef = useRef(null);
 
-  useEffect(() => {
-    const h1 = document.querySelector('.motivational-section h1');
-    if (h1) {
-      h1.classList.add('loaded');
+  const fetchData = useCallback(async (uid) => {
+    setLoading(true);
+    try {
+      const projectsRef = collection(db, 'projects');
+      const projectQuery = query(projectsRef, where('userId', '==', uid));
+      const projectSnapshot = await getDocs(projectQuery);
+      const userProjects = projectSnapshot.docs.map((doc) => ({
+        id: doc.id,
+        name: doc.data().name,
+        imageUrl: doc.data().imageUrl,
+      }));
+      setProjects(userProjects);
+
+      const sessionRef = collection(db, 'sessions');
+      const sessionQuery = query(sessionRef, where('userId', '==', uid));
+      const sessionSnapshot = await getDocs(sessionQuery);
+      const userSessions = sessionSnapshot.docs.map((doc) => doc.data());
+      setSessions(userSessions);
+    } catch (error) {
+      console.error('Error fetching data:', error.message);
+    } finally {
+      setLoading(false);
+      console.log('Data fetching complete.');
     }
   }, []);
 
@@ -48,74 +70,41 @@ const HomePage = () => {
         fetchData(currentUser.uid);
       }
     });
-
     return () => unsubscribe();
-  }, [navigate]);
+  }, [navigate, fetchData]);
 
+  const totalSessionTime = useMemo(() => {
+    return sessions.reduce((acc, session) => {
+      const project = session.project || 'Unknown Project';
+      acc[project] = (acc[project] || 0) + (session.elapsedTime || 0);
+      return acc;
+    }, {});
+  }, [sessions]);
 
+  const weeklyTrackedTime = useMemo(() => {
+    return sessions.reduce((sum, session) => sum + (session.elapsedTime || 0), 0);
+  }, [sessions]);
 
-  const fetchData = async (uid) => {
-    setLoading(true);
-    try {
-      // Fetch Projects
-      const projectsRef = collection(db, 'projects');
-      const projectQuery = query(projectsRef, where('userId', '==', uid));
-      const projectSnapshot = await getDocs(projectQuery);
-      const userProjects = projectSnapshot.docs.map((doc) => ({
-        id: doc.id,
-        name: doc.data().name,
-        imageUrl: doc.data().imageUrl, // Include imageUrl
-      }));
-      setProjects(userProjects);
-
-      // Fetch Sessions
-      const sessionRef = collection(db, 'sessions');
-      const sessionQuery = query(sessionRef, where('userId', '==', uid));
-      const sessionSnapshot = await getDocs(sessionQuery);
-
-      const sessions = sessionSnapshot.docs.map((doc) => doc.data());
-
-      // Calculate total time per project
-      const timeByProject = sessions.reduce((acc, session) => {
-        const project = session.project || 'Unknown Project';
-        acc[project] = (acc[project] || 0) + (session.elapsedTime || 0); // Add elapsedTime in seconds
-        return acc;
-      }, {});
-
-      setTotalSessionTime(timeByProject);
-
-      // Calculate total tracked time for all projects this week
-      const totalWeeklyTime = sessions.reduce(
-        (sum, session) => sum + (session.elapsedTime || 0),
-        0
-      );
-      setWeeklyTrackedTime(totalWeeklyTime);
-    } catch (error) {
-      console.error('Error fetching data:', error.message);
-    } finally {
-      setLoading(false);
-      setStartAnimation(true);
-    }
-  };
-
-  const handleLogout = async () => {
+  const handleLogout = useCallback(async () => {
     try {
       await signOut(auth);
       navigate('/');
     } catch (error) {
       console.error('Logout Error:', error.message);
     }
-  };
+  }, [navigate]);
 
-  const openSidebar = () => setIsSidebarOpen(true);
-  const closeSidebar = () => setIsSidebarOpen(false);
+  const openSidebar = useCallback(() => setIsSidebarOpen(true), []);
+  const closeSidebar = useCallback(() => setIsSidebarOpen(false), []);
 
-  const today = new Date().toLocaleDateString('en-GB', {
-    weekday: 'short',
-    day: 'numeric',
-    month: 'long',
-    timeZone: 'Europe/Brussels',
-  });
+  const today = useMemo(() => {
+    return new Date().toLocaleDateString('en-GB', {
+      weekday: 'short',
+      day: 'numeric',
+      month: 'long',
+      timeZone: 'Europe/Brussels',
+    });
+  }, []);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -126,18 +115,55 @@ const HomePage = () => {
           if (fabRef.current) {
             fabRef.current.classList.remove('scrolling');
           }
-        }, 300); // Adjust the timeout to match the transition duration
+        }, 300);
       }
     };
 
     window.addEventListener('scroll', handleScroll);
-
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const getInitials = (name) => {
-    return name.trim().charAt(0).toUpperCase();
-  };
+  const getInitials = useCallback((name) => name.trim().charAt(0).toUpperCase(), []);
+
+  const renderProjectImage = useCallback(
+    (project) =>
+      project.imageUrl ? (
+        <img src={project.imageUrl} alt={project.name} className="project-image" />
+      ) : (
+        <div className="default-project-image" style={{ backgroundColor: '#FE2F00' }}>
+          <span>{getInitials(project.name || 'P')}</span>
+        </div>
+      ),
+    [getInitials]
+  );
+
+  const renderProjects = useMemo(() => {
+    if (loading) {
+      return <p>Loading your projects...</p>;
+    } else if (projects.length > 0) {
+      return (
+        <ul className="projects-list">
+          {projects.map((project) => (
+            <li
+              key={project.id}
+              className="project-item"
+              onClick={() => navigate(`/project/${project.id}`)}
+            >
+              <div className="project-image-container">{renderProjectImage(project)}</div>
+              <div className="project-name">{project.name}</div>
+              <div className="project-total-time">
+                {formatTime(totalSessionTime[project.name] || 0)}
+              </div>
+            </li>
+          ))}
+        </ul>
+      );
+    } else {
+      return <p>No projects found. Start tracking to see results here!</p>;
+    }
+  }, [loading, projects, navigate, totalSessionTime, renderProjectImage]);
+
+  console.log('HomePage rendered. Loading:', loading);
 
   return (
     <div className="homepage">
@@ -148,67 +174,30 @@ const HomePage = () => {
               src={user?.photoURL || '/default-profile.png'}
               alt="Profile"
               className="profile-pic"
-              onClick={openSidebar} // Open the sidebar on profile pic click
+              onClick={openSidebar}
             />
           </div>
         )}
       </Header>
 
       <main className="homepage-content">
-        <section className="motivational-section">
-          {startAnimation && ( // Conditionally render TextGenerateEffect
-            weeklyTrackedTime > 0 ? (
-              <TextGenerateEffect
-                words={`This moment is\n progress. You\n tracked <span class="accent-text">${formatTime(
-                  weeklyTrackedTime
-                )}</span>\n this week.`}
-              />
-            ) : (
-              <TextGenerateEffect
-                words={`Every journey begins with one moment.\nTell me about your project ...`}
-              />
-            )
+        <section className="motivational-section" ref={motivationalSectionRef}>
+          {!loading && (
+            <TextGenerateEffect
+              words={
+                weeklyTrackedTime > 0
+                  ? `This moment is\n progress. You\n tracked <span class="accent-text">${formatTime(
+                      weeklyTrackedTime
+                    )}</span>\n this week.`
+                  : `Every journey begins with one moment.\nTell me about your project ...`
+              }
+            />
           )}
         </section>
 
         <section className="projects-section">
           <h2 className="projects-label">Your projects</h2>
-          {loading ? (
-            <p>Loading your projects...</p>
-          ) : projects.length > 0 ? (
-            <ul className="projects-list">
-              {projects.map((project) => (
-                <li
-                  key={project.id}
-                  className="project-item"
-                  onClick={() => navigate(`/project/${project.id}`)}
-                >
-                  <div className="project-image-container">
-                    {project.imageUrl ? (
-                      <img
-                        src={project.imageUrl}
-                        alt={project.name}
-                        className="project-image"
-                      />
-                    ) : (
-                      <div
-                        className="default-project-image"
-                        style={{ backgroundColor: '#FE2F00' }}
-                      >
-                        <span>{getInitials(project.name || 'P')}</span>
-                      </div>
-                    )}
-                  </div>
-                  <div className="project-name">{project.name}</div>
-                  <div className="project-total-time">
-                    {formatTime(totalSessionTime[project.name] || 0)}
-                  </div>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p>No projects found. Start tracking to see results here!</p>
-          )}
+          {renderProjects}
           <button
             className="track-project-button"
             onClick={() => navigate('/create-project')}
@@ -229,6 +218,8 @@ const HomePage = () => {
       )}
     </div>
   );
-};
+});
+
+HomePage.displayName = 'HomePage';
 
 export default HomePage;
