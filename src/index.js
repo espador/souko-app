@@ -1,7 +1,8 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import './styles/global.css';
-import App from './App'; // Import App component
+import App from './App';
+import * as serviceWorkerRegistration from './serviceWorkerRegistration'; // Import the service worker registration
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 
@@ -10,3 +11,9 @@ root.render(
     <App />
   </React.StrictMode>
 );
+
+// Register the service worker
+serviceWorkerRegistration.register();
+
+// If you want to unregister the service worker (for development or specific reasons), you can use:
+// serviceWorkerRegistration.unregister();
