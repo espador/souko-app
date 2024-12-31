@@ -137,7 +137,7 @@
 }
 
 .button:hover {
-  background-color: #00cc00; /* Darker shade of accent */
+  background-color: var(--card-background); /* Darker shade of accent */
 }
 
 .loading {

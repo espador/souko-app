@@ -30,11 +30,12 @@
   border: none;
   background: none;
   cursor: pointer;
+  padding: 0px;
 }
 
 .close-button-container {
   display: flex; /* Or other layout method */
-  justify-content: flex-end; /* Example: Align to the right */
+  justify-content: flex-start; /* Example: Align to the right */
   margin-bottom: 20px; /* Add margin below the close button */
   }
 

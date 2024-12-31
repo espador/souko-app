@@ -38,12 +38,12 @@ const SessionOverviewPage = () => {
     <div className="session-overview-page">
       <section className="motivational-section">
         <TextGenerateEffect
-          words={`For <span class="accent-text">${formattedTime}</span>,\n you lived the\n now! Honoring the simplicity\n of being.`}
+          words={`For <span class="accent-text">${formattedTime}</span>, you lived the\n now! Honoring the simplicity\n of being.`}
         />
       </section>
 
       <div className="overview-actions">
-        <button className="button primary-button" onClick={handleStartNewSession}>
+        <button className="button secondary-button" onClick={handleStartNewSession}>
           Start a new session
         </button>
         <button className="button secondary-button" onClick={handleOpenProjectDetails} disabled={!projectId}>

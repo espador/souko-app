@@ -1,15 +1,14 @@
 /* SessionOverviewPage.css */
 .session-overview-page {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-start;
-  min-height: 100vh;
+  /* padding: 24px;  Keep padding for content spacing */
+  margin: 0 auto;
+  max-width: 600px;
   background-color: var(--background-color);
   color: var(--text-color);
-  padding: 24px;
+  /* min-height: 100vh; Remove this as body should handle the viewport height */
+  display: flex;
   margin-top: 40px;
-  box-sizing: border-box;
+  flex-direction: column; /* Ensure content flows vertically */
 }
 
 .overview-container {
@@ -28,10 +27,6 @@
   line-height: 40px;
   margin-top: 0;
   margin-bottom: 24px;
-}
-
-.overview-quote .overview-time {
-  color: var(--accent-color);
 }
 
 .overview-actions {
@@ -71,9 +66,10 @@
 
 .disabled {
   color: var(--text-muted);
+   background-color: var(--background-color);
   cursor: not-allowed;
   font-weight: 400;
-  opacity: 0.6; /* Indicate disabled state */
+  opacity: 0.3; /* Indicate disabled state */
 }
 
 .motivational-section .tracked-time {

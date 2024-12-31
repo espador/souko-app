@@ -197,30 +197,6 @@ body.allow-scroll {
   color: var(--accent-color);
 }
 
-/* FAB styles are now in global.css */
-
-.fab {
-  position: fixed;
-  bottom: 64px; /* Adjusted bottom */
-  right: 24px;
-  width: 64px;
-  height: 64px;
-  border-radius: 50%;
-  background-color: transparent;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  cursor: pointer;
-  padding: 0; /* Keep padding at 0 */
-  transition: opacity 0.3s ease-in-out;
-  opacity: 1;
-  color: transparent;
-}
-
-.fab.scrolling {
-  opacity: 0.0;
-}
-
 .fab-icon {
   width: 100%; /* Make the icon take full width of the FAB */
   height: 100%; /* Make the icon take full height of the FAB */

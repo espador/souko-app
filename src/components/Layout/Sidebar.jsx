@@ -1,7 +1,7 @@
 // src/components/Sidebar.jsx
 import React from 'react';
 import '../../styles/components/Sidebar.css';
-import { ReactComponent as ReturnIcon } from '../../styles/components/assets/return.svg';
+import { ReactComponent as CloseIcon } from '../../styles/components/assets/close.svg';
 
 const Sidebar = ({ isOpen, onClose, onLogout }) => {
   return (
@@ -9,7 +9,7 @@ const Sidebar = ({ isOpen, onClose, onLogout }) => {
       <div className="sidebar-content">
         <div className="close-button-container"> {/* New div for the close button */}
           <button className="close-button" onClick={onClose}>
-            <ReturnIcon className="close-icon" /> {/* Renamed class to "close-icon" */}
+            <CloseIcon className="close-icon" /> {/* Renamed class to "close-icon" */}
           </button>
         </div>
         <h1>Every journey begins with one moment.</h1>
