@@ -3,25 +3,35 @@
   display: flex;
   justify-content: space-between;
   margin-top: 24px;
-  height: 88px;
+  margin-left: 0px;
+  height: 64px;
   width: 100%;
   z-index: 10;
   background-color: var(--background-color);
+  color: var(--accent-color);
   position: sticky;
   top: 0px;
-  /* Remove justify-content: space-between if you want the left section to stay on the left */
 }
 
 .header-left-section {
   display: flex;
   align-items: center;
+  color: var(--accent-color);
 }
 
 .header-title {
-  /* Removed explicit font-family, will inherit from global styles */
   font-weight: 400;
   color: var(--text-muted);
   font-size: 16px;
+  line-height: 20px;
+  margin: 0px; /* Add some right margin to separate from the time */
+}
+
+.header-live-time {
+  align-items: center;
+  font-weight: 400; /* Make it stand out a bit */
+  color: #43404C; /* Or a specific color for the time */
+  font-size: 20px; /* Adjust the size as needed */
   line-height: 20px;
   margin: 0px;
 }

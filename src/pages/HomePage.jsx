@@ -7,7 +7,7 @@ import React, {
   useMemo,
 } from 'react';
 import { auth, db } from '../services/firebase';
-import { onAuthStateChanged, signOut } from 'firebase/auth';
+import { onAuthStateChanged, signOut } from 'firebase/auth'; // Ensure signOut is imported here
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import { useNavigate } from 'react-router-dom';
 import { formatTime } from '../utils/formatTime';
@@ -97,15 +97,6 @@ const HomePage = React.memo(() => {
   const openSidebar = useCallback(() => setIsSidebarOpen(true), []);
   const closeSidebar = useCallback(() => setIsSidebarOpen(false), []);
 
-  const today = useMemo(() => {
-    return new Date().toLocaleDateString('en-GB', {
-      weekday: 'short',
-      day: 'numeric',
-      month: 'long',
-      timeZone: 'Europe/Brussels',
-    });
-  }, []);
-
   useEffect(() => {
     const handleScroll = () => {
       if (fabRef.current) {
@@ -167,7 +158,7 @@ const HomePage = React.memo(() => {
 
   return (
     <div className="homepage">
-      <Header title={today} user={user}>
+      <Header user={user} showLiveTime={true}>
         {user && (
           <div className="dropdown-wrapper">
             <img
