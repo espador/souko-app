@@ -1,0 +1,33 @@
+/* src/components/Journal/JournalConfirmation.css */
+.journal-confirmation-container {
+    text-align: center;
+    padding: 20px;
+  }
+  
+  .journal-confirmation-quote {
+    font-size: 16px; /* Adjust as needed */
+    line-height: 1.6;
+    margin-bottom: 20px;
+  }
+  
+  .journal-confirmation-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 10px; /* Spacing between buttons */
+    margin-top: 20px;
+  }
+  
+  .journal-confirmation-button {
+    padding: 12px 24px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background-color: transparent;
+    color: var(--text-color);
+    cursor: pointer;
+    font-family: var(--font-commit-mono);
+    text-decoration: none; /* Remove default link styling */
+  }
+  
+  .journal-confirmation-button.journal-overview-link {
+      /* Add specific styles for the overview link if needed */
+  }

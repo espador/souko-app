@@ -7,7 +7,7 @@ import React, {
   useMemo,
 } from 'react';
 import { auth, db } from '../services/firebase';
-import { onAuthStateChanged, signOut } from 'firebase/auth'; // Ensure signOut is imported here
+import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import { useNavigate } from 'react-router-dom';
 import { formatTime } from '../utils/formatTime';
@@ -21,6 +21,7 @@ import '../styles/components/Sidebar.css';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { TextGenerateEffect } from '../styles/components/text-generate-effect.tsx';
+import JournalSection from '../components/Journal/JournalSection';
 
 export const cn = (...inputs) => twMerge(clsx(inputs));
 
@@ -28,6 +29,7 @@ const HomePage = React.memo(() => {
   const [user, setUser] = useState(null);
   const [projects, setProjects] = useState([]);
   const [sessions, setSessions] = useState([]);
+  const [journalEntries, setJournalEntries] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const navigate = useNavigate();
@@ -53,6 +55,18 @@ const HomePage = React.memo(() => {
       const sessionSnapshot = await getDocs(sessionQuery);
       const userSessions = sessionSnapshot.docs.map((doc) => doc.data());
       setSessions(userSessions);
+
+      // Fetch Journal Entries
+      const journalRef = collection(db, 'journals');
+      const journalQuery = query(journalRef, where('userId', '==', uid));
+      const journalSnapshot = await getDocs(journalQuery);
+      const userJournalEntries = journalSnapshot.docs.map((doc) => ({
+        ...doc.data(),
+        id: doc.id,
+      }));
+      setJournalEntries(userJournalEntries);
+
+
     } catch (error) {
       console.error('Error fetching data:', error.message);
     } finally {
@@ -143,7 +157,10 @@ const HomePage = React.memo(() => {
               <div className="project-image-container">{renderProjectImage(project)}</div>
               <div className="project-name">{project.name}</div>
               <div className="project-total-time">
-                {formatTime(totalSessionTime[project.name] || 0)}
+                {
+                  totalSessionTime && totalSessionTime[project.name] !== undefined ?
+                  formatTime(totalSessionTime[project.name]) : formatTime(0)
+                }
               </div>
             </li>
           ))}
@@ -186,8 +203,14 @@ const HomePage = React.memo(() => {
           )}
         </section>
 
+        {/* Render JournalSection component here, above projects-section */}
+        <JournalSection journalEntries={journalEntries} />
+
         <section className="projects-section">
-          <h2 className="projects-label">Your projects</h2>
+          <div className="projects-header">
+            <h2 className="projects-label">Your projects</h2>
+            <div className="projects-all-link">All</div>
+          </div>
           {renderProjects}
           <button
             className="track-project-button"

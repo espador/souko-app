@@ -1,14 +1,12 @@
 /* HomePage.css */
 
 .homepage {
-  /* padding: 24px;  Keep padding for content spacing */
   margin: 0 auto;
   max-width: 600px;
   background-color: var(--background-color);
   color: var(--text-color);
-  /* min-height: 100vh; Remove this as body should handle the viewport height */
   display: flex;
-  flex-direction: column; /* Ensure content flows vertically */
+  flex-direction: column;
 }
 
 body.allow-scroll html {
@@ -24,22 +22,21 @@ body.allow-scroll {
   display: flex;
   flex-direction: column;
   gap: 16px;
-  flex: 0; /* Allow content to grow and take available space */
+  flex: 0;
 }
 
 .motivational-section {
   margin-bottom: 0px;
-  /* Removed explicit font-family, will inherit from global styles */
   color: var(--text-muted);
   font-size: 32px;
   line-height: 40px;
   text-align: left;
   color: var(--text-color);
-  overflow: hidden; /* Added for text generate effect */
+  overflow: hidden;
 }
 
 .motivational-section h1 {
-  margin: 0; /* Reset default h1 margins if needed */
+  margin: 0;
 }
 
 .motivational-section .word {
@@ -59,64 +56,60 @@ body.allow-scroll {
   transform: translateY(0%);
 }
 
-/* Example for staggering effect */
-.motivational-section h1 .word:nth-child(1) .letter {
-  transition-delay: 0.05s;
+/* Staggering effect example */
+.motivational-section h1 .word:nth-child(n) .letter {
+  transition-delay: calc(0.05s * n);
 }
-.motivational-section h1 .word:nth-child(2) .letter {
-  transition-delay: 0.1s;
-}
-.motivational-section h1 .word:nth-child(3) .letter {
-  transition-delay: 0.15s;
-}
-.motivational-section h1 .word:nth-child(4) .letter {
-  transition-delay: 0.20s;
-}
-.motivational-section h1 .word:nth-child(5) .letter {
-  transition-delay: 0.25s;
-}
-.motivational-section h1 .word:nth-child(6) .letter {
-  transition-delay: 0.30s;
-}
-.motivational-section h1 .word:nth-child(7) .letter {
-  transition-delay: 0.35s;
-  color: var(--accent-color);
-}
-.motivational-section h1 .word:nth-child(8) .letter {
-  transition-delay: 0.40s;
-}
-.motivational-section h1 .word:nth-child(9) .letter {
-  transition-delay: 0.45s;
-}
-.motivational-section h1 .word:nth-child(10) .letter {
-  transition-delay: 0.50s;
-}
-/* Add more nth-child selectors as needed */
 
-/* Specific styling for the tracked-time span */
+/* Specific styling for tracked-time span */
 .motivational-section h1 .tracked-time {
-  display: inline-block; /* Or consider other display properties */
+  display: inline-block;
   color: var(--accent-color);
   font-weight: 400;
-  /* Add any specific styling for the time here */
 }
 .motivational-section h1 .tracked-time .letter {
-    transition-delay: 0.6s; /* Example delay after the preceding text */
+    transition-delay: 0.6s;
 }
 
-.projects-section {
+.projects-section, .journal-section { /* Apply section header styling to both */
   display: flex;
   flex-direction: column;
-  /* Removed explicit font-family, will inherit from global styles */
   font-weight: 400;
   font-size: 16px;
   line-height: 20px;
   gap: 16px;
 }
 
+.projects-header, .journal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+
+.projects-all-link, .journal-all-link {
+    font-size: 16px;
+    color: var(--text-muted);
+    font-family: var(--font-commit-mono);
+    cursor: pointer;
+}
+
+.projects-all-link:hover, .journal-all-link:hover {
+    color: var(--text-color);
+}
+
+
+.projects-label, .journal-label {
+  font-size: 16px;
+  color: var(--text-muted);
+  font-family: var(--font-commit-mono);
+  margin-bottom: 0;
+}
+
+
 .projects-list {
   list-style: none;
-  /* Removed explicit font-family, will inherit from global styles */
   color: var(--text-color);
   font-size: 20px;
   line-height: 24px;
@@ -126,17 +119,16 @@ body.allow-scroll {
 
 .project-item {
   display: flex;
-  align-items: center; /* Align image and text vertically */
+  align-items: center;
   background-color: var(--card-background);
   border-radius: 12px;
   padding: 16px;
   margin-bottom: 16px;
-  cursor: pointer; /* Indicate it's clickable */
-  /* Removed explicit font-family, will inherit from global styles */
+  cursor: pointer;
   font-weight: 400;
   font-size: 16px;
   line-height: 20pt;
-  gap: 16px; /* Space between image and text */
+  gap: 16px;
 }
 
 .project-image-container {
@@ -169,11 +161,10 @@ body.allow-scroll {
 }
 
 .project-name {
-  flex-grow: 1; /* Allow project name to take available space */
+  flex-grow: 1;
 }
 
 .project-total-time {
-  /* Removed explicit font-family, will inherit from global styles */
   font-weight: 400;
   color: var(--text-color);
   font-size: 16px;
@@ -185,7 +176,6 @@ body.allow-scroll {
   border: 1px solid var(--card-background);
   border-radius: 12px;
   text-align: center;
-  /* Removed explicit font-family, will inherit from global styles */
   font-size: 16px;
   color: var(--text-color);
   padding: 16px;
@@ -198,8 +188,8 @@ body.allow-scroll {
 }
 
 .fab-icon {
-  width: 100%; /* Make the icon take full width of the FAB */
-  height: 100%; /* Make the icon take full height of the FAB */
+  width: 100%;
+  height: 100%;
 }
 
 .motivational-section .tracked-time {
@@ -208,28 +198,23 @@ body.allow-scroll {
 }
 
 .project-label {
-  /* Removed explicit font-family, will inherit from global styles */
   font-size: 16px;
   color: var(--text-color);
 }
 
-h2 {
-  /* Your desired styles for all h2 elements */
-  /* Removed explicit font-family, will inherit from global styles */
-  font-weight: 400;
-  color: var(--text-color);
+h2.projects-label, h2.journal-label {
   font-size: 16px;
-  line-height: 20px;
-  margin-bottom: 8px;
-  /* ... other styles ... */
+  color: var(--text-muted);
+  font-family: var(--font-commit-mono);
+  margin-bottom: 0;
+  margin-top: 0;
 }
 
-/* Override global overflow: hidden for pages that need scrolling */
 body.allow-scroll > html {
-  overflow: auto; /* Or overflow-y: auto; if you only need vertical scrolling */
-  height: auto; /* Reset the height to allow content to expand */
+  overflow: auto;
+  height: auto;
 }
 
 body.allow-scroll {
-  overflow-y: auto; /* Ensure body can also scroll */
+  overflow-y: auto;
 }

@@ -9,8 +9,12 @@
         "eject": "react-scripts eject"
     },
     "dependencies": {
+        "@emotion/react": "^11.14.0",
+        "@emotion/styled": "^11.14.0",
         "@fontsource/shippori-mincho": "^5.1.0",
+        "@mui/material": "^6.4.2",
         "clsx": "^2.1.1",
+        "date-fns": "^4.1.0",
         "firebase": "^11.1.0",
         "framer-motion": "^11.15.0",
         "react": "^18.2.0",

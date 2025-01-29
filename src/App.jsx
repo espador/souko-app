@@ -8,6 +8,9 @@ import CreateProjectPage from './pages/CreateProjectPage';
 import ProjectDetailPage from './pages/ProjectDetailPage';
 import SessionDetailPage from './pages/SessionDetailPage';
 import SessionOverviewPage from './pages/SessionOverviewPage'; // Import the new component
+// Import JournalCountdown and JournalForm components
+import JournalCountdown from './components/Journal/JournalCountdown';
+import JournalForm from './components/Journal/JournalForm';
 
 const App = () => {
   return (
@@ -20,6 +23,9 @@ const App = () => {
         <Route path="/project/:projectId" element={<ProjectDetailPage />} />
         <Route path="/session/:sessionId" element={<SessionDetailPage />} />
         <Route path="/session-overview" element={<SessionOverviewPage />} /> {/* Add the route for the overview page */}
+        {/* Add routes for JournalCountdown and JournalForm */}
+        <Route path="/journal-countdown" element={<JournalCountdown />} />
+        <Route path="/journal-form" element={<JournalForm />} />
       </Routes>
     </Router>
   );

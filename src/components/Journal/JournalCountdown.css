@@ -1,0 +1,66 @@
+/* src/components/Journal/JournalCountdown.css */
+.journal-countdown-page { /* Changed container class name to page */
+  margin: 0 auto;
+  max-width: 600px;
+  background-color: var(--background-color);
+  color: var(--text-color);
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh; /* Ensure full viewport height */
+}
+
+.journal-countdown-content { /* Added main content container */
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.motivational-section { /* Added motivational section for consistent styling */
+  margin-bottom: 0px;
+  /* Removed explicit font-family, will inherit from global styles */
+  color: var(--text-muted);
+  font-size: 32px;
+  line-height: 40px;
+  text-align: left;
+  color: var(--text-color);
+}
+
+.journal-countdown-quote {
+  line-height: 1.4;
+  margin-bottom: 32px; /* Increased margin below quote */
+  font-weight: 400; /* Set font weight to normal */
+  color: var(--text-color); /* Ensure text color is correct */
+  font-family: var(--font-commit-mono), monospace; /* Ensure font family is correct */
+}
+
+#countdown-timer {
+  color: var(--accent-color); /* Use your accent color */
+}
+
+.journal-countdown-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 16px; /* Increased spacing between buttons */
+  width: 100%; /* Make buttons full width */
+  max-width: 300px; /* Limit button width if needed */
+}
+
+.journal-countdown-button {
+  padding: 16px 24px; /* Increased padding for buttons */
+  border: 1px solid var(--card-background);
+  border-radius: 12px;
+  background-color: transparent;
+  color: var(--text-color);
+  cursor: pointer;
+  font-family: var(--font-commit-mono);
+  font-size: 16px; /* Ensure font size is consistent */
+  text-align: center; /* Center text in button */
+}
+
+h1 { 
+  color: var(--text-muted);
+  font-size: 32px;
+  line-height: 40px;
+  text-align: left;
+  color: var(--text-color);
+  }

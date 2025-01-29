@@ -1,7 +1,9 @@
-// src/firebase/firebase.js
+// src/services/firebase.js
 import { initializeApp } from 'firebase/app';
-import { getFirestore, collection, query, where, getDocs, addDoc } from 'firebase/firestore';
+import { getFirestore, collection, query, where, getDocs, addDoc, doc, updateDoc, deleteDoc, getDoc, serverTimestamp } from 'firebase/firestore'; // Import necessary Firestore functions
 import { getAuth, GoogleAuthProvider } from 'firebase/auth';
+// REMOVED INCORRECT IMPORT! - Ensure this line is REMOVED
+// import logEvent from './utils/logEvent';
 
 // Firebase configuration
 const firebaseConfig = {
@@ -136,6 +138,112 @@ const refreshUserProjects = async (userId) => {
   }
 };
 
+// -------------------- Journal Entry Functions --------------------
+
+// Function to add a new journal entry
+const addJournalEntry = async (userId, mood, reflection, future) => {
+  if (!userId || !mood) {
+    throw new Error('User ID and mood are required for a journal entry.');
+  }
+
+  try {
+    const docRef = await addDoc(collection(db, 'journalEntries'), {
+      userId,
+      mood: mood, // Use 'mood' as field name
+      reflection: reflection || '', // Use 'reflection' for textField1
+      future: future || '', // Use 'future' for textField2
+      timestamp: serverTimestamp(), // Add server timestamp
+    });
+    console.log('Journal entry added with ID:', docRef.id);
+    return docRef.id;
+  } catch (error) {
+    console.error("Error adding journal entry:", error);
+    throw error;
+  }
+};
+
+// Function to update an existing journal entry
+const updateJournalEntry = async (journalEntryId, mood, reflection, future) => {
+  if (!journalEntryId) {
+    throw new Error('Journal entry ID is required to update.');
+  }
+
+  try {
+    const journalEntryRef = doc(db, 'journalEntries', journalEntryId);
+    await updateDoc(journalEntryRef, {
+      mood: mood, // Use 'mood' as field name
+      reflection: reflection || '', // Use 'reflection' for textField1
+      future: future || '', // Use 'future' for textField2
+      timestamp: serverTimestamp(), // Update timestamp on save
+    });
+    console.log('Journal entry updated with ID:', journalEntryId);
+  } catch (error) {
+    console.error("Error updating journal entry:", error);
+    throw error;
+  }
+};
+
+// Function to delete a journal entry
+const deleteJournalEntry = async (journalEntryId) => {
+  if (!journalEntryId) {
+    throw new Error('Journal entry ID is required to delete.');
+  }
+
+  try {
+    const journalEntryRef = doc(db, 'journalEntries', journalEntryId);
+    await deleteDoc(journalEntryRef);
+    console.log('Journal entry deleted with ID:', journalEntryId);
+  } catch (error) {
+    console.error("Error deleting journal entry:", error);
+    throw error;
+  }
+};
+
+// Function to fetch a journal entry by ID
+const fetchJournalEntryById = async (journalEntryId) => {
+  if (!journalEntryId) {
+    throw new Error('Journal entry ID is required to fetch.');
+  }
+
+  try {
+    const journalEntrySnap = await getDoc(doc(db, 'journalEntries', journalEntryId));
+    if (journalEntrySnap.exists()) {
+      return { id: journalEntrySnap.id, ...journalEntrySnap.data() };
+    } else {
+      console.log("Journal entry not found");
+      return null;
+    }
+  } catch (error) {
+    console.error("Error fetching journal entry:", error);
+    throw error;
+  }
+};
+
+// Function to fetch all journal entries for a user
+const fetchJournalEntriesForUser = async (userId) => {
+  if (!userId) {
+    throw new Error('User ID is required to fetch journal entries.');
+  }
+
+  try {
+    const journalEntriesRef = collection(db, 'journalEntries');
+    const q = query(journalEntriesRef, where('userId', '==', userId));
+    const querySnapshot = await getDocs(q);
+
+    const journalEntries = querySnapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+
+    console.log('Journal entries fetched for user:', userId);
+    return journalEntries;
+  } catch (error) {
+    console.error("Error fetching journal entries for user:", error);
+    throw error;
+  }
+};
+
+
 export {
   auth,
   googleProvider,
@@ -146,4 +254,9 @@ export {
   addSession,
   refreshUserProjects,
   app,
+  addJournalEntry, // Export new journal entry functions
+  updateJournalEntry,
+  deleteJournalEntry,
+  fetchJournalEntryById,
+  fetchJournalEntriesForUser,
 };
