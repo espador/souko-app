@@ -38,7 +38,6 @@
 .header-profile {
   display: flex;
   align-items: center;
-  margin-right: 16px; /* Add some right margin for spacing */
 }
 
 .profile-pic {

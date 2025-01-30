@@ -48,7 +48,7 @@
 }
 
 .day-button {
-  background-color: var(--card-background);
+  background-color: var(--background-color);
   border: none;
   border-radius: 50%;
   width: 35px; /* Adjusted to 35px */
@@ -69,8 +69,7 @@
 }
 
 .day-button-today {
-  border: 2px solid var(--accent-color);
-  background-color: var(--card-background-lighter);
+  background-color: var(--background-color);
 }
 
 .day-button-filled {
@@ -82,29 +81,28 @@
 }
 
 .day-button-past-unfilled {
-    background-color: var(--card-background);
+  background-color: var(--background-color);
 }
 
 .day-button-future {
-    background-color: var(--card-background);
+  background-color: var(--background-color);
     opacity: 0.5;
     cursor: not-allowed;
 }
 
 .day-button-future:hover {
-    background-color: var(--card-background);
+  background-color: var(--background-color);
     opacity: 0.5;
 }
 
 
 .mood-icon {
-  width: 20px; /* Adjusted icon size if needed */
-  height: 20px; /* Adjusted icon size if needed */
-  fill: var(--card-background);
+    width: 35px;
+    height: 35px;
 }
 
 .day-button-filled .mood-icon {
-    fill: var(--card-background);
+  background-color: var(--background-color);
 }
 
 .day-button-today .mood-icon {

@@ -3,15 +3,15 @@ import React, { useState, useEffect, useCallback } from 'react';
 import './JournalSection.css';
 import { useNavigate } from 'react-router-dom';
 import { format, startOfWeek, addDays } from 'date-fns';
-import JournalCountdown from './JournalCountdown';
 
-import { ReactComponent as MoodNeutral } from '../../styles/components/assets/mood-neutral.svg';
-import { ReactComponent as MoodInspired } from '../../styles/components/assets/mood-inspired.svg';
-import { ReactComponent as MoodFocused } from '../../styles/components/assets/mood-focused.svg';
-import { ReactComponent as MoodUnmotivated } from '../../styles/components/assets/mood-unmotivated.svg';
-import { ReactComponent as MoodFrustrated } from '../../styles/components/assets/mood-frustrated.svg';
-import { ReactComponent as JournalUnfilledIcon } from '../../styles/components/assets/journal-future.svg';
-import { ReactComponent as JournalLoadingIcon } from '../../styles/components/assets/journal-loading.svg';
+// PNG Imports instead of ReactComponents from SVG
+import MoodNeutral from '../../styles/components/assets/mood-neutral.png';
+import MoodInspired from '../../styles/components/assets/mood-inspired.png';
+import MoodFocused from '../../styles/components/assets/mood-focused.png';
+import MoodUnmotivated from '../../styles/components/assets/mood-unmotivated.png';
+import MoodFrustrated from '../../styles/components/assets/mood-frustrated.png';
+import JournalUnfilledIcon from '../../styles/components/assets/journal-future.png';
+import JournalLoadingIcon from '../../styles/components/assets/journal-loading.png';
 
 const moodIcons = {
   neutral: MoodNeutral,
@@ -21,7 +21,12 @@ const moodIcons = {
   frustrated: MoodFrustrated,
 };
 
-const JournalSection = React.memo(({ journalEntries = [] }) => {
+console.log("JournalSection - moodIcons object:", moodIcons);
+
+const JournalSection = React.memo(({ journalEntries = [], loading }) => {
+  console.log("JournalSection - journalEntries prop:", journalEntries);
+  console.log("JournalSection - loading prop:", loading);
+
   const [currentTime, setCurrentTime] = useState(new Date());
   const [isJournalAvailable, setIsJournalAvailable] = useState(false);
   const navigate = useNavigate();
@@ -29,10 +34,7 @@ const JournalSection = React.memo(({ journalEntries = [] }) => {
   const startOfCurrentWeek = startOfWeek(today, { weekStartsOn: 1 });
 
   useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentTime(new Date());
-    }, 60 * 1000);
-
+    const timer = setInterval(() => setCurrentTime(new Date()), 60 * 1000);
     return () => clearInterval(timer);
   }, []);
 
@@ -41,76 +43,94 @@ const JournalSection = React.memo(({ journalEntries = [] }) => {
     setIsJournalAvailable(currentHour >= 18 || currentHour < 2);
   }, [currentTime]);
 
-  const getDayButtonStyle = useCallback((dayDate, entryForDay) => {
-    const formattedDayDate = format(dayDate, 'yyyy-MM-dd');
-    const formattedToday = format(today, 'yyyy-MM-dd');
-    if (formattedDayDate === formattedToday) {
-      return 'day-button day-button-today';
-    } else if (entryForDay) {
-      return 'day-button day-button-filled';
-    } else if (dayDate < today) {
-      return 'day-button day-button-past-unfilled';
-    }
-    return 'day-button day-button-future';
-  }, [today]);
+  const handleDayClick = useCallback(
+    (index) => {
+      const dayDate = addDays(startOfCurrentWeek, index);
+      const todayDate = new Date();
+      todayDate.setHours(0, 0, 0, 0);
+      dayDate.setHours(0, 0, 0, 0);
 
-  const handleDayClick = useCallback((index) => {
-    const dayDate = addDays(startOfCurrentWeek, index);
-    const isToday = format(dayDate, 'yyyy-MM-dd') === format(today, 'yyyy-MM-dd');
+      const isToday = dayDate.getTime() === todayDate.getTime();
+      const currentHour = new Date().getHours();
 
-    if (isToday && !isJournalAvailable) {
-      navigate('/journal-countdown');
-    } else {
-      navigate('/journal-form');
-    }
-  }, [startOfCurrentWeek, today, isJournalAvailable, navigate]);
+      console.log("📌 Clicked Day Index:", index);
+      console.log("📅 Day Date:", format(dayDate, 'yyyy-MM-dd'));
+      console.log("📆 Today:", format(todayDate, 'yyyy-MM-dd'));
+      console.log("⏰ Current Hour:", currentHour);
+      console.log("⚡ isToday:", isToday);
+
+      if (isToday) {
+        if (currentHour < 18 && currentHour >= 2) {
+          console.log("🟠 Navigating to: /journal-countdown");
+          setTimeout(() => navigate('/journal-countdown'), 0);
+        } else {
+          console.log("🟢 Navigating to: /journal-form");
+          navigate('/journal-form');
+        }
+      } else {
+        console.log("❌ Not today, no navigation.");
+      }
+    },
+    [startOfCurrentWeek, navigate]
+  );
 
   const renderDayButtons = useCallback(() => {
-    const dayButtons = [];
-    if (Array.isArray(journalEntries)) {
-      for (let i = 0; i < 7; i++) {
-        const dayDate = addDays(startOfCurrentWeek, i);
-        const dayLabel = format(dayDate, 'EEE').charAt(0).toLowerCase();
-        const dateKey = format(dayDate, 'yyyy-MM-dd');
-        const entryForDay = journalEntries.find(entry => {
-          if (entry && entry.timestamp) {
-            return format(entry.timestamp.toDate(), 'yyyy-MM-dd') === dateKey;
-          }
-          return false;
-        });
+    return [...Array(7)].map((_, i) => {
+      const dayDate = addDays(startOfCurrentWeek, i);
+      const dateKey = format(dayDate, 'yyyy-MM-dd');
+      const entryForDay = journalEntries.find(
+        (entry) => entry?.timestamp && format(entry.timestamp.toDate(), 'yyyy-MM-dd') === dateKey
+      );
 
-        let MoodIconComponent = null;
-        const isToday = format(dayDate, 'yyyy-MM-dd') === format(today, 'yyyy-MM-dd');
-        const isFutureDay = dayDate > today;
+      console.log(`JournalSection - Day: ${format(dayDate, 'yyyy-MM-dd')}, entryForDay:`, entryForDay);
 
-        if (isFutureDay) {
-          MoodIconComponent = JournalUnfilledIcon;
-        } else if (isToday) {
-          MoodIconComponent = !isJournalAvailable ? JournalLoadingIcon : (entryForDay ? moodIcons[entryForDay.mood] : JournalLoadingIcon);
+      const isToday = format(dayDate, 'yyyy-MM-dd') === format(today, 'yyyy-MM-dd');
+      const isFutureDay = dayDate > today;
+
+      let MoodIconComponent = JournalUnfilledIcon;
+
+      if (isFutureDay) {
+        MoodIconComponent = JournalUnfilledIcon;
+      } else if (isToday) {
+        if (!isJournalAvailable) {
+          MoodIconComponent = JournalLoadingIcon;
+        } else if (loading) {
+          MoodIconComponent = JournalLoadingIcon;
+        } else if (entryForDay) {
+          console.log("JournalSection - entryForDay.mood (isToday):", entryForDay.mood);
+          MoodIconComponent = moodIcons[entryForDay.mood];
+          console.log("JournalSection - MoodIconComponent for", format(dayDate, 'yyyy-MM-dd'), ":", MoodIconComponent);
         } else {
-          MoodIconComponent = entryForDay ? moodIcons[entryForDay.mood] : JournalUnfilledIcon;
+          MoodIconComponent = JournalUnfilledIcon; // Use unfilled if no entry for today
+          console.log("JournalSection - No entry for TODAY:", format(dayDate, 'yyyy-MM-dd')); // ADDED LOG
         }
-
-        const buttonStyle = getDayButtonStyle(dayDate, entryForDay);
-        const dayButtonStyleClass = `day-button-label ${isToday ? 'day-button-label-today' : (dayDate < today ? 'day-button-label-past' : 'day-button-label-future')}`;
-
-
-        dayButtons.push(
-          <div key={i} className="day-container">
-            <button
-              className={buttonStyle}
-              onClick={() => handleDayClick(i)}
-              disabled={isToday && !isJournalAvailable}
-            >
-              {MoodIconComponent && <MoodIconComponent className="mood-icon" />}
-            </button>
-            <span className={dayButtonStyleClass}>{dayLabel}</span>
-          </div>
-        );
+      } else { // Past days
+        if (loading) {
+          MoodIconComponent = JournalLoadingIcon;
+        } else if (entryForDay) {
+          console.log("JournalSection - entryForDay.mood (past day):", entryForDay.mood);
+          MoodIconComponent = moodIcons[entryForDay.mood];
+          console.log("JournalSection - MoodIconComponent for", format(dayDate, 'yyyy-MM-dd'), ":", MoodIconComponent);
+        } else {
+          MoodIconComponent = JournalUnfilledIcon; // Use unfilled if no entry for past day
+          console.log("JournalSection - No entry for PAST DAY:", format(dayDate, 'yyyy-MM-dd')); // ADDED LOG
+        }
       }
-    }
-    return dayButtons;
-  }, [startOfCurrentWeek, today, journalEntries, navigate, getDayButtonStyle, isJournalAvailable]);
+
+      return (
+        <div key={i} className="day-container">
+          <button
+            className={`day-button ${isToday ? 'day-button-today' : ''}`}
+            onClick={() => handleDayClick(i)}
+            disabled={isFutureDay}
+          >
+            {MoodIconComponent && <img src={MoodIconComponent} alt="Mood Icon" className="mood-icon" />}
+          </button>
+          <span className="day-label">{format(dayDate, 'EEE').charAt(0).toLowerCase()}</span>
+        </div>
+      );
+    });
+  }, [startOfCurrentWeek, today, journalEntries, isJournalAvailable, handleDayClick, loading, moodIcons]);
 
   return (
     <section className="journal-section">
@@ -118,9 +138,7 @@ const JournalSection = React.memo(({ journalEntries = [] }) => {
         <h2 className="journal-label">Your journal</h2>
         <div className="journal-all-link">All</div>
       </div>
-      <div className="journal-days">
-        {renderDayButtons()}
-      </div>
+      <div className="journal-days">{renderDayButtons()}</div>
     </section>
   );
 });

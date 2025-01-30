@@ -8,7 +8,7 @@ import React, {
 } from 'react';
 import { auth, db } from '../services/firebase';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
-import { collection, getDocs, query, where } from 'firebase/firestore';
+import { collection, getDocs, query, where, doc, getDoc } from 'firebase/firestore';
 import { useNavigate } from 'react-router-dom';
 import { formatTime } from '../utils/formatTime';
 import Header from '../components/Layout/Header';
@@ -36,13 +36,18 @@ const HomePage = React.memo(() => {
   const fabRef = useRef(null);
   const scrollTimeout = useRef(null);
   const motivationalSectionRef = useRef(null);
+  const [userProfile, setUserProfile] = useState(null);
 
   const fetchData = useCallback(async (uid) => {
     setLoading(true);
     try {
-      const projectsRef = collection(db, 'projects');
-      const projectQuery = query(projectsRef, where('userId', '==', uid));
-      const projectSnapshot = await getDocs(projectQuery);
+      const [projectSnapshot, sessionSnapshot, journalSnapshot, profileSnapshot] = await Promise.all([
+        getDocs(query(collection(db, 'projects'), where('userId', '==', uid))),
+        getDocs(query(collection(db, 'sessions'), where('userId', '==', uid))),
+        getDocs(query(collection(db, 'journalEntries'), where('userId', '==', uid))),
+        getDoc(doc(db, 'profiles', uid))
+      ]);
+
       const userProjects = projectSnapshot.docs.map((doc) => ({
         id: doc.id,
         name: doc.data().name,
@@ -50,22 +55,30 @@ const HomePage = React.memo(() => {
       }));
       setProjects(userProjects);
 
-      const sessionRef = collection(db, 'sessions');
-      const sessionQuery = query(sessionRef, where('userId', '==', uid));
-      const sessionSnapshot = await getDocs(sessionQuery);
       const userSessions = sessionSnapshot.docs.map((doc) => doc.data());
       setSessions(userSessions);
 
-      // Fetch Journal Entries
-      const journalRef = collection(db, 'journals');
-      const journalQuery = query(journalRef, where('userId', '==', uid));
-      const journalSnapshot = await getDocs(journalQuery);
       const userJournalEntries = journalSnapshot.docs.map((doc) => ({
         ...doc.data(),
         id: doc.id,
       }));
       setJournalEntries(userJournalEntries);
 
+      if (profileSnapshot.exists()) {
+        const profileData = profileSnapshot.data();
+        setUserProfile(profileData);
+        console.log('Profile data fetched:', profileData);
+      } else {
+        console.log('No profile found for user:', uid);
+        if (user) {
+          setUserProfile({
+            uid: user.uid,
+            displayName: user.displayName,
+            profileImageUrl: user.photoURL,
+            featureAccessLevel: 'free'
+          });
+        }
+      }
 
     } catch (error) {
       console.error('Error fetching data:', error.message);
@@ -73,7 +86,7 @@ const HomePage = React.memo(() => {
       setLoading(false);
       console.log('Data fetching complete.');
     }
-  }, []);
+  }, [user]);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
@@ -92,7 +105,7 @@ const HomePage = React.memo(() => {
       const project = session.project || 'Unknown Project';
       acc[project] = (acc[project] || 0) + (session.elapsedTime || 0);
       return acc;
-    }, {});
+    }, [sessions]); // Dependency array updated to include sessions
   }, [sessions]);
 
   const weeklyTrackedTime = useMemo(() => {
@@ -130,8 +143,8 @@ const HomePage = React.memo(() => {
 
   const getInitials = useCallback((name) => name.trim().charAt(0).toUpperCase(), []);
 
-  const renderProjectImage = useCallback(
-    (project) =>
+  const renderProjectImage = useMemo( // Using useMemo for renderProjectImage
+    () => (project) =>
       project.imageUrl ? (
         <img src={project.imageUrl} alt={project.name} className="project-image" />
       ) : (
@@ -175,19 +188,7 @@ const HomePage = React.memo(() => {
 
   return (
     <div className="homepage">
-      <Header user={user} showLiveTime={true}>
-        {user && (
-          <div className="dropdown-wrapper">
-            <img
-              src={user?.photoURL || '/default-profile.png'}
-              alt="Profile"
-              className="profile-pic"
-              onClick={openSidebar}
-            />
-          </div>
-        )}
-      </Header>
-
+      <Header user={userProfile} showLiveTime={true} onProfileClick={openSidebar} />
       <main className="homepage-content">
         <section className="motivational-section" ref={motivationalSectionRef}>
           {!loading && (
@@ -202,10 +203,7 @@ const HomePage = React.memo(() => {
             />
           )}
         </section>
-
-        {/* Render JournalSection component here, above projects-section */}
-        <JournalSection journalEntries={journalEntries} />
-
+        <JournalSection journalEntries={journalEntries} loading={loading} />
         <section className="projects-section">
           <div className="projects-header">
             <h2 className="projects-label">Your projects</h2>
@@ -220,11 +218,8 @@ const HomePage = React.memo(() => {
           </button>
         </section>
       </main>
-
       <Sidebar isOpen={isSidebarOpen} onClose={closeSidebar} onLogout={handleLogout} />
-
       {isSidebarOpen && <div className="sidebar-overlay" onClick={closeSidebar}></div>}
-
       {projects.length >= 0 && (
         <button ref={fabRef} className="fab" onClick={() => navigate('/time-tracker')}>
           <StartTimerIcon className="fab-icon" />

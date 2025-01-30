@@ -1,10 +1,11 @@
 // Header.jsx
-import React, { useState, useEffect, memo } from 'react';
+import React, { useState, useEffect, memo, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../../styles/components/Header.css';
 import { ReactComponent as ReturnIcon } from '../../styles/components/assets/return.svg';
+import { ReactComponent as SoukoLogoHeader } from '../../styles/components/assets/Souko-logo-header.svg'; // Import the logo
 
-const Header = memo(({ title, showBackArrow, onBack, user, hideProfile, children, showLiveTime = false }) => {
+const Header = memo(({ title, showBackArrow, onBack, hideProfile, children, showLiveTime = false, onProfileClick }) => { // Added onProfileClick prop
   const navigate = useNavigate();
   const [currentTime, setCurrentTime] = useState('');
 
@@ -28,6 +29,17 @@ const Header = memo(({ title, showBackArrow, onBack, user, hideProfile, children
     return () => clearInterval(intervalId);
   }, [showLiveTime]);
 
+  // Simplified useMemo to always return the SoukoLogoHeader
+  const profileImageElement = useMemo(() => {
+    if (children) {
+      return children;
+    } else if (!hideProfile) { // Keep hideProfile logic if you still want to conditionally hide the logo area
+      return <SoukoLogoHeader className="profile-pic souko-logo-header" onClick={onProfileClick} style={{cursor: 'pointer'}} />; // Render the SoukoLogoHeader component and added onClick
+    } else {
+      return null; // Still handle hideProfile if needed
+    }
+  }, [hideProfile, children, onProfileClick]); // Added onProfileClick to dependency array
+
   return (
     <div className="header">
       <div className="header-left-section">
@@ -40,15 +52,7 @@ const Header = memo(({ title, showBackArrow, onBack, user, hideProfile, children
         {showLiveTime && <div className="header-live-time">{currentTime}</div>}
       </div>
       <div className="header-profile">
-        {children ? (
-          children
-        ) : user?.photoURL ? (
-          <img src={user.photoURL} alt="Profile" className="profile-pic" />
-        ) : !hideProfile ? (
-          <div className="profile-placeholder">
-            {user?.displayName?.charAt(0) || 'U'}
-          </div>
-        ) : null}
+        {profileImageElement} {/* profileImageElement will now always be the SoukoLogoHeader (or null if hidden) */}
       </div>
     </div>
   );

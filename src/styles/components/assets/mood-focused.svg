@@ -1,10 +1,10 @@
 <svg width="35" height="35" viewBox="0 0 35 35" fill="none" xmlns="http://www.w3.org/2000/svg">
-<circle cx="17.5" cy="17.5" r="15.5" stroke="url(#paint0_angular_3247_82)" stroke-width="4"/>
+<circle cx="17.5" cy="17.5" r="15.5" stroke="url(#paint0_conic_3247_82)" stroke-width="4"/>
 <defs>
-<radialGradient id="paint0_angular_3247_82" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(17.5 17.5) rotate(-88.3634) scale(17.5071)">
+<conicGradient id="paint0_conic_3247_82" cx="17.5" cy="17.5">
 <stop stop-color="#E682FF"/>
 <stop offset="0.46" stop-color="#FFD9FB"/>
 <stop offset="1" stop-color="#EFE6D0"/>
-</radialGradient>
+</conicGradient>
 </defs>
 </svg>
