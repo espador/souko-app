@@ -152,7 +152,7 @@ const addJournalEntry = async (userId, mood, reflection, futureStep) => { // Ren
       mood: mood,
       reflection: reflection || '',
       futureStep: futureStep || '', // Use 'futureStep' consistently
-      timestamp: serverTimestamp(),
+      createdAt: serverTimestamp(), // Renamed timestamp to createdAt and set serverTimestamp
     });
     console.log('Journal entry added with ID:', docRef.id);
     return docRef.id;
@@ -174,7 +174,7 @@ const updateJournalEntry = async (journalEntryId, mood, reflection, futureStep) 
       mood: mood,
       reflection: reflection || '',
       futureStep: futureStep || '', // Use 'futureStep' consistently
-      timestamp: serverTimestamp(),
+      lastUpdated: serverTimestamp(), // Added lastUpdated field and set serverTimestamp
     });
     console.log('Journal entry updated with ID:', journalEntryId);
   } catch (error) {
@@ -227,7 +227,8 @@ const fetchJournalEntriesForUser = async (userId) => {
 
   try {
     const journalEntriesRef = collection(db, 'journalEntries');
-    const q = query(journalEntriesRef, where('userId', '==', userId), orderBy('timestamp', 'desc')); // Added orderBy for consistent order
+    // const q = query(journalEntriesRef, where('userId', '==', userId), orderBy('timestamp', 'desc')); // Original line - ordering by timestamp which is now createdAt
+    const q = query(journalEntriesRef, where('userId', '==', userId), orderBy('createdAt', 'desc')); // Modified to order by createdAt
     const querySnapshot = await getDocs(q);
 
     const journalEntries = querySnapshot.docs.map((doc) => ({
@@ -259,8 +260,8 @@ const getJournalEntryByDate = async (userId, date) => {
     const q = query(
       journalEntriesRef,
       where('userId', '==', userId),
-      where('timestamp', '>=', startOfDay), // Corrected line
-      where('timestamp', '<=', endOfDay)   // Corrected line
+      where('createdAt', '>=', startOfDay), // Modified to use createdAt
+      where('createdAt', '<=', endOfDay)   // Modified to use createdAt
     );
 
     const querySnapshot = await getDocs(q);

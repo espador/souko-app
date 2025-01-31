@@ -64,7 +64,7 @@ const JournalSection = React.memo(({ journalEntries = [], loading }) => {
 
             const isFutureDay = dayDate > today;
             const entryForDay = journalEntries.find(
-                (entry) => entry?.timestamp && format(entry.timestamp.toDate(), 'yyyy-MM-dd') === dayDateFormatted
+                (entry) => entry?.createdAt && format(entry.createdAt.toDate(), 'yyyy-MM-dd') === dayDateFormatted // Changed to createdAt
             );
 
             console.log("📌 Clicked Day Index:", index);
@@ -86,8 +86,24 @@ const JournalSection = React.memo(({ journalEntries = [], loading }) => {
                 }
             } else if (!isToday && !isFutureDay) { // Open journal form for past days and explicitly check it's not today and not future
                 if (entryForDay) { // Only navigate for past days if there is an entry
-                    console.log("📂 Navigating to JournalForm for past day WITH entry:", dayDateFormatted);
-                    navigate('/journal-form', { state: { selectedDate: dayDateFormatted } });
+                    // Check if entry was created within the allowed edit window
+                    if (entryForDay.createdAt) {
+                        const entryTimestamp = entryForDay.createdAt.toDate(); // Use createdAt
+                        const entryHour = entryTimestamp.getHours();
+                        const isWithinEditWindow = (entryHour >= 18 || entryHour < 2) && format(entryTimestamp, 'yyyy-MM-dd') === dayDateFormatted;
+
+                        if (isWithinEditWindow) {
+                            console.log("📂 Navigating to JournalForm for past day WITH entry AND within edit window:", dayDateFormatted);
+                            navigate('/journal-form', { state: { selectedDate: dayDateFormatted } });
+                        } else {
+                            console.log("🔒 Past day entry exists, but NOT within edit window.");
+                            return; // Prevent navigation if not within edit window
+                        }
+                    } else {
+                        console.log("⚠️ Past day entry exists, but createdAt is missing. Navigation prevented for safety.");
+                        return; // Prevent navigation if createdAt is missing (defensive)
+                    }
+
                 } else {
                     console.log("❌ Past day WITHOUT entry, no navigation.");
                     return; // Prevent navigation for past days without entries
@@ -106,7 +122,7 @@ const JournalSection = React.memo(({ journalEntries = [], loading }) => {
       const dayDate = addDays(startOfCurrentWeek, i);
       const dateKey = format(dayDate, 'yyyy-MM-dd');
       const entryForDay = journalEntries.find(
-        (entry) => entry?.timestamp && format(entry.timestamp.toDate(), 'yyyy-MM-dd') === dateKey
+        (entry) => entry?.createdAt && format(entry.createdAt.toDate(), 'yyyy-MM-dd') === dateKey // Changed to createdAt
       );
 
       console.log(`JournalSection - Day: ${format(dayDate, 'yyyy-MM-dd')}, entryForDay:`, entryForDay);

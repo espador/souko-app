@@ -1,4 +1,4 @@
-/* src/components/Journal/JournalForm.css (Updated Buttons to Vertical Stack) */
+/* src/components/Journal/JournalForm.css (Updated Buttons to Vertical Stack and Input Tiles) */
 .journal-form-page {
   margin: 0 auto;
   max-width: 600px;
@@ -14,7 +14,6 @@
   display: flex;
   flex-direction: column;
   flex-grow: 1;
-  gap: 16px; /* Spacing between sections, like in CreateProjectPage */
 }
 
 .journal-form-title {
@@ -23,26 +22,27 @@
   text-align: left; /* Align title to the left like in CreateProjectPage */
   font-family: var(--font-basic);
   color: var(--text-color); /* Ensure text color is set */
-  margin-bottom: 16px; /* Reduce bottom margin to match section gap */
+  margin: 0px; /* Reduce bottom margin to match section gap */
 }
 
 .mood-header {
   font-family: var(--font-commit-mono);
-  font-size: 14px;
-  color: var(--text-muted);
-  margin-bottom: 8px;
+  font-size: 16px;
+  color: var(--text-color);
+  margin-bottom: 0px;
   margin-top: 16px; /* Reduced top margin */
 }
 
 .mood-slider-container {
-  margin-bottom: 24px; /* Adjust spacing after slider */
+  margin-bottom: 0px; /* Adjust spacing after slider */
 }
 
 .journal-form-section {
-  margin-bottom: 16px; /* Reduced spacing between form sections */
+  margin-top: 24px; /* Reduced spacing between form sections */
   display: flex; /* Enable flexbox for label + input alignment */
   flex-direction: column; /* Stack label and input vertically */
   gap: 8px; /* Spacing between label and input */
+  width: 100%; /* Ensure section takes full width */
 }
 
 
@@ -50,12 +50,12 @@
   display: block;
   font-family: var(--font-commit-mono);
   font-size: 16px; /* Slightly larger label font size */
-  color: var(--text-muted);
+  color: var(--text-color);
   margin-bottom: 0; /* Remove bottom margin on label, spacing handled by section gap */
 }
 
-.journal-input,
-.journal-textarea {
+/* Shared styles for both input and textarea */
+.journal-text-input-style {
   width: 100%;
   padding: 16px;
   background-color: var(--card-background);
@@ -66,17 +66,30 @@
   font-size: 16px;
   outline: none;
   box-sizing: border-box;
-  margin-bottom: 0; /* Remove bottom margin from input/textarea */
+  vertical-align: top !important; /* ADDED !important - stronger override */
+  padding-right: 40px; /* Space for the edit icon */
 }
 
+
 .journal-input {
-  height: 48px; /* Fixed height for input fields */
+  height: 80px;
   resize: none;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: flex-start;
+  text-align: left;
+  padding-top: 8px; /* Adjusted padding-top to 8px */
+  padding-bottom: 16px; /* Keeping bottom padding consistent */
+  line-height: normal;
+  width: 100%;
 }
 
 .journal-textarea {
-  min-height: 100px;
+  min-height: 80px;
   resize: vertical;
+  vertical-align: top !important; /* ADDED !important - stronger override for textarea as well, just in case */
+  padding-top: 16px;
 }
 
 .journal-input::placeholder,
@@ -86,7 +99,7 @@
 
 /* Buttons - Vertically Stacked and Full Width */
 .form-navigation-single-page {
-  margin-top: 32px;
+  margin-top: 24px;
   display: flex;
   flex-direction: column; /* Stack buttons vertically */
   gap: 8px; /* 8px margin between buttons */
@@ -115,8 +128,8 @@
 }
 
 .save-button {
-  color: var(--accent-color); /* Accent color for Save button text */
-  border-color: var(--accent-color); /* Accent color for Save button border */
+  color: var(--text-color); /* Accent color for Save button text */
+  border-color: var(--card-background); /* Accent color for Save button border */
 }
 
 .erase-button {
@@ -140,6 +153,30 @@
 
 .erase-button .button-icon {
     fill: var(--error-color); /* Error color for erase button icon */
+}
+
+/* Input Tile Styling - Consistent with SessionDetailPage notes input */
+.journal-form-section-text1,
+.journal-form-section-text2 {
+    position: relative; /* needed for absolute positioning of the icon */
+    width: 100%; /* Ensure sections take full width */
+}
+
+.journal-input-tile {
+    position: relative; /* Needed for absolute positioning of the icon */
+    padding: 0;
+    display: block; /* Ensure block display */
+    width: 100%; /* Ensure input tile takes full width */
+}
+
+
+.journal-edit-icon {
+    position: absolute;
+    top: 16px; /* Adjust as needed to vertically align icon */
+    right: 16px;
+    width: 20px;
+    height: 20px;
+    fill: var(--text-muted); /* Icon color to match notes edit icon */
 }
 
 
