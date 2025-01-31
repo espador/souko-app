@@ -1,0 +1,38 @@
+{
+    "short_name": "Souko",
+    "name": "Time tracking made cool",
+    "icons": [
+      {
+        "src": "/favicon.ico",
+        "sizes": "32x32",
+        "type": "image/x-icon"
+      },
+      {
+        "src": "/logo192.png",
+        "type": "image/png",
+        "sizes": "192x192"
+      },
+      {
+        "src": "/logo512.png",
+        "type": "image/png",
+        "sizes": "512x512"
+      }
+    ],
+    "start_url": ".",
+    "screenshots": [
+    {
+      "src": "/desktop.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide"
+    },
+    {
+      "src": "/mobile.png",
+      "sizes": "640x480",
+      "type": "image/png"
+    }
+  ],
+    "display": "standalone",
+    "theme_color": "#0f0f14",
+    "background_color": "#0f0f14"
+  }
