@@ -20,7 +20,7 @@ import {
 } from 'firebase/firestore';
 import { db, auth } from '../services/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
-import Header from '../components/Layout/Header'; // Assuming Header is the correct export
+import Header from '../components/Layout/Header';
 import '../styles/global.css';
 import '../styles/components/TimeTrackerPage.css';
 import { ReactComponent as ResetMuteIcon } from '../styles/components/assets/reset-mute.svg';
@@ -34,7 +34,7 @@ import { ReactComponent as DropdownIcon } from '../styles/components/assets/drop
 import { ReactComponent as RadioActiveIcon } from '../styles/components/assets/radio-active.svg';
 import { ReactComponent as RadioMutedIcon } from '../styles/components/assets/radio-muted.svg';
 import '@fontsource/shippori-mincho';
-import ConfirmModal from '../components/ConfirmModal'; // Assuming ConfirmModal is the correct export
+import ConfirmModal from '../components/ConfirmModal';
 
 const TimeTrackerPage = React.memo(() => {
   const [user, setUser] = useState(null);
@@ -51,6 +51,7 @@ const TimeTrackerPage = React.memo(() => {
   const timerRef = useRef(null);
   const [showStopConfirmModal, setShowStopConfirmModal] = useState(false);
   const [showResetConfirmModal, setShowResetConfirmModal] = useState(false);
+  const noteSaveTimeout = useRef(null); // Ref for debouncing note saving
 
   const timerQuote = useMemo(() => {
     if (timer === 0 && !isRunning) {
@@ -193,6 +194,7 @@ const TimeTrackerPage = React.memo(() => {
           elapsedTime: timer,
           endTime: serverTimestamp(),
           project: selectedProject.name,
+          sessionNotes, // Ensure notes are saved on stop as well
         });
       } catch (error) {
         console.error('Error stopping session:', error);
@@ -210,7 +212,7 @@ const TimeTrackerPage = React.memo(() => {
     setIsBillable(true);
     setSessionId(null);
     setStartTime(null);
-  }, [navigate, sessionId, selectedProject, timer]);
+  }, [navigate, sessionId, selectedProject, timer, sessionNotes]); // Include sessionNotes in dependencies
 
   const cancelStopSession = useCallback(() => {
     setShowStopConfirmModal(false);
@@ -222,14 +224,28 @@ const TimeTrackerPage = React.memo(() => {
     }
   }, [isRunning, timer]);
 
-  const confirmResetTimer = useCallback(() => {
+  const confirmResetTimer = useCallback(async () => {
     setShowResetConfirmModal(false);
     setTimer(0);
     setIsRunning(false);
     setIsPaused(false);
-    setSessionId(null);
     setStartTime(null);
-  }, []);
+
+    if (sessionId) {
+      try {
+        const sessionRef = doc(db, 'sessions', sessionId);
+        await updateDoc(sessionRef, {
+          elapsedTime: 0, // Reset elapsed time in db
+          endTime: serverTimestamp(), // Mark session as ended/reset
+        });
+        setSessionId(null); // Clear sessionId after reset as it's a new session now
+      } catch (error) {
+        console.error('Error resetting session in database:', error);
+      }
+    } else {
+      setSessionId(null); // Ensure sessionId is cleared even if not in db
+    }
+  }, [sessionId]);
 
   const cancelResetTimer = useCallback(() => {
     setShowResetConfirmModal(false);
@@ -256,6 +272,33 @@ const TimeTrackerPage = React.memo(() => {
     },
     [projects]
   );
+
+  // Debounced save for notes
+  useEffect(() => {
+    if (sessionId) {
+      if (noteSaveTimeout.current) {
+        clearTimeout(noteSaveTimeout.current);
+      }
+      noteSaveTimeout.current = setTimeout(async () => {
+        if (sessionNotes !== '') { // Only save if notes are not empty, or adjust as needed
+          try {
+            const sessionRef = doc(db, 'sessions', sessionId);
+            await updateDoc(sessionRef, { sessionNotes: sessionNotes });
+            console.log('Session notes saved automatically.');
+          } catch (error) {
+            console.error('Error saving session notes:', error);
+          }
+        }
+      }, 1000); // Save notes 1 second after typing stops
+    }
+    return () => clearTimeout(noteSaveTimeout.current); // Cleanup timeout on unmount or dependency change
+  }, [sessionNotes, sessionId]);
+
+
+  const handleNotesChange = useCallback((e) => {
+    setSessionNotes(e.target.value.slice(0, 140));
+  }, []);
+
 
   return (
     <div className="time-tracker-page">
@@ -339,7 +382,7 @@ const TimeTrackerPage = React.memo(() => {
           className="notes-textarea"
           placeholder="Take a moment to note"
           value={sessionNotes}
-          onChange={(e) => setSessionNotes(e.target.value.slice(0, 140))}
+          onChange={handleNotesChange} // Use handleNotesChange
           onBlur={() => {
             timerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
           }}
