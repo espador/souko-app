@@ -1,6 +1,6 @@
 console.log('Service worker registered!');
 
-const CACHE_NAME = 'my-pwa-cache-v2'; // Increment version to force cache update for new deployments!
+const CACHE_NAME = 'my-pwa-cache-v3'; // Increment version to force cache update for new deployments!
 const urlsToCache = [
   '/',
   '/index.html',
