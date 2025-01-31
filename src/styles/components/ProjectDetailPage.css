@@ -4,7 +4,7 @@
   /* padding: 24px;  Keep padding for content spacing */
   margin: 0 auto;
   max-width: 600px;
-  background-color: var(--background-color);
+  background-color: transparent;
   color: var(--text-color);
   /* min-height: 100vh; Remove this as body should handle the viewport height */
   display: flex;

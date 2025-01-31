@@ -2,17 +2,19 @@
 .journal-countdown-page { /* Changed container class name to page */
   margin: 0 auto;
   max-width: 600px;
-  background-color: var(--background-color);
+  background-color: transparent;
   color: var(--text-color);
   display: flex;
   flex-direction: column;
   min-height: 100vh; /* Ensure full viewport height */
+  box-sizing: border-box; /* Include padding in width calculation */
 }
 
 .journal-countdown-content { /* Added main content container */
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 40px;
+  /* Remove margin from here, apply to page container instead if needed */
 }
 
 .motivational-section { /* Added motivational section for consistent styling */
@@ -42,7 +44,6 @@
   flex-direction: column;
   gap: 16px; /* Increased spacing between buttons */
   width: 100%; /* Make buttons full width */
-  max-width: 300px; /* Limit button width if needed */
 }
 
 .journal-countdown-button {
@@ -55,9 +56,11 @@
   font-family: var(--font-commit-mono);
   font-size: 16px; /* Ensure font size is consistent */
   text-align: center; /* Center text in button */
+  width: 100%;
+  box-sizing: border-box; /* Include padding and border in width calculation */
 }
 
-h1 { 
+h1 {
   color: var(--text-muted);
   font-size: 32px;
   line-height: 40px;

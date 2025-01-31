@@ -7,7 +7,7 @@
   height: 64px;
   width: 100%;
   z-index: 10;
-  background-color: var(--background-color);
+  background-color: transparent;
   position: sticky;
   top: 0px;
 }
@@ -76,4 +76,19 @@
   background-color: var(--text-muted); /* Or any color you prefer */
   color: var(--background-color);
   font-weight: bold;
+}
+
+/* Keyframes for spinning animation */
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* Apply spinning animation to the logo */
+.spinning-logo {
+  animation: spin 60s linear infinite; /* 10 seconds, linear speed, infinite loop */
 }

@@ -1,6 +1,6 @@
 // src/services/firebase.js
 import { initializeApp } from 'firebase/app';
-import { getFirestore, collection, query, where, getDocs, addDoc, doc, updateDoc, deleteDoc, getDoc, serverTimestamp } from 'firebase/firestore'; // Import necessary Firestore functions
+import { getFirestore, collection, query, where, getDocs, addDoc, doc, updateDoc, deleteDoc, getDoc, serverTimestamp, orderBy } from 'firebase/firestore'; // Import necessary Firestore functions
 import { getAuth, GoogleAuthProvider } from 'firebase/auth';
 // REMOVED INCORRECT IMPORT! - Ensure this line is REMOVED
 // import logEvent from './utils/logEvent';
@@ -141,7 +141,7 @@ const refreshUserProjects = async (userId) => {
 // -------------------- Journal Entry Functions --------------------
 
 // Function to add a new journal entry
-const addJournalEntry = async (userId, mood, reflection, future) => {
+const addJournalEntry = async (userId, mood, reflection, futureStep) => { // Renamed 'future' to 'futureStep' to match JournalForm
   if (!userId || !mood) {
     throw new Error('User ID and mood are required for a journal entry.');
   }
@@ -149,10 +149,10 @@ const addJournalEntry = async (userId, mood, reflection, future) => {
   try {
     const docRef = await addDoc(collection(db, 'journalEntries'), {
       userId,
-      mood: mood, // Use 'mood' as field name
-      reflection: reflection || '', // Use 'reflection' for textField1
-      future: future || '', // Use 'future' for textField2
-      timestamp: serverTimestamp(), // Add server timestamp
+      mood: mood,
+      reflection: reflection || '',
+      futureStep: futureStep || '', // Use 'futureStep' consistently
+      timestamp: serverTimestamp(),
     });
     console.log('Journal entry added with ID:', docRef.id);
     return docRef.id;
@@ -163,7 +163,7 @@ const addJournalEntry = async (userId, mood, reflection, future) => {
 };
 
 // Function to update an existing journal entry
-const updateJournalEntry = async (journalEntryId, mood, reflection, future) => {
+const updateJournalEntry = async (journalEntryId, mood, reflection, futureStep) => { // Renamed 'future' to 'futureStep'
   if (!journalEntryId) {
     throw new Error('Journal entry ID is required to update.');
   }
@@ -171,10 +171,10 @@ const updateJournalEntry = async (journalEntryId, mood, reflection, future) => {
   try {
     const journalEntryRef = doc(db, 'journalEntries', journalEntryId);
     await updateDoc(journalEntryRef, {
-      mood: mood, // Use 'mood' as field name
-      reflection: reflection || '', // Use 'reflection' for textField1
-      future: future || '', // Use 'future' for textField2
-      timestamp: serverTimestamp(), // Update timestamp on save
+      mood: mood,
+      reflection: reflection || '',
+      futureStep: futureStep || '', // Use 'futureStep' consistently
+      timestamp: serverTimestamp(),
     });
     console.log('Journal entry updated with ID:', journalEntryId);
   } catch (error) {
@@ -227,7 +227,7 @@ const fetchJournalEntriesForUser = async (userId) => {
 
   try {
     const journalEntriesRef = collection(db, 'journalEntries');
-    const q = query(journalEntriesRef, where('userId', '==', userId));
+    const q = query(journalEntriesRef, where('userId', '==', userId), orderBy('timestamp', 'desc')); // Added orderBy for consistent order
     const querySnapshot = await getDocs(q);
 
     const journalEntries = querySnapshot.docs.map((doc) => ({
@@ -243,6 +243,39 @@ const fetchJournalEntriesForUser = async (userId) => {
   }
 };
 
+// Function to fetch journal entry by user ID and date
+const getJournalEntryByDate = async (userId, date) => {
+  if (!userId || !date) {
+    throw new Error('User ID and date are required to fetch journal entry by date.');
+  }
+
+  try {
+    const journalEntriesRef = collection(db, 'journalEntries');
+    const startOfDay = new Date(date);
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date(date);
+    endOfDay.setHours(23, 59, 59, 999);
+
+    const q = query(
+      journalEntriesRef,
+      where('userId', '==', userId),
+      where('timestamp', '>=', startOfDay), // Corrected line
+      where('timestamp', '<=', endOfDay)   // Corrected line
+    );
+
+    const querySnapshot = await getDocs(q);
+    if (!querySnapshot.empty) {
+      const docSnapshot = querySnapshot.docs[0];
+      return { id: docSnapshot.id, ...docSnapshot.data() };
+    } else {
+      return null; // No entry found for the date
+    }
+  } catch (error) {
+    console.error("Error fetching journal entry by date:", error);
+    return null;
+  }
+};
+
 
 export {
   auth,
@@ -254,9 +287,10 @@ export {
   addSession,
   refreshUserProjects,
   app,
-  addJournalEntry, // Export new journal entry functions
+  addJournalEntry,
   updateJournalEntry,
   deleteJournalEntry,
   fetchJournalEntryById,
   fetchJournalEntriesForUser,
+  getJournalEntryByDate, // Export the new function
 };

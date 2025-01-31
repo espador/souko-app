@@ -37,6 +37,7 @@ const HomePage = React.memo(() => {
   const scrollTimeout = useRef(null);
   const motivationalSectionRef = useRef(null);
   const [userProfile, setUserProfile] = useState(null);
+  const [hasTrackedEver, setHasTrackedEver] = useState(false); // New state to track if user has ever tracked
 
   const fetchData = useCallback(async (uid) => {
     setLoading(true);
@@ -57,6 +58,11 @@ const HomePage = React.memo(() => {
 
       const userSessions = sessionSnapshot.docs.map((doc) => doc.data());
       setSessions(userSessions);
+      if (userSessions.length > 0) {
+        setHasTrackedEver(true); // Set to true if sessions are found
+      } else {
+        setHasTrackedEver(false); // Set to false if no sessions are found (or keep default false)
+      }
 
       const userJournalEntries = journalSnapshot.docs.map((doc) => ({
         ...doc.data(),
@@ -105,12 +111,28 @@ const HomePage = React.memo(() => {
       const project = session.project || 'Unknown Project';
       acc[project] = (acc[project] || 0) + (session.elapsedTime || 0);
       return acc;
-    }, [sessions]); // Dependency array updated to include sessions
+    }, {}); // Initialize accumulator as an empty object
   }, [sessions]);
 
   const weeklyTrackedTime = useMemo(() => {
-    return sessions.reduce((sum, session) => sum + (session.elapsedTime || 0), 0);
+    const now = new Date();
+    const startOfWeek = new Date(now);
+    startOfWeek.setHours(0, 0, 0, 0);
+    startOfWeek.setDate(startOfWeek.getDate() - (now.getDay() === 0 ? 7 : now.getDay()) + 1); // Monday start
+
+    const endOfWeek = new Date(now);
+    endOfWeek.setHours(23, 59, 59, 999);
+    endOfWeek.setDate(endOfWeek.getDate() - (now.getDay() === 0 ? 7 : now.getDay()) + 7); // Sunday end
+
+    return sessions.reduce((sum, session) => {
+      const sessionStartTime = session.startTime ? new Date(session.startTime) : null;
+      if (sessionStartTime && sessionStartTime >= startOfWeek && sessionStartTime <= endOfWeek) {
+        return sum + (session.elapsedTime || 0);
+      }
+      return sum;
+    }, 0);
   }, [sessions]);
+
 
   const handleLogout = useCallback(async () => {
     try {
@@ -199,11 +221,13 @@ const HomePage = React.memo(() => {
           {!loading && (
             <TextGenerateEffect
               words={
-                weeklyTrackedTime > 0
-                  ? `This moment is\n progress. You\n tracked <span class="accent-text">${formatTime(
-                      weeklyTrackedTime
-                    )}</span>\n this week.`
-                  : `Every journey begins with one moment.\nTell me about your project ...`
+                !hasTrackedEver
+                  ? `Every journey begins with one moment.\nStart tracking yours.`
+                  : weeklyTrackedTime > 0
+                    ? `This moment is\n progress. You\n tracked <span class="accent-text">${formatTime(
+                        weeklyTrackedTime
+                      )}</span>\n this week.`
+                    : `Momentum begins with a single tracked hour. Let’s go.`
               }
             />
           )}

@@ -19,7 +19,9 @@
 
 /* Reset and Global Defaults */
 html {
-  height: 100%; /* Ensure html takes up the full viewport height */
+  background-color: #0C0C0C; 
+  background-image: linear-gradient(to bottom, #17171D, #0C0C0C); 
+  min-height: 100%; 
 }
 
 body.no-scroll, html.no-scroll { /* Apply to both html and body */
@@ -29,7 +31,8 @@ body.no-scroll, html.no-scroll { /* Apply to both html and body */
 body {
   margin: 0;
   padding: 0;
-  background-color: var(--background-color);
+  /* Using background shorthand for gradient */
+  background: linear-gradient(to bottom, #17171D, #0C0C0C);
   color: var(--text-color);
   font-family: var(--font-commit-mono), monospace;
   line-height: 1.5;

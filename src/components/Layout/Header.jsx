@@ -8,6 +8,7 @@ import { ReactComponent as SoukoLogoHeader } from '../../styles/components/asset
 const Header = memo(({ title, showBackArrow, onBack, hideProfile, children, showLiveTime = false, onProfileClick }) => { // Added onProfileClick prop
   const navigate = useNavigate();
   const [currentTime, setCurrentTime] = useState('');
+  const [isSpinning, setIsSpinning] = useState(true); // Assume spinning by default, or control with a prop if needed
 
   useEffect(() => {
     let intervalId;
@@ -34,11 +35,17 @@ const Header = memo(({ title, showBackArrow, onBack, hideProfile, children, show
     if (children) {
       return children;
     } else if (!hideProfile) { // Keep hideProfile logic if you still want to conditionally hide the logo area
-      return <SoukoLogoHeader className="profile-pic souko-logo-header" onClick={onProfileClick} style={{cursor: 'pointer'}} />; // Render the SoukoLogoHeader component and added onClick
+      return (
+        <SoukoLogoHeader
+          className={`profile-pic souko-logo-header ${isSpinning ? 'spinning-logo' : ''}`} // Added spinning-logo class conditionally
+          onClick={onProfileClick}
+          style={{ cursor: 'pointer' }}
+        />
+      ); // Render the SoukoLogoHeader component and added onClick
     } else {
       return null; // Still handle hideProfile if needed
     }
-  }, [hideProfile, children, onProfileClick]); // Added onProfileClick to dependency array
+  }, [hideProfile, children, onProfileClick, isSpinning]); // Added isSpinning to dependency array
 
   return (
     <div className="header">

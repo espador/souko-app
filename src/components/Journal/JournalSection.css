@@ -2,8 +2,6 @@
 .journal-section {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  margin-bottom: 24px;
 }
 
 .journal-header {
@@ -48,7 +46,7 @@
 }
 
 .day-button {
-  background-color: var(--background-color);
+  background-color: transparent;
   border: none;
   border-radius: 50%;
   width: 35px; /* Adjusted to 35px */

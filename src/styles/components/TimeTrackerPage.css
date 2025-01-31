@@ -3,7 +3,7 @@
 .time-tracker-page {
   margin: 0 auto;
   max-width: 600px;
-  background-color: var(--background-color);
+  background-color: transparent;
   color: var(--text-color);
   /* Removed explicit font-family, will inherit from global styles */
   display: flex;

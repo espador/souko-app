@@ -3,7 +3,7 @@
 .homepage {
   margin: 0 auto;
   max-width: 600px;
-  background-color: var(--background-color);
+  background-color: transparent;
   color: var(--text-color);
   display: flex;
   flex-direction: column;
@@ -21,7 +21,6 @@ body.allow-scroll {
 .homepage-content {
   display: flex;
   flex-direction: column;
-  gap: 16px;
   flex: 0;
 }
 
@@ -77,14 +76,14 @@ body.allow-scroll {
   font-weight: 400;
   font-size: 16px;
   line-height: 20px;
-  gap: 16px;
+  margin-top: 40px;
 }
 
 .projects-header, .journal-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 8px;
+    margin-bottom: 16px;
 }
 
 
