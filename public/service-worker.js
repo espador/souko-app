@@ -1,6 +1,6 @@
 console.log('Service worker registered!');
 
-const CACHE_NAME = 'my-pwa-cache-v3'; // Increment version to force cache update for new deployments!
+const CACHE_NAME = 'my-pwa-cache-v4'; // Increment version to force cache update for new deployments!
 const urlsToCache = [
   '/',
   '/index.html',
@@ -8,8 +8,8 @@ const urlsToCache = [
   '/favicon.ico',    // Good practice to cache favicon
   '/logo192.png',
   '/logo512.png',
-  '/static/js/main.6453ad09.js', // Adjust based on your build output
-  '/static/css/main.baafca37.css',    // <--- REPLACE THIS PLACEHOLDER! (If your CSS is in main.css, otherwise adjust)
+  '/static/js/main.04150159.js', // Adjust based on your build output
+  '/static/css/main.5a09115f.css',    // <--- REPLACE THIS PLACEHOLDER! (If your CSS is in main.css, otherwise adjust)
 ];
 
 self.addEventListener('install', event => {
