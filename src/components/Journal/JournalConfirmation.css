@@ -1,13 +1,18 @@
 /* src/components/Journal/JournalConfirmation.css */
 .journal-confirmation-container {
     text-align: center;
-    padding: 20px;
+    margin-top: 40px;
   }
   
   .journal-confirmation-quote {
-    font-size: 16px; /* Adjust as needed */
-    line-height: 1.6;
-    margin-bottom: 20px;
+    font-family: inherit;
+    font-weight: normal;
+    text-align: left;
+    color: var(--text-color);
+    font-size: 32px;
+    line-height: 40px;
+    margin-top: 0;
+    margin-bottom: 40px;
   }
   
   .journal-confirmation-buttons {
@@ -26,8 +31,4 @@
     cursor: pointer;
     font-family: var(--font-commit-mono);
     text-decoration: none; /* Remove default link styling */
-  }
-  
-  .journal-confirmation-button.journal-overview-link {
-      /* Add specific styles for the overview link if needed */
   }

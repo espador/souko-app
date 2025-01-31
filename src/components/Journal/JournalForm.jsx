@@ -3,7 +3,7 @@ import React, { useState, useCallback, useEffect } from 'react';
 import './JournalForm.css';
 import Header from '../Layout/Header';
 import '../../styles/global.css';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import {
     addJournalEntry,
     auth,
@@ -13,54 +13,31 @@ import {
     deleteJournalEntry
 } from '../../services/firebase';
 import logEvent from '../../utils/logEvent';
-import ConfirmModal from '../ConfirmModal'; // Import ConfirmModal
+import ConfirmModal from '../ConfirmModal';
 
-// Import Material UI Slider
 import Slider from '@mui/material/Slider';
-import { styled } from '@mui/material/styles';
 
-// Import Mood Icons
-import { ReactComponent as MoodFrustrated } from '../../styles/components/assets/mood-frustrated.svg'; // Frustrated first
+import { ReactComponent as MoodFrustrated } from '../../styles/components/assets/mood-frustrated.svg';
 import { ReactComponent as MoodUnmotivated } from '../../styles/components/assets/mood-unmotivated.svg';
 import { ReactComponent as MoodNeutral } from '../../styles/components/assets/mood-neutral.svg';
 import { ReactComponent as MoodFocused } from '../../styles/components/assets/mood-focused.svg';
-import { ReactComponent as MoodInspired } from '../../styles/components/assets/mood-inspired.svg'; // Inspired last
+import { ReactComponent as MoodInspired } from '../../styles/components/assets/mood-inspired.svg';
 
-// Import Button Icons
 import { ReactComponent as SaveIcon } from '../../styles/components/assets/save.svg';
 import { ReactComponent as EraseIcon } from '../../styles/components/assets/erase.svg';
-import { ReactComponent as EditIcon } from '../../styles/components/assets/edit.svg'; // Import EditIcon
+import { ReactComponent as EditIcon } from '../../styles/components/assets/edit.svg';
 
 
 const moodOptions = [
-    { value: 'frustrated', label: 'Frustrated', icon: MoodFrustrated }, // 1: Frustrated
-    { value: 'unmotivated', label: 'Unmotivated', icon: MoodUnmotivated }, // 2: Unmotivated
-    { value: 'neutral', label: 'Neutral', icon: MoodNeutral },        // 3: Neutral
-    { value: 'focused', label: 'Focused', icon: MoodFocused },        // 4: Focused
-    { value: 'inspired', label: 'Inspired', icon: MoodInspired },      // 5: Inspired
+    { value: 'frustrated', label: 'Frustrated', icon: MoodFrustrated },
+    { value: 'unmotivated', label: 'Unmotivated', icon: MoodUnmotivated },
+    { value: 'neutral', label: 'Neutral', icon: MoodNeutral },
+    { value: 'focused', label: 'Focused', icon: MoodFocused },
+    { value: 'inspired', label: 'Inspired', icon: MoodInspired },
 ];
 
-// Custom styled Slider Thumb component -  We will style thumb directly in `sx` for more control
-// const ThumbIcon = styled('span')(({ theme }) => ({
-//     '& .MuiSlider-thumb': {
-//         width: 40,
-//         height: 40,
-//         '&:before': {
-//             content: '""',
-//             display: 'block',
-//             position: 'absolute',
-//             width: '100%',
-//             height: '100%',
-//             borderRadius: '50%',
-//             backgroundColor: theme.palette.background.paper,
-//             boxShadow: theme.shadows[2],
-//             zIndex: -1,
-//         },
-//     },
-// }));
 
-// Non-linear scale function - Corrected for 5 moods
-const moodPoints = [0, 25, 50, 75, 100]; // 5 points for 5 moods, evenly spaced
+const moodPoints = [0, 25, 50, 75, 100];
 const moodScale = (value) => {
     let moodIndex = -1;
     for (let i = 0; i < moodPoints.length; i++) {
@@ -69,57 +46,70 @@ const moodScale = (value) => {
             break;
         }
     }
-    if (moodIndex === -1) moodIndex = moodPoints.length - 1; // Fallback for values above max
+    if (moodIndex === -1) moodIndex = moodPoints.length - 1;
     return moodIndex;
 };
 
-// Reverse scale function to map mood index back to slider value
 const reverseMoodScale = (index) => {
     return moodPoints[index] || 0;
 };
 
 
 const JournalForm = () => {
-    const [mood, setMood] = useState('focused'); // Default mood, now 4th option 'focused'
+    const [mood, setMood] = useState('focused');
     const [textField1, setTextField1] = useState('');
     const [textField2, setTextField2] = useState('');
     const navigate = useNavigate();
     const location = useLocation();
-    const selectedDate = location.state?.selectedDate;
-    const [journalEntryId, setJournalEntryId] = useState(null); // To store document ID for updates
+    const [searchParams] = useSearchParams();
+    const selectedDate = searchParams.get('date');
+    const [journalEntryId, setJournalEntryId] = useState(null);
     const [showEraseConfirmModal, setShowEraseConfirmModal] = useState(false);
-    // const [originalTimestamp, setOriginalTimestamp] = useState(null); // No longer needed in JournalForm, logic moved to JournalSection
 
 
     useEffect(() => {
+        console.log("JournalForm useEffect - location.state:", location.state);
+        console.log("JournalForm useEffect - searchParams:", searchParams.toString());
+        console.log("JournalForm useEffect - selectedDate (from query param):", selectedDate);
+
         if (selectedDate) {
             const fetchJournalEntry = async () => {
                 try {
                     const user = auth.currentUser;
-                    if (!user) return;
+                    if (!user) {
+                        console.log("JournalForm useEffect - No user logged in, exiting fetch."); // Added log
+                        return;
+                    }
+
+                    console.log("JournalForm useEffect - selectedDate received:", selectedDate);
+                    console.log("JournalForm useEffect - Fetching entry for date:", selectedDate);
+
                     const entryData = await getJournalEntryByDate(user.uid, selectedDate);
+
+                    console.log("JournalForm useEffect - Data fetched from getJournalEntryByDate:", entryData); // Keep this log
+
                     if (entryData) {
+                        console.log("JournalForm useEffect - Entry data found:", entryData); // Added log to confirm entryData is truthy
                         setMood(entryData.mood);
                         setTextField1(entryData.reflection);
                         setTextField2(entryData.futureStep);
                         setJournalEntryId(entryData.id);
-                        // setOriginalTimestamp(entryData.createdAt); // Store original timestamp - No longer needed here
+                        console.log("JournalForm useEffect - State updated with fetched data:", { mood: entryData.mood, reflection: entryData.reflection, futureStep: entryData.futureStep, journalEntryId: entryData.id }); // Added log to show state update
                     } else {
-                        // If no entry for the day, initialize with defaults or leave blank
-                        console.log(`No journal entry found for ${selectedDate}, creating new.`);
+                        console.log(`JournalForm useEffect - No journal entry found for ${selectedDate}, creating new.`);
+                        // State is already at default for new entry, no need to reset again here unless you want to explicitly reset journalEntryId to null again.
                     }
                 } catch (error) {
-                    console.error("Error fetching journal entry:", error);
+                    console.error("JournalForm useEffect - Error fetching journal entry:", error);
                 }
             };
             fetchJournalEntry();
         } else {
-            // Reset form for new entries (today's entry)
-            setMood('focused'); // Default mood, now 4th option 'focused'
+            setMood('focused');
             setTextField1('');
             setTextField2('');
             setJournalEntryId(null);
-            // setOriginalTimestamp(null); // Reset original timestamp for new entries - No longer needed here
+            console.log("JournalForm useEffect - No selectedDate, resetting form for new entry.");
         }
     }, [selectedDate]);
 
@@ -143,6 +133,7 @@ const JournalForm = () => {
     const handleSubmit = useCallback(async () => {
         try {
             const user = auth.currentUser;
+            console.log("Current User UID:", user?.uid); //  <----- ADD THIS LINE
             if (!user) {
                 console.error("User not logged in.");
                 return;
@@ -152,13 +143,11 @@ const JournalForm = () => {
             const futureStepText = textField2;
 
             if (journalEntryId) {
-                // Update existing entry -  createdAt is NOT updated here, lastUpdated is handled in firebase.js
                 await updateJournalEntry(journalEntryId, mood, reflectionText, futureStepText);
                 console.log('Journal entry updated in Firestore:', { mood, textField1, textField2, journalEntryId });
                 logEvent('journal_updated_firestore', { mood: mood, textField1Length: textField1.length, textField2Length: textField2.length, journalEntryId: journalEntryId });
 
             } else {
-                // Add new entry - createdAt timestamp is set in firebase.js
                 await addJournalEntry(user.uid, mood, reflectionText, futureStepText);
                 console.log('Journal entry saved to Firestore:', { mood, textField1, textField2 });
                 logEvent('journal_saved_firestore', { mood: mood, textField1Length: textField1.length, textField2Length: textField2.length });
@@ -179,18 +168,18 @@ const JournalForm = () => {
       setShowEraseConfirmModal(false);
       if (journalEntryId) {
           try {
-              await deleteJournalEntry(journalEntryId); // Correct function name: deleteJournalEntry
+              await deleteJournalEntry(journalEntryId);
               console.log('Journal entry deleted from Firestore:', journalEntryId);
               logEvent('journal_deleted_firestore', { journalEntryId: journalEntryId });
-              navigate('/home'); // Or journal overview page if preferred
+              navigate('/home');
           } catch (error) {
               console.error("Error deleting journal entry:", error);
               logEvent('journal_delete_failed', { journalEntryId: journalEntryId, error: error.message });
-              alert('Failed to delete journal entry.'); // Or better error handling
+              alert('Failed to delete journal entry.');
           }
       } else {
           console.log('No journal entry ID to delete.');
-          navigate('/home'); // If no entry to delete, just go home
+          navigate('/home');
       }
   }, [journalEntryId, navigate]);
 
@@ -200,13 +189,13 @@ const JournalForm = () => {
 
 
     const valuetext = (value) => {
-        let moodIndex = moodScale(value); // Get mood index from slider value for accessibility
+        let moodIndex = moodScale(value);
         const moodOption = moodOptions[moodIndex];
         return moodOption ? moodOption.label : '';
     };
 
     const valueLabelFormat = (value) => {
-        let moodIndex = moodScale(value); // Get mood index from slider value for value label
+        let moodIndex = moodScale(value);
         const moodOption = moodOptions[moodIndex];
         return moodOption ? moodOption.label : '';
     };
@@ -214,9 +203,9 @@ const JournalForm = () => {
 
     const currentMoodLabel = moodOptions.find(option => option.value === mood)?.label || 'Focused';
 
-    const marks = moodOptions.map((option, index) => ({ // Marks at mood points (optional visual cues)
-        value: reverseMoodScale(index), // Use reverse scale to position marks
-        label: '', // No labels, as per design - remove if you want labels on marks
+    const marks = moodOptions.map((option, index) => ({
+        value: reverseMoodScale(index),
+        label: '',
     }));
 
       return (
@@ -234,22 +223,21 @@ const JournalForm = () => {
                     <div className="mood-slider-container">
                         <Slider
                             aria-label="mood"
-                            defaultValue={reverseMoodScale(moodOptions.findIndex(opt => opt.value === mood))} // Dynamically set default mood - 'focused' now index 3
+                            defaultValue={reverseMoodScale(moodOptions.findIndex(opt => opt.value === mood))}
                             getAriaValueText={valuetext}
                             step={null}
                             marks={marks}
                             min={0}
-                            max={100} // Slider max value
-                            valueLabelDisplay="off" //  <-----  VALUE LABEL DISPLAY SET TO "OFF"
+                            max={100}
+                            valueLabelDisplay="off"
                             valueLabelFormat={valueLabelFormat}
                             onChange={handleSliderChange}
-                            // ThumbComponent={ThumbIcon} -  We are styling thumb directly in `sx` now
-                            scale={moodScale} // Apply non-linear scale function
+                            scale={moodScale}
                             sx={{
-                                color: 'var(--accent-color)', // default color, might be overridden by track gradient
+                                color: 'var(--accent-color)',
                                 '& .MuiSlider-track': {
                                     background: 'linear-gradient(to right, #E682FF, #18A2FD, #7B7BFF)',
-                                    border: 'none', // Remove border if any
+                                    border: 'none',
                                 },
                                 '& .MuiSlider-rail': {
                                     backgroundColor: '#1D1B25',
@@ -258,12 +246,12 @@ const JournalForm = () => {
                                 '& .MuiSlider-thumb': {
                                     width: '8px',
                                     height: '8px',
-                                    backgroundColor: '#00FF00', // --accent-color: #00FF00;
-                                    '&:hover, &.Mui-focusVisible, &.Mui-active': { // Active and focus states
-                                        boxShadow: `0px 0px 0px 8px rgba(0, 255, 0, 0.16)`, // Keep existing active shadow
+                                    backgroundColor: '#00FF00',
+                                    '&:hover, &.Mui-focusVisible, &.Mui-active': {
+                                        boxShadow: `0px 0px 0px 8px rgba(0, 255, 0, 0.16)`,
                                     },
                                     '&.Mui-active': {
-                                        width: '16px', // Active state size
+                                        width: '16px',
                                         height: '16px',
                                     },
                                 },
@@ -288,7 +276,7 @@ const JournalForm = () => {
                             placeholder="Find the root of this feeling in your day."
                             value={textField1}
                             onChange={handleText1Change}
-                            className="journal-input journal-textarea journal-text-input-style" // ADDED journal-text-input-style
+                            className="journal-input journal-textarea journal-text-input-style"
                         />
                         <EditIcon className="journal-edit-icon" />
                     </div>
@@ -302,7 +290,7 @@ const JournalForm = () => {
                             placeholder="One small action to shape your path."
                             value={textField2}
                             onChange={handleText2Change}
-                            className="journal-input journal-textarea journal-text-input-style" // ADDED journal-text-input-style
+                            className="journal-input journal-textarea journal-text-input-style"
                         />
                         <EditIcon className="journal-edit-icon" />
                     </div>

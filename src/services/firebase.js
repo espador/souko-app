@@ -257,6 +257,11 @@ const getJournalEntryByDate = async (userId, date) => {
     const endOfDay = new Date(date);
     endOfDay.setHours(23, 59, 59, 999);
 
+    console.log("getJournalEntryByDate - userId:", userId); // ADDED LOG
+    console.log("getJournalEntryByDate - date (input):", date); // ADDED LOG
+    console.log("getJournalEntryByDate - startOfDay:", startOfDay); // ADDED LOG
+    console.log("getJournalEntryByDate - endOfDay:", endOfDay); // ADDED LOG
+
     const q = query(
       journalEntriesRef,
       where('userId', '==', userId),
@@ -267,8 +272,11 @@ const getJournalEntryByDate = async (userId, date) => {
     const querySnapshot = await getDocs(q);
     if (!querySnapshot.empty) {
       const docSnapshot = querySnapshot.docs[0];
-      return { id: docSnapshot.id, ...docSnapshot.data() };
+      const entryData = { id: docSnapshot.id, ...docSnapshot.data() };
+      console.log("getJournalEntryByDate - Entry found:", entryData); // ADDED LOG
+      return entryData;
     } else {
+      console.log("getJournalEntryByDate - No entry found for date:", date); // ADDED LOG
       return null; // No entry found for the date
     }
   } catch (error) {

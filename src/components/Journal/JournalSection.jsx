@@ -43,86 +43,79 @@ const JournalSection = React.memo(({ journalEntries = [], loading }) => {
     setIsJournalAvailable(currentHour >= 18 || currentHour < 2); // Journal available from 6 PM to 2 AM
   }, [currentTime]);
 
-    const handleDayClick = useCallback(
-        (index) => {
-            console.log("handleDayClick FUNCTION IS BEING CALLED!"); // ADDED - STEP 1 DEBUG
-            const dayDate = addDays(startOfCurrentWeek, index);
-            const dayDateFormatted = format(dayDate, 'yyyy-MM-dd');
-            const todayDate = new Date();
-            todayDate.setHours(0, 0, 0, 0);
-            dayDate.setHours(0, 0, 0, 0);
+  const handleDayClick = useCallback(
+    (index) => {
+        console.log("handleDayClick FUNCTION IS BEING CALLED!");
+        const dayDate = addDays(startOfCurrentWeek, index);
+        const dayDateFormatted = format(dayDate, 'yyyy-MM-dd');
+        const todayDate = new Date();
+        todayDate.setHours(0, 0, 0, 0);
+        dayDate.setHours(0, 0, 0, 0);
 
-            const isToday = dayDate.getTime() === todayDate.getTime();
-            const currentHour = new Date().getHours();
-
-            // --- ADDED CONSOLE LOGS FOR DEBUGGING ---
-            console.log("handleDayClick - currentHour:", currentHour);
-            console.log("handleDayClick - isToday:", isToday);
-            console.log("handleDayClick - (currentHour < 18 && currentHour >= 2):", (currentHour < 18 && currentHour >= 2));
-            // --- END OF ADDED CONSOLE LOGS ---
+        const isToday = dayDate.getTime() === todayDate.getTime();
+        const currentHour = new Date().getHours();
 
 
-            const isFutureDay = dayDate > today;
-            const entryForDay = journalEntries.find(
-                (entry) => entry?.createdAt && format(entry.createdAt.toDate(), 'yyyy-MM-dd') === dayDateFormatted // Changed to createdAt
-            );
-
-            console.log("📌 Clicked Day Index:", index);
-            console.log("📅 Day Date:", dayDateFormatted);
-            console.log("📆 Today:", format(todayDate, 'yyyy-MM-dd'));
-            console.log("⏰ Current Hour:", currentHour);
-            console.log("⚡ isToday:", isToday);
-            console.log("🔮 isFutureDay:", isFutureDay);
-            console.log("📝 entryForDay:", !!entryForDay);
+        const isFutureDay = dayDate > today;
+        const entryForDay = journalEntries.find(
+            (entry) => entry?.createdAt && format(entry.createdAt.toDate(), 'yyyy-MM-dd') === dayDateFormatted
+        );
 
 
-            if (isToday) {
-                if (currentHour < 18 && currentHour >= 2) {
-                    console.log("🟠 Navigating to: /journal-countdown");
-                    navigate('/journal-countdown'); // Removed setTimeout here!
-                } else {
-                    console.log("🟢 Navigating to: /journal-form");
-                    navigate('/journal-form');
-                }
-            } else if (!isToday && !isFutureDay) { // Open journal form for past days and explicitly check it's not today and not future
-                if (entryForDay) { // Only navigate for past days if there is an entry
-                    // Check if entry was created within the allowed edit window
-                    if (entryForDay.createdAt) {
-                        const entryTimestamp = entryForDay.createdAt.toDate(); // Use createdAt
-                        const entryHour = entryTimestamp.getHours();
-                        const isWithinEditWindow = (entryHour >= 18 || entryHour < 2) && format(entryTimestamp, 'yyyy-MM-dd') === dayDateFormatted;
+        console.log("📌 Clicked Day Index:", index);
+        console.log("📅 Day Date:", dayDateFormatted);
+        console.log("📆 Today:", format(todayDate, 'yyyy-MM-dd'));
+        console.log("⏰ Current Hour:", currentHour);
+        console.log("⚡ isToday:", isToday);
+        console.log("🔮 isFutureDay:", isFutureDay);
+        console.log("📝 entryForDay:", !!entryForDay);
 
-                        if (isWithinEditWindow) {
-                            console.log("📂 Navigating to JournalForm for past day WITH entry AND within edit window:", dayDateFormatted);
-                            navigate('/journal-form', { state: { selectedDate: dayDateFormatted } });
-                        } else {
-                            console.log("🔒 Past day entry exists, but NOT within edit window.");
-                            return; // Prevent navigation if not within edit window
-                        }
-                    } else {
-                        console.log("⚠️ Past day entry exists, but createdAt is missing. Navigation prevented for safety.");
-                        return; // Prevent navigation if createdAt is missing (defensive)
-                    }
 
-                } else {
-                    console.log("❌ Past day WITHOUT entry, no navigation.");
-                    return; // Prevent navigation for past days without entries
-                }
-            } else if (isFutureDay) {
-                console.log("❌ Future day, no navigation."); // Log when it's a future day
+        if (isToday) {
+            if (currentHour < 18 && currentHour >= 2) {
+                console.log("🟠 Navigating to: /journal-countdown");
+                navigate('/journal-countdown');
+            } else {
+                console.log("🟢 Navigating to: /journal-form");
+                navigate(`/journal-form?date=${dayDateFormatted}`); // Explicitly added date param here as well for extra safety
             }
-        },
-        [startOfCurrentWeek, navigate, journalEntries, today]
-    );
+        } else if (!isToday && !isFutureDay) {
+            if (entryForDay) {
+                if (entryForDay.createdAt) {
+                    const entryTimestamp = entryForDay.createdAt.toDate();
+                    const entryHour = entryTimestamp.getHours();
+                    const isWithinEditWindow = (entryHour >= 18 || entryHour < 2) && format(entryTimestamp, 'yyyy-MM-dd') === dayDateFormatted;
+
+                    if (isWithinEditWindow) {
+                        console.log("📂 Navigating to JournalForm for past day WITH entry AND within edit window:", dayDateFormatted);
+                        navigate(`/journal-form?date=${dayDateFormatted}`); // Explicitly added date param here as well for extra safety
+                    } else {
+                        console.log("🔒 Past day entry exists, but NOT within edit window.");
+                        return;
+                    }
+                } else {
+                    console.log("⚠️ Past day entry exists, but createdAt is missing. Navigation prevented for safety.");
+                    return;
+                }
+
+            } else {
+                console.log("❌ Past day WITHOUT entry, no navigation.");
+                return;
+            }
+        } else if (isFutureDay) {
+            console.log("❌ Future day, no navigation.");
+        }
+    },
+    [startOfCurrentWeek, navigate, journalEntries, today]
+);
 
 
-  // Simplified renderDayButtons for testing - STEP 6 DEBUG
   const renderDayButtons = useCallback(() => {
     return [...Array(7)].map((_, i) => {
       const dayDate = addDays(startOfCurrentWeek, i);
       const dateKey = format(dayDate, 'yyyy-MM-dd');
       const entryForDay = journalEntries.find(
-        (entry) => entry?.createdAt && format(entry.createdAt.toDate(), 'yyyy-MM-dd') === dateKey // Changed to createdAt
+        (entry) => entry?.createdAt && format(entry.createdAt.toDate(), 'yyyy-MM-dd') === dateKey
       );
 
       console.log(`JournalSection - Day: ${format(dayDate, 'yyyy-MM-dd')}, entryForDay:`, entryForDay);
@@ -144,7 +137,7 @@ const JournalSection = React.memo(({ journalEntries = [], loading }) => {
           MoodIconComponent = moodIcons[entryForDay.mood];
           console.log("JournalSection - MoodIconComponent for", format(dayDate, 'yyyy-MM-dd'), ":", MoodIconComponent);
         } else {
-          MoodIconComponent = JournalUnfilledIcon; // Use unfilled if no entry for today
+          MoodIconComponent = JournalUnfilledIcon;
           console.log("JournalSection - No entry for TODAY:", format(dayDate, 'yyyy-MM-dd'));
         }
       } else { // Past days
@@ -155,7 +148,7 @@ const JournalSection = React.memo(({ journalEntries = [], loading }) => {
           MoodIconComponent = moodIcons[entryForDay.mood];
           console.log("JournalSection - MoodIconComponent for", format(dayDate, 'yyyy-MM-dd'), ":", MoodIconComponent);
         } else {
-          MoodIconComponent = JournalUnfilledIcon; // Use unfilled if no entry for past day
+          MoodIconComponent = JournalUnfilledIcon;
           console.log("JournalSection - No entry for PAST DAY:", format(dayDate, 'yyyy-MM-dd'));
         }
       }
@@ -165,10 +158,10 @@ const JournalSection = React.memo(({ journalEntries = [], loading }) => {
           <button
             className={`day-button ${isToday ? 'day-button-today' : ''}`}
             onClick={() => {
-                console.log("BUTTON CLICKED!", i); // Keep the debug log
+                console.log("BUTTON CLICKED!", i);
                 handleDayClick(i);
             }}
-            disabled={isFutureDay} // Simplified disabled prop - like older version
+            disabled={isFutureDay}
           >
             {MoodIconComponent && <img src={MoodIconComponent} alt="Mood Icon" className="mood-icon" />}
           </button>

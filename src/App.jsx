@@ -11,6 +11,7 @@ import SessionOverviewPage from './pages/SessionOverviewPage';
 import ProjectOverviewPage from './pages/ProjectOverviewPage';
 import JournalCountdown from './components/Journal/JournalCountdown';
 import JournalForm from './components/Journal/JournalForm';
+import JournalConfirmation from './components/Journal/JournalConfirmation'; // Import JournalConfirmation component
 
 const App = () => {
   return (
@@ -27,6 +28,7 @@ const App = () => {
         {/* Add routes for JournalCountdown and JournalForm */}
         <Route path="/journal-countdown" element={<JournalCountdown />} />
         <Route path="/journal-form" element={<JournalForm />} />
+        <Route path="/journal-confirmation" element={<JournalConfirmation />} /> {/* Add the route for JournalConfirmation */}
       </Routes>
     </Router>
   );
