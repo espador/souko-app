@@ -10,10 +10,11 @@ import { onAuthStateChanged } from 'firebase/auth';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import { useNavigate, Link } from 'react-router-dom';
 import { formatTime } from '../utils/formatTime';
-import Header from '../components/Layout/Header'; // You might not need Header again, consider a simpler layout
+import Header from '../components/Layout/Header';
 import '../styles/global.css';
-import '../styles/components/HomePage.css'; // Reuse HomePage styles for consistency
+import '../styles/components/HomePage.css';
 import '@fontsource/shippori-mincho';
+import { TextGenerateEffect } from '../styles/components/text-generate-effect.tsx';
 
 const ProjectOverviewPage = () => {
   const [user, setUser] = useState(null);
@@ -69,6 +70,27 @@ const ProjectOverviewPage = () => {
     }, [sessions]);
   }, [sessions]);
 
+  // Calculate total tracked time across all projects
+  const totalTrackedTimeAcrossProjects = useMemo(() => {
+    return sessions.reduce((sum, session) => sum + (session.elapsedTime || 0), 0);
+  }, [sessions]);
+
+  const formatTotalTimeForQuote = useCallback((totalTime) => {
+    const formattedTime = formatTime(totalTime);
+    const parts = formattedTime.split(' ');
+    if (parts.length === 2) {
+      return `${parts[0]} ${parts[1]}`; // e.g., "21h 30m" or "1d 2h"
+    } else if (parts.length === 4 && parts[1] === 'days') {
+      return `${parts[0]}d ${parts[2]}h`; // e.g., "2d 3h"
+    }
+    return formattedTime; // Fallback to full format if needed
+  }, []);
+
+  const formattedTotalTime = useMemo(() => {
+    return formatTotalTimeForQuote(totalTrackedTimeAcrossProjects);
+  }, [totalTrackedTimeAcrossProjects, formatTotalTimeForQuote]);
+
+
   // Define getInitials function here
   const getInitials = (name) => {
     if (!name) return ''; // Handle cases with no name
@@ -121,15 +143,28 @@ const ProjectOverviewPage = () => {
 
 
   return (
-    <div className="homepage"> {/* Reusing homepage class for styling consistency */}
-      <Header showLiveTime={false} /> {/* Consider a simpler header or no header if design requires */}
+    <div className="project-container">
+      <Header
+        showBackArrow={true}
+        onBack={() => navigate('/home')}
+        hideProfile={true}
+      />
+       <section className="motivational-section">
+          {!loading && (
+            <TextGenerateEffect
+              words={`You tracked <span class="accent-text">${formattedTotalTime}</span> hours.\nTime flows where focus leads.`}
+            />
+          )}
+        </section>
       <main className="homepage-content">
         <section className="projects-section">
           <div className="projects-header">
-            <Link to="/home" className="projects-all-link"> {/* Back to Homepage link - using "All" class for styling */}
-              ← Back
-            </Link>
             <h2 className="projects-label">All Projects</h2>
+             <div className="projects-actions"> {/* Added projects-actions container for alignment */}
+                <Link to="/create-project" className="projects-add-link">
+                  <span className="button-icon">✛</span>
+                </Link>
+              </div>
           </div>
           {renderProjects}
         </section>
