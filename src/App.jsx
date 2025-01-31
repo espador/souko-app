@@ -7,8 +7,8 @@ import TimeTrackerPage from './pages/TimeTrackerPage';
 import CreateProjectPage from './pages/CreateProjectPage';
 import ProjectDetailPage from './pages/ProjectDetailPage';
 import SessionDetailPage from './pages/SessionDetailPage';
-import SessionOverviewPage from './pages/SessionOverviewPage'; // Import the new component
-// Import JournalCountdown and JournalForm components
+import SessionOverviewPage from './pages/SessionOverviewPage';
+import ProjectOverviewPage from './pages/ProjectOverviewPage';
 import JournalCountdown from './components/Journal/JournalCountdown';
 import JournalForm from './components/Journal/JournalForm';
 
@@ -18,6 +18,7 @@ const App = () => {
       <Routes>
         <Route path="/" element={<LoginPage />} />
         <Route path="/home" element={<HomePage />} />
+        <Route path="/projects" element={<ProjectOverviewPage />} /> {/* Add the route for ProjectOverviewPage */}
         <Route path="/time-tracker" element={<TimeTrackerPage />} />
         <Route path="/create-project" element={<CreateProjectPage />} />
         <Route path="/project/:projectId" element={<ProjectDetailPage />} />

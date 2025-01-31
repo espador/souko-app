@@ -93,6 +93,7 @@ body.allow-scroll {
     color: var(--text-muted);
     font-family: var(--font-commit-mono);
     cursor: pointer;
+    text-decoration: none; /* Remove default underline from Link */
 }
 
 .projects-all-link:hover, .journal-all-link:hover {
@@ -181,6 +182,7 @@ body.allow-scroll {
   padding: 16px;
   cursor: pointer;
   width: 100%;
+  display: none; /* Hide the button */
 }
 
 .button-icon {
@@ -217,4 +219,27 @@ body.allow-scroll > html {
 
 body.allow-scroll {
   overflow-y: auto;
+}
+
+/* Additions for projects actions and add link */
+.projects-actions {
+  display: flex; /* To lay out "All" and "+" side-by-side */
+  align-items: center; /* Vertically align items within actions */
+}
+
+.projects-all-link {
+  margin-right: 1rem; /* Add some spacing between "All" and "+" if needed */
+  /* Inherits styles from existing .projects-all-link */
+}
+
+.projects-add-link {
+  color: var(--text-muted); 
+  font-family: var(--font-commit-mono);
+  font-size: 20px;
+  cursor: pointer;
+  text-decoration: none; 
+}
+
+.projects-add-link:hover {
+    color: var(--text-color);
 }

@@ -9,7 +9,7 @@ import React, {
 import { auth, db } from '../services/firebase';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { collection, getDocs, query, where, doc, getDoc } from 'firebase/firestore';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom'; // Import Link
 import { formatTime } from '../utils/formatTime';
 import Header from '../components/Layout/Header';
 import '../styles/global.css';
@@ -159,9 +159,14 @@ const HomePage = React.memo(() => {
     if (loading) {
       return <p>Loading your projects...</p>;
     } else if (projects.length > 0) {
+      // Sort projects alphabetically by name (placeholder for "latest tracked")
+      const sortedProjects = [...projects].sort((a, b) => a.name.localeCompare(b.name));
+      // Limit to latest 3 projects
+      const limitedProjects = sortedProjects.slice(0, 3);
+
       return (
         <ul className="projects-list">
-          {projects.map((project) => (
+          {limitedProjects.map((project) => ( // Use limitedProjects here
             <li
               key={project.id}
               className="project-item"
@@ -207,15 +212,16 @@ const HomePage = React.memo(() => {
         <section className="projects-section">
           <div className="projects-header">
             <h2 className="projects-label">Your projects</h2>
-            <div className="projects-all-link">All</div>
+            <div className="projects-actions"> {/* New container for actions */}
+              <Link to="/projects" className="projects-all-link">
+                All
+              </Link>
+              <Link to="/create-project" className="projects-add-link"> {/* New class for add link, if needed for styling */}
+                <span className="button-icon">✛</span>
+              </Link>
+            </div>
           </div>
           {renderProjects}
-          <button
-            className="track-project-button"
-            onClick={() => navigate('/create-project')}
-          >
-            <span className="button-icon">✛</span> Track new project
-          </button>
         </section>
       </main>
       <Sidebar isOpen={isSidebarOpen} onClose={closeSidebar} onLogout={handleLogout} />

@@ -12,6 +12,7 @@ import {
   collection,
   query,
   where,
+  orderBy,
   getDocs,
   Timestamp,
 } from 'firebase/firestore';
@@ -33,7 +34,6 @@ const ProjectDetailPage = React.memo(() => {
   const [projects, setProjects] = useState([]);
   const [selectedProjectId, setSelectedProjectId] = useState(routeProjectId);
 
-  // Memoize fetchProjects to prevent unnecessary recreation
   const fetchProjects = useCallback(async (uid) => {
     try {
       const projectsRef = collection(db, 'projects');
@@ -48,9 +48,8 @@ const ProjectDetailPage = React.memo(() => {
     } catch (error) {
       console.error('Error fetching projects for dropdown:', error);
     }
-  }, []); // Empty dependency array as it doesn't depend on component state
+  }, []);
 
-  // Memoize fetchProjectDetails to prevent unnecessary recreation
   const fetchProjectDetails = useCallback(
     async (projectId, uid) => {
       if (!uid || !projectId) return;
@@ -77,7 +76,8 @@ const ProjectDetailPage = React.memo(() => {
           const q = query(
             sessionsRef,
             where('project', '==', projectData.name),
-            where('userId', '==', uid)
+            where('userId', '==', uid),
+            orderBy('startTime', 'desc')
           );
           const sessionsSnapshot = await getDocs(q);
 
@@ -94,10 +94,9 @@ const ProjectDetailPage = React.memo(() => {
         setLoading(false);
       }
     },
-    [] // Empty dependency array as it now relies on arguments
+    []
   );
 
-  // Fetch current user and initial data
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
@@ -111,7 +110,6 @@ const ProjectDetailPage = React.memo(() => {
     return () => unsubscribe();
   }, [navigate, fetchProjects]);
 
-  // Fetch project details when routeProjectId or currentUser changes
   useEffect(() => {
     if (currentUser && routeProjectId) {
       fetchProjectDetails(routeProjectId, currentUser.uid);
@@ -127,7 +125,6 @@ const ProjectDetailPage = React.memo(() => {
     [navigate]
   );
 
-  // Memoize the calculation of total time
   const totalTime = useMemo(() => {
     return sessions.reduce(
       (sum, session) => sum + (session.elapsedTime || 0),
@@ -135,7 +132,6 @@ const ProjectDetailPage = React.memo(() => {
     );
   }, [sessions]);
 
-  // Memoize sessions grouped by date
   const sessionsByDate = useMemo(() => {
     return sessions.reduce((acc, session) => {
       let date;
@@ -145,6 +141,7 @@ const ProjectDetailPage = React.memo(() => {
             weekday: 'long',
             month: 'long',
             day: 'numeric',
+            year: 'numeric', // Included year here
           });
         } catch (error) {
           console.error(
@@ -167,13 +164,14 @@ const ProjectDetailPage = React.memo(() => {
     }, {});
   }, [sessions]);
 
-  // Memoize sorted dates
   const sortedDates = useMemo(() => {
     return Object.keys(sessionsByDate).sort((a, b) => {
       if (a === 'Invalid Date') return 1;
       if (b === 'Invalid Date') return -1;
       try {
-        return new Date(b) - new Date(a);
+        const dateA = new Date(a);
+        const dateB = new Date(b);
+        return dateB - dateA;
       } catch (error) {
         console.error('Error comparing dates:', error);
         return 0;
@@ -194,7 +192,7 @@ const ProjectDetailPage = React.memo(() => {
       }
     }
     return 'N/A';
-  }, []); // Memoize formatStartTime
+  }, []);
 
   if (loading) {
     return <p className="loading">Loading project details...</p>;
@@ -284,7 +282,7 @@ const ProjectDetailPage = React.memo(() => {
                       </span>
                     </li>
                   </Link>
-                ))}
+                 ))}
               </ul>
             </div>
           ))
