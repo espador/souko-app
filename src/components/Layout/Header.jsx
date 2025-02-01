@@ -1,14 +1,24 @@
 // Header.jsx
-import React, { useState, useEffect, memo, useMemo } from 'react';
+import React, { useState, useEffect, memo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../../styles/components/Header.css';
 import { ReactComponent as ReturnIcon } from '../../styles/components/assets/return.svg';
-import { ReactComponent as SoukoLogoHeader } from '../../styles/components/assets/Souko-logo-header.svg'; // Import the logo
+import { ReactComponent as SoukoLogoHeader } from '../../styles/components/assets/Souko-logo-header.svg';
 
-const Header = memo(({ title, showBackArrow, onBack, hideProfile, children, showLiveTime = false, onProfileClick }) => { // Added onProfileClick prop
+const Header = memo(({
+  variant = "home", // "home" (default) or "projectOverview"
+  title,
+  showBackArrow,
+  onBack,
+  hideProfile,
+  children,
+  showLiveTime = false,
+  onProfileClick,
+  onActionClick = () => {}  // default no-op if not provided
+}) => {
   const navigate = useNavigate();
   const [currentTime, setCurrentTime] = useState('');
-  const [isSpinning, setIsSpinning] = useState(true); // Assume spinning by default, or control with a prop if needed
+  const [isSpinning, setIsSpinning] = useState(true);
 
   useEffect(() => {
     let intervalId;
@@ -22,30 +32,35 @@ const Header = memo(({ title, showBackArrow, onBack, hideProfile, children, show
         const month = String(now.getMonth() + 1).padStart(2, '0');
         setCurrentTime(`${hours}:${minutes}:${seconds}.${day}.${month}`);
       };
-
       tick();
       intervalId = setInterval(tick, 1000);
     }
-
     return () => clearInterval(intervalId);
   }, [showLiveTime]);
 
-  // Simplified useMemo to always return the SoukoLogoHeader
-  const profileImageElement = useMemo(() => {
+  // Determine what to render on the right side of the header.
+  // For the projectOverview variant, we want to show "Add project".
+  // Otherwise, we show the profile logo (or any passed children) unless hidden.
+  let rightSection = null;
+  if (variant === "projectOverview") {
+    rightSection = (
+      <span className="header-action" onClick={onActionClick}>
+        Add project
+      </span>
+    );
+  } else {
     if (children) {
-      return children;
-    } else if (!hideProfile) { // Keep hideProfile logic if you still want to conditionally hide the logo area
-      return (
+      rightSection = children;
+    } else if (!hideProfile) {
+      rightSection = (
         <SoukoLogoHeader
-          className={`profile-pic souko-logo-header ${isSpinning ? 'spinning-logo' : ''}`} // Added spinning-logo class conditionally
+          className={`profile-pic souko-logo-header ${isSpinning ? 'spinning-logo' : ''}`}
           onClick={onProfileClick}
           style={{ cursor: 'pointer' }}
         />
-      ); // Render the SoukoLogoHeader component and added onClick
-    } else {
-      return null; // Still handle hideProfile if needed
+      );
     }
-  }, [hideProfile, children, onProfileClick, isSpinning]); // Added isSpinning to dependency array
+  }
 
   return (
     <div className="header">
@@ -55,11 +70,11 @@ const Header = memo(({ title, showBackArrow, onBack, hideProfile, children, show
             <ReturnIcon style={{ width: '40px', height: '40px' }} />
           </button>
         )}
-        <h1 className="header-title">{title}</h1>
+        {title && <h1 className="header-title">{title}</h1>}
         {showLiveTime && <div className="header-live-time">{currentTime}</div>}
       </div>
-      <div className="header-profile">
-        {profileImageElement} {/* profileImageElement will now always be the SoukoLogoHeader (or null if hidden) */}
+      <div className="header-right-section">
+        {rightSection}
       </div>
     </div>
   );

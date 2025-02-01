@@ -14,7 +14,11 @@ import { formatTime } from '../utils/formatTime';
 import Header from '../components/Layout/Header';
 import '../styles/global.css';
 import '../styles/components/HomePage.css';
+
+// Updated Icon Imports: Import both start and stop timer icons.
 import { ReactComponent as StartTimerIcon } from '../styles/components/assets/start-timer.svg';
+import { ReactComponent as StopTimerIcon } from '../styles/components/assets/stop-timer.svg';
+
 import '@fontsource/shippori-mincho';
 import Sidebar from '../components/Layout/Sidebar';
 import '../styles/components/Sidebar.css';
@@ -23,6 +27,8 @@ import { twMerge } from 'tailwind-merge';
 import { TextGenerateEffect } from '../styles/components/text-generate-effect.tsx';
 import JournalSection from '../components/Journal/JournalSection';
 import { ReactComponent as SoukoLogoHeader } from '../styles/components/assets/Souko-logo-header.svg';
+// Import date-fns helpers for week boundaries
+import { startOfWeek, endOfWeek } from 'date-fns';
 
 export const cn = (...inputs) => twMerge(clsx(inputs));
 
@@ -33,12 +39,28 @@ const HomePage = React.memo(() => {
   const [journalEntries, setJournalEntries] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [userProfile, setUserProfile] = useState(null);
+  const [hasTrackedEver, setHasTrackedEver] = useState(false);
+
   const navigate = useNavigate();
   const fabRef = useRef(null);
   const scrollTimeout = useRef(null);
   const motivationalSectionRef = useRef(null);
-  const [userProfile, setUserProfile] = useState(null);
-  const [hasTrackedEver, setHasTrackedEver] = useState(false);
+
+  // Helper function to parse timestamps (handling Firestore Timestamps)
+  const parseTimestamp = (timestamp) => {
+    if (!timestamp) return null;
+    return typeof timestamp.toDate === 'function'
+      ? timestamp.toDate()
+      : new Date(timestamp);
+  };
+
+  // Determine if there is an active time-tracking session.
+  // We assume that an active session is one without an endTime.
+  const hasActiveSession = useMemo(
+    () => sessions.some(session => !session.endTime),
+    [sessions]
+  );
 
   const fetchData = useCallback(async (uid) => {
     setLoading(true);
@@ -102,6 +124,7 @@ const HomePage = React.memo(() => {
     return () => unsubscribe();
   }, [navigate, fetchData]);
 
+  // Compute total session time per project (by project name)
   const totalSessionTime = useMemo(() => {
     return sessions.reduce((acc, session) => {
       const project = session.project || 'Unknown Project';
@@ -110,19 +133,14 @@ const HomePage = React.memo(() => {
     }, {});
   }, [sessions]);
 
+  // Compute the weekly tracked time using date-fns to get week boundaries.
   const weeklyTrackedTime = useMemo(() => {
     const now = new Date();
-    const startOfWeek = new Date(now);
-    startOfWeek.setHours(0, 0, 0, 0);
-    startOfWeek.setDate(startOfWeek.getDate() - (now.getDay() === 0 ? 7 : now.getDay()) + 1);
-
-    const endOfWeek = new Date(now);
-    endOfWeek.setHours(23, 59, 59, 999);
-    endOfWeek.setDate(endOfWeek.getDate() - (now.getDay() === 0 ? 7 : now.getDay()) + 7);
-
+    const weekStart = startOfWeek(now, { weekStartsOn: 1 });
+    const weekEnd = endOfWeek(now, { weekStartsOn: 1 });
     return sessions.reduce((sum, session) => {
-      const sessionStartTime = session.startTime ? new Date(session.startTime) : null;
-      if (sessionStartTime && sessionStartTime >= startOfWeek && sessionStartTime <= endOfWeek) {
+      const sessionStartTime = parseTimestamp(session.startTime);
+      if (sessionStartTime && sessionStartTime >= weekStart && sessionStartTime <= weekEnd) {
         return sum + (session.elapsedTime || 0);
       }
       return sum;
@@ -170,13 +188,37 @@ const HomePage = React.memo(() => {
     ),
   [getInitials]);
 
+  // Compute the 3 projects with the most recent time-tracking sessions.
+  const recentProjects = useMemo(() => {
+    return projects
+      .map(project => {
+        const projectSessions = sessions.filter(
+          session => session.project === project.name && session.startTime
+        );
+        const latestSessionTime =
+          projectSessions.length > 0
+            ? Math.max(
+                ...projectSessions.map(session => {
+                  const sessionStartTime = parseTimestamp(session.startTime);
+                  return sessionStartTime ? sessionStartTime.getTime() : 0;
+                })
+              )
+            : 0;
+        return { ...project, latestSessionTime };
+      })
+      .filter(project => project.latestSessionTime > 0)
+      .sort((a, b) => b.latestSessionTime - a.latestSessionTime)
+      .slice(0, 3);
+  }, [projects, sessions]);
+
   const renderProjects = useMemo(() => {
     if (projects.length > 0) {
-      const sortedProjects = [...projects].sort((a, b) => a.name.localeCompare(b.name));
-      const limitedProjects = sortedProjects.slice(0, 3);
+      if (recentProjects.length === 0) {
+        return <p>No projects with tracked sessions found. Start tracking to see results here!</p>;
+      }
       return (
         <ul className="projects-list">
-          {limitedProjects.map((project) => (
+          {recentProjects.map((project) => (
             <li
               key={project.id}
               className="project-item"
@@ -185,8 +227,9 @@ const HomePage = React.memo(() => {
               <div className="project-image-container">{renderProjectImage(project)}</div>
               <div className="project-name">{project.name}</div>
               <div className="project-total-time">
-                {totalSessionTime && totalSessionTime[project.name] !== undefined ?
-                  formatTime(totalSessionTime[project.name]) : formatTime(0)}
+                {totalSessionTime && totalSessionTime[project.name] !== undefined
+                  ? formatTime(totalSessionTime[project.name])
+                  : formatTime(0)}
               </div>
             </li>
           ))}
@@ -195,7 +238,7 @@ const HomePage = React.memo(() => {
     } else {
       return <p>No projects found. Start tracking to see results here!</p>;
     }
-  }, [projects, navigate, totalSessionTime, renderProjectImage]);
+  }, [projects, navigate, totalSessionTime, renderProjectImage, recentProjects]);
 
   console.log('HomePage rendered. Loading:', loading);
 
@@ -245,7 +288,11 @@ const HomePage = React.memo(() => {
       {isSidebarOpen && <div className="sidebar-overlay" onClick={closeSidebar}></div>}
       {projects.length >= 0 && (
         <button ref={fabRef} className="fab" onClick={() => navigate('/time-tracker')}>
-          <StartTimerIcon className="fab-icon" />
+          {hasActiveSession ? (
+            <StopTimerIcon className="fab-icon" />
+          ) : (
+            <StartTimerIcon className="fab-icon" />
+          )}
         </button>
       )}
     </div>

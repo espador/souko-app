@@ -2,8 +2,8 @@
 .header {
   display: flex;
   justify-content: space-between;
+  align-items: center;
   margin-top: 24px;
-  margin-left: 0px;
   height: 64px;
   width: 100%;
   z-index: 10;
@@ -23,72 +23,65 @@
   color: var(--text-muted);
   font-size: 16px;
   line-height: 20px;
-  margin: 0px; /* Add some right margin to separate from the time */
+  margin: 0;
+  margin-left: 8px; /* Spacing from back button if present */
 }
 
 .header-live-time {
-  align-items: center;
-  font-weight: 400; /* Make it stand out a bit */
-  color: #43404C; /* Or a specific color for the time */
-  font-size: 20px; /* Adjust the size as needed */
+  margin-left: 0px;
+  font-weight: 400;
+  color: #43404C;
+  font-size: 20px;
   line-height: 20px;
-  margin: 0px;
 }
 
-.header-profile {
+.header-right-section {
   display: flex;
   align-items: center;
 }
 
+/* Profile image styling */
 .profile-pic {
   width: 40px;
   height: 40px;
   border-radius: 50%;
   object-fit: cover;
+  cursor: pointer;
 }
 
+/* Back button styling */
 .back-button {
-  display: flex; /* Keep your flexbox alignment if you're using it */
-  justify-content: flex-start;
+  display: flex;
+  justify-content: center;
   align-items: center;
   width: 40px;
   height: 40px;
   border: none;
   background: none;
   cursor: pointer;
-  padding: 0; /* Remove the padding */
+  padding: 0;
 }
 
 .back-button svg {
   width: 24px;
   height: 24px;
   fill: var(--text-color);
-  padding-left: 0px; /* You might experiment with this, but flexbox is better */
 }
 
-.profile-placeholder {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background-color: var(--text-muted); /* Or any color you prefer */
-  color: var(--background-color);
-  font-weight: bold;
+.header-action {
+  font-size: 16px;
+  color: var(--text-muted);
+  font-weight: 400;
+  color: #43404C;
+  cursor: pointer;
+  font-family: var(--font-commit-mono);
 }
 
-/* Keyframes for spinning animation */
 @keyframes spin {
-  0% {
-    transform: rotate(0deg);
-  }
-  100% {
-    transform: rotate(360deg);
-  }
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
-/* Apply spinning animation to the logo */
 .spinning-logo {
-  animation: spin 60s linear infinite; /* 10 seconds, linear speed, infinite loop */
+  animation: spin 60s linear infinite;
 }

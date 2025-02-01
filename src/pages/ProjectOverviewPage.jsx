@@ -8,20 +8,28 @@ import React, {
 import { auth, db } from '../services/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import { collection, getDocs, query, where } from 'firebase/firestore';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { formatTime } from '../utils/formatTime';
 import Header from '../components/Layout/Header';
-import '../styles/global.css';
-import '../styles/components/HomePage.css';
 import '@fontsource/shippori-mincho';
 import { TextGenerateEffect } from '../styles/components/text-generate-effect.tsx';
+import '../styles/components/ProjectOverviewPage.css'; // New CSS file for this page
 
 const ProjectOverviewPage = () => {
   const [user, setUser] = useState(null);
   const [projects, setProjects] = useState([]);
   const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [sortMode, setSortMode] = useState("tracked"); // "tracked" or "recent"
   const navigate = useNavigate();
+
+  // Helper to parse timestamps (handle Firestore Timestamps)
+  const parseTimestamp = (timestamp) => {
+    if (!timestamp) return null;
+    return typeof timestamp.toDate === 'function'
+      ? timestamp.toDate()
+      : new Date(timestamp);
+  };
 
   const fetchData = useCallback(async (uid) => {
     setLoading(true);
@@ -40,8 +48,6 @@ const ProjectOverviewPage = () => {
 
       const userSessions = sessionSnapshot.docs.map((doc) => doc.data());
       setSessions(userSessions);
-
-
     } catch (error) {
       console.error('Error fetching data:', error.message);
     } finally {
@@ -62,12 +68,13 @@ const ProjectOverviewPage = () => {
     return () => unsubscribe();
   }, [navigate, fetchData]);
 
+  // Total tracked time per project (by project name)
   const totalSessionTime = useMemo(() => {
     return sessions.reduce((acc, session) => {
       const project = session.project || 'Unknown Project';
       acc[project] = (acc[project] || 0) + (session.elapsedTime || 0);
       return acc;
-    }, [sessions]);
+    }, {});
   }, [sessions]);
 
   // Calculate total tracked time across all projects
@@ -79,21 +86,20 @@ const ProjectOverviewPage = () => {
     const formattedTime = formatTime(totalTime);
     const parts = formattedTime.split(' ');
     if (parts.length === 2) {
-      return `${parts[0]} ${parts[1]}`; // e.g., "21h 30m" or "1d 2h"
+      return `${parts[0]} ${parts[1]}`; // e.g. "21h 30m" or "1d 2h"
     } else if (parts.length === 4 && parts[1] === 'days') {
-      return `${parts[0]}d ${parts[2]}h`; // e.g., "2d 3h"
+      return `${parts[0]}d ${parts[2]}h`; // e.g. "2d 3h"
     }
-    return formattedTime; // Fallback to full format if needed
+    return formattedTime; // fallback
   }, []);
 
   const formattedTotalTime = useMemo(() => {
     return formatTotalTimeForQuote(totalTrackedTimeAcrossProjects);
   }, [totalTrackedTimeAcrossProjects, formatTotalTimeForQuote]);
 
-
-  // Define getInitials function here
+  // Get initials from project name
   const getInitials = (name) => {
-    if (!name) return ''; // Handle cases with no name
+    if (!name) return '';
     return name.trim().charAt(0).toUpperCase();
   };
 
@@ -106,16 +112,53 @@ const ProjectOverviewPage = () => {
           <span>{getInitials(project.name || 'P')}</span>
         </div>
       ),
-    [getInitials] // Add getInitials to the dependency array as it's used inside
+    [getInitials]
   );
+
+  // Compute sorted projects based on the sort mode.
+  const sortedProjects = useMemo(() => {
+    if (sortMode === "tracked") {
+      // Sort by total tracked time (descending)
+      return [...projects].sort((a, b) => {
+        const aTime = totalSessionTime[a.name] || 0;
+        const bTime = totalSessionTime[b.name] || 0;
+        return bTime - aTime;
+      });
+    } else {
+      // Sort by most recent tracked session (using startTime)
+      return [...projects].sort((a, b) => {
+        const aSessions = sessions.filter(
+          session => session.project === a.name && session.startTime
+        );
+        const bSessions = sessions.filter(
+          session => session.project === b.name && session.startTime
+        );
+        const aLatest = aSessions.length > 0
+          ? Math.max(...aSessions.map(session => {
+              const t = parseTimestamp(session.startTime);
+              return t ? t.getTime() : 0;
+            }))
+          : 0;
+        const bLatest = bSessions.length > 0
+          ? Math.max(...bSessions.map(session => {
+              const t = parseTimestamp(session.startTime);
+              return t ? t.getTime() : 0;
+            }))
+          : 0;
+        return bLatest - aLatest;
+      });
+    }
+  }, [sortMode, projects, sessions, totalSessionTime]);
+
+  // Toggle sort mode between "tracked" and "recent"
+  const toggleSortMode = useCallback(() => {
+    setSortMode((prevMode) => (prevMode === "tracked" ? "recent" : "tracked"));
+  }, []);
 
   const renderProjects = useMemo(() => {
     if (loading) {
       return <p>Loading projects...</p>;
     } else if (projects.length > 0) {
-      // Sort projects alphabetically by name (placeholder for "latest tracked" - same as HomePage)
-      const sortedProjects = [...projects].sort((a, b) => a.name.localeCompare(b.name));
-
       return (
         <ul className="projects-list">
           {sortedProjects.map((project) => (
@@ -127,10 +170,9 @@ const ProjectOverviewPage = () => {
               <div className="project-image-container">{renderProjectImage(project)}</div>
               <div className="project-name">{project.name}</div>
               <div className="project-total-time">
-                {
-                  totalSessionTime && totalSessionTime[project.name] !== undefined ?
-                  formatTime(totalSessionTime[project.name]) : formatTime(0)
-                }
+                {totalSessionTime && totalSessionTime[project.name] !== undefined
+                  ? formatTime(totalSessionTime[project.name])
+                  : formatTime(0)}
               </div>
             </li>
           ))}
@@ -139,32 +181,36 @@ const ProjectOverviewPage = () => {
     } else {
       return <p>No projects found.</p>;
     }
-  }, [loading, projects, navigate, totalSessionTime, renderProjectImage]);
-
+  }, [loading, projects, navigate, totalSessionTime, renderProjectImage, sortedProjects]);
 
   return (
     <div className="project-container">
       <Header
+        variant="projectOverview"
         showBackArrow={true}
         onBack={() => navigate('/home')}
-        hideProfile={true}
+        onActionClick={() => navigate('/create-project')}
       />
-       <section className="motivational-section">
-          {!loading && (
-            <TextGenerateEffect
-              words={`You tracked <span class="accent-text">${formattedTotalTime}</span> hours.\nTime flows where focus leads.`}
-            />
-          )}
-        </section>
+      <section className="motivational-section">
+        {!loading && (
+          <TextGenerateEffect
+            words={`You tracked <span class="accent-text">${formattedTotalTime}</span> hours.\nTime flows where focus leads.`}
+          />
+        )}
+      </section>
       <main className="homepage-content">
         <section className="projects-section">
           <div className="projects-header">
             <h2 className="projects-label">All Projects</h2>
-             <div className="projects-actions"> {/* Added projects-actions container for alignment */}
-                <Link to="/create-project" className="projects-add-link">
-                  <span className="button-icon">✛</span>
-                </Link>
-              </div>
+            <div className="projects-actions">
+              {/* Toggle label: when in default "tracked" order, show "Most recent" to switch order; when in "recent", show "Most tracked" */}
+              <span 
+                onClick={toggleSortMode} 
+                className="projects-label sort-toggle-label"
+              >
+                {sortMode === "tracked" ? "Most recent" : "Most tracked"}
+              </span>
+            </div>
           </div>
           {renderProjects}
         </section>
