@@ -1,15 +1,16 @@
 console.log('Service worker registered!');
 
-const CACHE_NAME = 'my-pwa-cache-v4'; // Increment version to force cache update for new deployments!
+const CACHE_VERSION = 'v5'; // Increment this version with each deployment
+const CACHE_NAME = `my-pwa-cache-${CACHE_VERSION}`;
 const urlsToCache = [
-  '/',
+  '/', // Cache the root (index.html) but see note below on fetch strategy.
   '/index.html',
-  '/manifest.json', // Good practice to cache manifest
-  '/favicon.ico',    // Good practice to cache favicon
+  '/manifest.json',
+  '/favicon.ico',
   '/logo192.png',
   '/logo512.png',
-  '/static/js/main.04150159.js', // Adjust based on your build output
-  '/static/css/main.5a09115f.css',    // <--- REPLACE THIS PLACEHOLDER! (If your CSS is in main.css, otherwise adjust)
+  '/static/js/main.04150159.js', // Adjust paths based on your build output
+  '/static/css/main.5a09115f.css'
 ];
 
 self.addEventListener('install', event => {
@@ -20,6 +21,7 @@ self.addEventListener('install', event => {
         console.log('Opened cache');
         return cache.addAll(urlsToCache);
       })
+      .then(() => self.skipWaiting()) // Force waiting service worker to become active
   );
 });
 
@@ -30,27 +32,41 @@ self.addEventListener('activate', event => {
     caches.keys().then(cacheNames => {
       return Promise.all(
         cacheNames.map(cacheName => {
-          if (cacheWhitelist.indexOf(cacheName) === -1) {
+          if (!cacheWhitelist.includes(cacheName)) {
             console.log('Deleting old cache:', cacheName);
-            return caches.delete(cacheName); // Delete caches that are not in the whitelist
+            return caches.delete(cacheName);
           }
         })
       );
-    })
+    }).then(() => self.clients.claim()) // Claim clients immediately so that the new SW starts controlling pages
   );
 });
 
 self.addEventListener('fetch', event => {
+  // For navigation requests, use a network-first strategy.
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request)
+        .then(response => {
+          // Optionally update the cache with the fresh index.html
+          return caches.open(CACHE_NAME).then(cache => {
+            cache.put('/index.html', response.clone());
+            return response;
+          });
+        })
+        .catch(() => caches.match('/index.html'))
+    );
+    return;
+  }
+  
+  // For other requests, use a cache-first strategy.
   event.respondWith(
     caches.match(event.request)
       .then(response => {
-        // Cache hit - return response
         if (response) {
           console.log('Serving from cache:', event.request.url);
           return response;
         }
-
-        // Not in cache - fetch from network
         console.log('Fetching from network:', event.request.url);
         return fetch(event.request);
       })

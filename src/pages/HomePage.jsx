@@ -9,7 +9,7 @@ import React, {
 import { auth, db } from '../services/firebase';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { collection, getDocs, query, where, doc, getDoc } from 'firebase/firestore';
-import { useNavigate, Link } from 'react-router-dom'; // Import Link
+import { useNavigate, Link } from 'react-router-dom';
 import { formatTime } from '../utils/formatTime';
 import Header from '../components/Layout/Header';
 import '../styles/global.css';
@@ -22,6 +22,7 @@ import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { TextGenerateEffect } from '../styles/components/text-generate-effect.tsx';
 import JournalSection from '../components/Journal/JournalSection';
+import { ReactComponent as SoukoLogoHeader } from '../styles/components/assets/Souko-logo-header.svg';
 
 export const cn = (...inputs) => twMerge(clsx(inputs));
 
@@ -37,7 +38,7 @@ const HomePage = React.memo(() => {
   const scrollTimeout = useRef(null);
   const motivationalSectionRef = useRef(null);
   const [userProfile, setUserProfile] = useState(null);
-  const [hasTrackedEver, setHasTrackedEver] = useState(false); // New state to track if user has ever tracked
+  const [hasTrackedEver, setHasTrackedEver] = useState(false);
 
   const fetchData = useCallback(async (uid) => {
     setLoading(true);
@@ -58,11 +59,7 @@ const HomePage = React.memo(() => {
 
       const userSessions = sessionSnapshot.docs.map((doc) => doc.data());
       setSessions(userSessions);
-      if (userSessions.length > 0) {
-        setHasTrackedEver(true); // Set to true if sessions are found
-      } else {
-        setHasTrackedEver(false); // Set to false if no sessions are found (or keep default false)
-      }
+      setHasTrackedEver(userSessions.length > 0);
 
       const userJournalEntries = journalSnapshot.docs.map((doc) => ({
         ...doc.data(),
@@ -85,7 +82,6 @@ const HomePage = React.memo(() => {
           });
         }
       }
-
     } catch (error) {
       console.error('Error fetching data:', error.message);
     } finally {
@@ -111,18 +107,18 @@ const HomePage = React.memo(() => {
       const project = session.project || 'Unknown Project';
       acc[project] = (acc[project] || 0) + (session.elapsedTime || 0);
       return acc;
-    }, {}); // Initialize accumulator as an empty object
+    }, {});
   }, [sessions]);
 
   const weeklyTrackedTime = useMemo(() => {
     const now = new Date();
     const startOfWeek = new Date(now);
     startOfWeek.setHours(0, 0, 0, 0);
-    startOfWeek.setDate(startOfWeek.getDate() - (now.getDay() === 0 ? 7 : now.getDay()) + 1); // Monday start
+    startOfWeek.setDate(startOfWeek.getDate() - (now.getDay() === 0 ? 7 : now.getDay()) + 1);
 
     const endOfWeek = new Date(now);
     endOfWeek.setHours(23, 59, 59, 999);
-    endOfWeek.setDate(endOfWeek.getDate() - (now.getDay() === 0 ? 7 : now.getDay()) + 7); // Sunday end
+    endOfWeek.setDate(endOfWeek.getDate() - (now.getDay() === 0 ? 7 : now.getDay()) + 7);
 
     return sessions.reduce((sum, session) => {
       const sessionStartTime = session.startTime ? new Date(session.startTime) : null;
@@ -132,7 +128,6 @@ const HomePage = React.memo(() => {
       return sum;
     }, 0);
   }, [sessions]);
-
 
   const handleLogout = useCallback(async () => {
     try {
@@ -165,30 +160,23 @@ const HomePage = React.memo(() => {
 
   const getInitials = useCallback((name) => name.trim().charAt(0).toUpperCase(), []);
 
-  const renderProjectImage = useMemo( // Using useMemo for renderProjectImage
-    () => (project) =>
-      project.imageUrl ? (
-        <img src={project.imageUrl} alt={project.name} className="project-image" />
-      ) : (
-        <div className="default-project-image" style={{ backgroundColor: '#FE2F00' }}>
-          <span>{getInitials(project.name || 'P')}</span>
-        </div>
-      ),
-    [getInitials]
-  );
+  const renderProjectImage = useMemo(() => (project) =>
+    project.imageUrl ? (
+      <img src={project.imageUrl} alt={project.name} className="project-image" />
+    ) : (
+      <div className="default-project-image" style={{ backgroundColor: '#FE2F00' }}>
+        <span>{getInitials(project.name || 'P')}</span>
+      </div>
+    ),
+  [getInitials]);
 
   const renderProjects = useMemo(() => {
-    if (loading) {
-      return <p>Loading your projects...</p>;
-    } else if (projects.length > 0) {
-      // Sort projects alphabetically by name (placeholder for "latest tracked")
+    if (projects.length > 0) {
       const sortedProjects = [...projects].sort((a, b) => a.name.localeCompare(b.name));
-      // Limit to latest 3 projects
       const limitedProjects = sortedProjects.slice(0, 3);
-
       return (
         <ul className="projects-list">
-          {limitedProjects.map((project) => ( // Use limitedProjects here
+          {limitedProjects.map((project) => (
             <li
               key={project.id}
               className="project-item"
@@ -197,10 +185,8 @@ const HomePage = React.memo(() => {
               <div className="project-image-container">{renderProjectImage(project)}</div>
               <div className="project-name">{project.name}</div>
               <div className="project-total-time">
-                {
-                  totalSessionTime && totalSessionTime[project.name] !== undefined ?
-                  formatTime(totalSessionTime[project.name]) : formatTime(0)
-                }
+                {totalSessionTime && totalSessionTime[project.name] !== undefined ?
+                  formatTime(totalSessionTime[project.name]) : formatTime(0)}
               </div>
             </li>
           ))}
@@ -209,38 +195,45 @@ const HomePage = React.memo(() => {
     } else {
       return <p>No projects found. Start tracking to see results here!</p>;
     }
-  }, [loading, projects, navigate, totalSessionTime, renderProjectImage]);
+  }, [projects, navigate, totalSessionTime, renderProjectImage]);
 
   console.log('HomePage rendered. Loading:', loading);
+
+  // Single loading state: if loading, render the spinning logo as the loading spinner
+  if (loading) {
+    return (
+      <div className="homepage-loading">
+        <SoukoLogoHeader className="profile-pic souko-logo-header spinning-logo" />
+      </div>
+    );
+  }
 
   return (
     <div className="homepage">
       <Header user={userProfile} showLiveTime={true} onProfileClick={openSidebar} />
       <main className="homepage-content">
         <section className="motivational-section" ref={motivationalSectionRef}>
-          {!loading && (
-            <TextGenerateEffect
-              words={
-                !hasTrackedEver
-                  ? `Every journey begins with one moment.\nStart tracking yours.`
-                  : weeklyTrackedTime > 0
-                    ? `This moment is\n progress. You\n tracked <span class="accent-text">${formatTime(
-                        weeklyTrackedTime
-                      )}</span>\n this week.`
-                    : `Momentum begins with a single tracked hour. Let’s go.`
-              }
-            />
-          )}
+          <TextGenerateEffect
+            words={
+              !hasTrackedEver
+                ? `Every journey begins with one moment.\nStart tracking yours.`
+                : weeklyTrackedTime > 0
+                  ? `This moment is\n progress. You\n tracked <span class="accent-text">${formatTime(
+                      weeklyTrackedTime
+                    )}</span>\n this week.`
+                  : `Momentum begins with a single tracked hour. Let’s go.`
+            }
+          />
         </section>
-        <JournalSection journalEntries={journalEntries} loading={loading} />
+        <JournalSection journalEntries={journalEntries} loading={false} />
         <section className="projects-section">
           <div className="projects-header">
             <h2 className="projects-label">Your projects</h2>
-            <div className="projects-actions"> {/* New container for actions */}
+            <div className="projects-actions">
               <Link to="/projects" className="projects-all-link">
                 All
               </Link>
-              <Link to="/create-project" className="projects-add-link"> {/* New class for add link, if needed for styling */}
+              <Link to="/create-project" className="projects-add-link">
                 <span className="button-icon">✛</span>
               </Link>
             </div>

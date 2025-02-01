@@ -242,3 +242,24 @@ body.allow-scroll {
 .projects-add-link:hover {
     color: var(--text-color);
 }
+
+/* Add to your global CSS or HomePage.css file */
+.homepage-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh; /* Full viewport height */
+}
+
+.spinning-logo {
+  animation: spin 30s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
