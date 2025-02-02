@@ -1,0 +1,64 @@
+/* JournalOverviewPage.css */
+.journal-overview-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background-color: transparent;
+  color: var(--text-color);
+}
+
+.motivational-section {
+  text-align: center;
+}
+
+.motivational-section .accent-text {
+  color: var(--accent-color);
+}
+
+.journal-overview-content {
+  padding: 0px;
+}
+
+.journal-entries-section {
+  margin-top: 40px;
+}
+
+.month-section {
+  margin-bottom: 30px;
+}
+
+.month-header {
+  font-size: 16px;
+  color: var(--text-muted);
+  font-family: var(--font-commit-mono);
+  margin-bottom: 0;
+  margin-top: 0;
+}
+
+.journal-entries-list {
+  list-style: none;
+  padding: 0;
+}
+
+.journal-entry-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 20px;
+  margin-bottom: 10px;
+  background-color: var(--card-background);
+  border-radius: 8px;
+}
+
+.entry-date {
+  font-size: 16px;
+  line-height: 20px;
+  color: var(--muted-text);
+}
+
+.entry-mood {
+  font-size: 16px;
+  line-height: 20px;
+  color: var(--text-muted);
+  font-weight: bold;
+}

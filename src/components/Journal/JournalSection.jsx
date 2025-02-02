@@ -1,7 +1,7 @@
 // src/components/Journal/JournalSection.jsx
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import './JournalSection.css';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom'; // Added Link here
 import { format, startOfWeek, addDays } from 'date-fns';
 
 // PNG Imports
@@ -139,7 +139,7 @@ const JournalSection = React.memo(({ journalEntries = [], loading }) => {
     <section className="journal-section">
       <div className="journal-header">
         <h2 className="journal-label">Your journal</h2>
-        <div className="journal-all-link">All</div>
+        <Link to="/journal-overview" className="journal-all-link">All</Link>
       </div>
       <div className="journal-days">{renderDayButtons()}</div>
     </section>

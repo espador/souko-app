@@ -1,10 +1,20 @@
 // SessionDetailPage.jsx
 import React, { useEffect, useState, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { doc, getDoc, updateDoc, deleteDoc, collection, query, where, getDocs, Timestamp } from 'firebase/firestore';
+import { useParams, useNavigate, Link } from 'react-router-dom';
+import {
+  doc,
+  getDoc,
+  updateDoc,
+  deleteDoc,
+  collection,
+  query,
+  where,
+  getDocs,
+  Timestamp,
+} from 'firebase/firestore';
 import { db, auth } from '../services/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
-import { formatTime } from '../utils/formatTime'; // You might already have this, if not, keep it
+import { formatTime } from '../utils/formatTime';
 import Header from '../components/Layout/Header';
 import '../styles/global.css';
 import '../styles/components/SessionDetailPage.css';
@@ -14,6 +24,7 @@ import { ReactComponent as RadioActiveIcon } from '../styles/components/assets/r
 import { ReactComponent as RadioMutedIcon } from '../styles/components/assets/radio-muted.svg';
 import { ReactComponent as SaveIcon } from '../styles/components/assets/save.svg';
 import { ReactComponent as EraseIcon } from '../styles/components/assets/erase.svg';
+import { ReactComponent as SoukoLogoHeader } from '../styles/components/assets/Souko-logo-header.svg';
 import ConfirmModal from '../components/ConfirmModal'; // Import the ConfirmModal component
 
 const SessionDetailPage = () => {
@@ -69,10 +80,10 @@ const SessionDetailPage = () => {
         setSelectedProject(project);
       } else {
         console.error("Session not found");
-        // Optionally redirect or show an error message
       }
     } catch (error) {
       console.error("Error fetching session details:", error);
+      setSession(null);
     } finally {
       setLoading(false);
     }
@@ -137,7 +148,7 @@ const SessionDetailPage = () => {
     setShowDeleteConfirmModal(false);
     try {
       await deleteDoc(doc(db, 'sessions', sessionId));
-      navigate('/home'); // Changed navigation to the homepage
+      navigate('/home'); // Navigate to the homepage after deletion
     } catch (error) {
       console.error("Error deleting session:", error);
       // Optionally show an error message
@@ -149,7 +160,11 @@ const SessionDetailPage = () => {
   };
 
   if (loading) {
-    return <p className="loading">Loading session details...</p>;
+    return (
+      <div className="homepage-loading">
+        <SoukoLogoHeader className="profile-pic souko-logo-header spinning-logo" />
+      </div>
+    );
   }
 
   if (!session) {

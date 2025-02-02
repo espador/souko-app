@@ -14,6 +14,7 @@ import Header from '../components/Layout/Header';
 import '@fontsource/shippori-mincho';
 import { TextGenerateEffect } from '../styles/components/text-generate-effect.tsx';
 import '../styles/components/ProjectOverviewPage.css'; // New CSS file for this page
+import { ReactComponent as SoukoLogoHeader } from '../styles/components/assets/Souko-logo-header.svg';
 
 const ProjectOverviewPage = () => {
   const [user, setUser] = useState(null);
@@ -156,9 +157,7 @@ const ProjectOverviewPage = () => {
   }, []);
 
   const renderProjects = useMemo(() => {
-    if (loading) {
-      return <p>Loading projects...</p>;
-    } else if (projects.length > 0) {
+    if (projects.length > 0) {
       return (
         <ul className="projects-list">
           {sortedProjects.map((project) => (
@@ -179,9 +178,18 @@ const ProjectOverviewPage = () => {
         </ul>
       );
     } else {
-      return <p>No projects found.</p>;
+      return <p>No projects found. Start tracking to see results here!</p>;
     }
-  }, [loading, projects, navigate, totalSessionTime, renderProjectImage, sortedProjects]);
+  }, [projects, navigate, totalSessionTime, renderProjectImage, sortedProjects]);
+
+  // If loading, render the spinning logo as the loading spinner.
+  if (loading) {
+    return (
+      <div className="homepage-loading">
+        <SoukoLogoHeader className="profile-pic souko-logo-header spinning-logo" />
+      </div>
+    );
+  }
 
   return (
     <div className="project-container">
@@ -192,11 +200,9 @@ const ProjectOverviewPage = () => {
         onActionClick={() => navigate('/create-project')}
       />
       <section className="motivational-section">
-        {!loading && (
-          <TextGenerateEffect
-            words={`You tracked <span class="accent-text">${formattedTotalTime}</span> hours.\nTime flows where focus leads.`}
-          />
-        )}
+        <TextGenerateEffect
+          words={`You tracked <span class="accent-text">${formattedTotalTime}</span> hours.\nTime flows where focus leads.`}
+        />
       </section>
       <main className="homepage-content">
         <section className="projects-section">

@@ -23,6 +23,7 @@ import Header from '../components/Layout/Header';
 import '../styles/global.css';
 import '../styles/components/ProjectDetailPage.css';
 import { ReactComponent as DropdownIcon } from '../styles/components/assets/dropdown.svg';
+import { ReactComponent as SoukoLogoHeader } from '../styles/components/assets/Souko-logo-header.svg';
 
 const ProjectDetailPage = React.memo(() => {
   const { projectId: routeProjectId } = useParams();
@@ -141,7 +142,7 @@ const ProjectDetailPage = React.memo(() => {
             weekday: 'long',
             month: 'long',
             day: 'numeric',
-            year: 'numeric', // Included year here
+            year: 'numeric',
           });
         } catch (error) {
           console.error(
@@ -195,7 +196,11 @@ const ProjectDetailPage = React.memo(() => {
   }, []);
 
   if (loading) {
-    return <p className="loading">Loading project details...</p>;
+    return (
+      <div className="homepage-loading">
+        <SoukoLogoHeader className="profile-pic souko-logo-header spinning-logo" />
+      </div>
+    );
   }
 
   if (!project) {
@@ -282,7 +287,7 @@ const ProjectDetailPage = React.memo(() => {
                       </span>
                     </li>
                   </Link>
-                 ))}
+                ))}
               </ul>
             </div>
           ))
