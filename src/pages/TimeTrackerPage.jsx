@@ -13,10 +13,10 @@ import {
   where,
   getDocs,
   doc,
+  getDoc,
   setDoc,
   updateDoc,
   serverTimestamp,
-  Timestamp,
 } from 'firebase/firestore';
 import { db, auth } from '../services/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
@@ -35,6 +35,7 @@ import { ReactComponent as RadioActiveIcon } from '../styles/components/assets/r
 import { ReactComponent as RadioMutedIcon } from '../styles/components/assets/radio-muted.svg';
 import '@fontsource/shippori-mincho';
 import ConfirmModal from '../components/ConfirmModal';
+import { ReactComponent as SoukoLogoHeader } from '../styles/components/assets/Souko-logo-header.svg';
 
 const TimeTrackerPage = React.memo(() => {
   const [user, setUser] = useState(null);
@@ -45,14 +46,17 @@ const TimeTrackerPage = React.memo(() => {
   const [timer, setTimer] = useState(0);
   const [isRunning, setIsRunning] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
+  // sessionId is for the active session document in Firestore.
   const [sessionId, setSessionId] = useState(null);
   const [startTime, setStartTime] = useState(null);
   const navigate = useNavigate();
   const timerRef = useRef(null);
   const [showStopConfirmModal, setShowStopConfirmModal] = useState(false);
   const [showResetConfirmModal, setShowResetConfirmModal] = useState(false);
-  const noteSaveTimeout = useRef(null); // Ref for debouncing note saving
+  const noteSaveTimeout = useRef(null);
+  const [loading, setLoading] = useState(true);
 
+  // Determine the timer quote based on state.
   const timerQuote = useMemo(() => {
     if (timer === 0 && !isRunning) {
       return 'This moment is yours';
@@ -61,23 +65,13 @@ const TimeTrackerPage = React.memo(() => {
     } else if (isPaused) {
       return 'Taking a moment';
     }
-    return 'This moment is yours ...'; // Default fallback
+    return 'This moment is yours...';
   }, [timer, isRunning, isPaused]);
 
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-      if (!currentUser) {
-        navigate('/');
-      } else {
-        setUser(currentUser);
-        fetchData(currentUser.uid);
-      }
-    });
-    return () => unsubscribe();
-  }, [navigate]);
-
+  // Fetch projects and active session for cross-device support.
   const fetchData = useCallback(async (uid) => {
     try {
+      // Fetch projects.
       const projectsRef = collection(db, 'projects');
       const projectQuery = query(projectsRef, where('userId', '==', uid));
       const projectSnapshot = await getDocs(projectQuery);
@@ -87,46 +81,75 @@ const TimeTrackerPage = React.memo(() => {
         imageUrl: doc.data().imageUrl,
       }));
       setProjects(userProjects);
-      setSelectedProject(userProjects[0] || null);
+      if (userProjects.length > 0 && !selectedProject) {
+        setSelectedProject(userProjects[0]);
+      }
 
-      const sessionRef = collection(db, 'sessions');
+      // Fetch active session (endTime is null).
+      const sessionsRef = collection(db, 'sessions');
       const activeSessionQuery = query(
-        sessionRef,
+        sessionsRef,
         where('userId', '==', uid),
         where('endTime', '==', null)
       );
       const activeSessionSnapshot = await getDocs(activeSessionQuery);
-
       if (!activeSessionSnapshot.empty) {
-        const activeSession = activeSessionSnapshot.docs[0];
-        const sessionData = activeSession.data();
-        setSessionId(activeSession.id);
-        setSelectedProject(
-          userProjects.find((proj) => proj.name === sessionData.project) || null
+        const activeSessionDoc = activeSessionSnapshot.docs[0];
+        const sessionData = activeSessionDoc.data();
+        setSessionId(activeSessionDoc.id);
+        const matchingProject = userProjects.find(
+          (proj) => proj.name === sessionData.project
         );
+        if (matchingProject) {
+          setSelectedProject(matchingProject);
+        }
         setSessionNotes(sessionData.sessionNotes || '');
-        setIsBillable(sessionData.isBillable || true);
+        setIsBillable(
+          sessionData.isBillable !== undefined ? sessionData.isBillable : true
+        );
         setStartTime(sessionData.startTime);
-        const now = Date.now();
-        const sessionStartTime =
-          sessionData.startTime instanceof Timestamp
-            ? sessionData.startTime.toDate().getTime()
-            : 0;
-        const elapsedSeconds = Math.floor((now - sessionStartTime) / 1000);
-        setTimer(elapsedSeconds + (sessionData.elapsedTime || 0));
-        setIsRunning(true);
-        setIsPaused(false);
+        // IMPORTANT: Keep isRunning true even when paused so that the stop button remains visible.
+        if (sessionData.paused) {
+          setTimer(sessionData.elapsedTime || 0);
+          setIsRunning(true);
+          setIsPaused(true);
+        } else {
+          const now = Date.now();
+          let sessionStartTime = 0;
+          if (sessionData.startTime && sessionData.startTime.toDate) {
+            sessionStartTime = sessionData.startTime.toDate().getTime();
+          }
+          const elapsedSeconds = Math.floor((now - sessionStartTime) / 1000);
+          setTimer((sessionData.elapsedTime || 0) + elapsedSeconds);
+          setIsRunning(true);
+          setIsPaused(false);
+        }
       }
     } catch (error) {
       console.error('Error fetching data:', error);
+    } finally {
+      setLoading(false);
     }
   }, []);
 
   useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+      if (!currentUser) {
+        navigate('/');
+      } else {
+        setUser(currentUser);
+        await fetchData(currentUser.uid);
+      }
+    });
+    return () => unsubscribe();
+  }, [navigate, fetchData]);
+
+  // Increment the timer every second if running and not paused.
+  useEffect(() => {
     let interval = null;
     if (isRunning && !isPaused) {
       interval = setInterval(() => {
-        setTimer((prevTime) => prevTime + 1);
+        setTimer((prev) => prev + 1);
       }, 1000);
     } else {
       clearInterval(interval);
@@ -134,6 +157,7 @@ const TimeTrackerPage = React.memo(() => {
     return () => clearInterval(interval);
   }, [isRunning, isPaused]);
 
+  // Start session: if no active session exists, create one immediately.
   const handleStart = useCallback(async () => {
     if (!selectedProject) {
       alert('Please select a project to start the timer.');
@@ -150,34 +174,55 @@ const TimeTrackerPage = React.memo(() => {
           startTime: serverTimestamp(),
           endTime: null,
           elapsedTime: 0,
+          paused: false,
+          status: "running", // New status field
         });
         setSessionId(sessionRef.id);
-        setStartTime(new Date());
+        const sessionSnap = await getDoc(sessionRef);
+        if (sessionSnap.exists()) {
+          const data = sessionSnap.data();
+          setStartTime(data.startTime);
+        } else {
+          setStartTime(new Date());
+        }
       } catch (error) {
         console.error('Error starting session:', error);
       }
     }
+    setTimer(0);
     setIsRunning(true);
     setIsPaused(false);
   }, [selectedProject, sessionId, user, sessionNotes, isBillable]);
 
+  // Pause session: update local state and Firestore.
   const handlePause = useCallback(async () => {
     setIsPaused(true);
     if (sessionId) {
       try {
         const sessionRef = doc(db, 'sessions', sessionId);
-        await updateDoc(sessionRef, { elapsedTime: timer });
+        await updateDoc(sessionRef, { elapsedTime: timer, paused: true, status: "paused" });
       } catch (error) {
         console.error('Error pausing session:', error);
       }
     }
   }, [sessionId, timer]);
 
-  const handleResume = useCallback(() => {
+  // Resume session: update Firestore and local state.
+  const handleResume = useCallback(async () => {
     setIsPaused(false);
+    if (sessionId) {
+      try {
+        const sessionRef = doc(db, 'sessions', sessionId);
+        await updateDoc(sessionRef, { paused: false, startTime: serverTimestamp(), status: "running" });
+        setStartTime(new Date());
+      } catch (error) {
+        console.error('Error resuming session:', error);
+      }
+    }
     setIsRunning(true);
-  }, []);
+  }, [sessionId]);
 
+  // Stop session: confirm and then update the session document.
   const handleStop = useCallback(() => {
     setShowStopConfirmModal(true);
   }, []);
@@ -186,7 +231,6 @@ const TimeTrackerPage = React.memo(() => {
     setShowStopConfirmModal(false);
     setIsRunning(false);
     setIsPaused(false);
-
     if (sessionId && selectedProject) {
       try {
         const sessionRef = doc(db, 'sessions', sessionId);
@@ -194,7 +238,8 @@ const TimeTrackerPage = React.memo(() => {
           elapsedTime: timer,
           endTime: serverTimestamp(),
           project: selectedProject.name,
-          sessionNotes, // Ensure notes are saved on stop as well
+          sessionNotes,
+          status: "stopped",
         });
       } catch (error) {
         console.error('Error stopping session:', error);
@@ -206,18 +251,20 @@ const TimeTrackerPage = React.memo(() => {
     navigate('/session-overview', {
       state: { totalTime: timer, projectId: selectedProject?.id },
     });
+    // Reset local state.
     setTimer(0);
     setSelectedProject(null);
     setSessionNotes('');
     setIsBillable(true);
     setSessionId(null);
     setStartTime(null);
-  }, [navigate, sessionId, selectedProject, timer, sessionNotes]); // Include sessionNotes in dependencies
+  }, [navigate, sessionId, selectedProject, timer, sessionNotes]);
 
   const cancelStopSession = useCallback(() => {
     setShowStopConfirmModal(false);
   }, []);
 
+  // Reset session: confirm then reset local state and update Firestore if needed.
   const handleReset = useCallback(() => {
     if (isRunning || timer > 0) {
       setShowResetConfirmModal(true);
@@ -230,20 +277,19 @@ const TimeTrackerPage = React.memo(() => {
     setIsRunning(false);
     setIsPaused(false);
     setStartTime(null);
-
     if (sessionId) {
       try {
         const sessionRef = doc(db, 'sessions', sessionId);
         await updateDoc(sessionRef, {
-          elapsedTime: 0, // Reset elapsed time in db
-          endTime: serverTimestamp(), // Mark session as ended/reset
+          elapsedTime: 0,
+          endTime: serverTimestamp(),
         });
-        setSessionId(null); // Clear sessionId after reset as it's a new session now
+        setSessionId(null);
       } catch (error) {
         console.error('Error resetting session in database:', error);
       }
     } else {
-      setSessionId(null); // Ensure sessionId is cleared even if not in db
+      setSessionId(null);
     }
   }, [sessionId]);
 
@@ -251,13 +297,13 @@ const TimeTrackerPage = React.memo(() => {
     setShowResetConfirmModal(false);
   }, []);
 
-  const handleBillableToggle = useCallback(async () => {
+  const handleBillableToggle = useCallback(() => {
     const newIsBillable = !isBillable;
     setIsBillable(newIsBillable);
     if (sessionId) {
       try {
         const sessionRef = doc(db, 'sessions', sessionId);
-        await updateDoc(sessionRef, { isBillable: newIsBillable });
+        updateDoc(sessionRef, { isBillable: newIsBillable });
       } catch (error) {
         console.error('Error updating billable status:', error);
       }
@@ -273,32 +319,38 @@ const TimeTrackerPage = React.memo(() => {
     [projects]
   );
 
-  // Debounced save for notes
+  // Debounced note saving – update session document if it exists.
   useEffect(() => {
     if (sessionId) {
       if (noteSaveTimeout.current) {
         clearTimeout(noteSaveTimeout.current);
       }
       noteSaveTimeout.current = setTimeout(async () => {
-        if (sessionNotes !== '') { // Only save if notes are not empty, or adjust as needed
+        if (sessionNotes !== '') {
           try {
             const sessionRef = doc(db, 'sessions', sessionId);
-            await updateDoc(sessionRef, { sessionNotes: sessionNotes });
+            await updateDoc(sessionRef, { sessionNotes });
             console.log('Session notes saved automatically.');
           } catch (error) {
             console.error('Error saving session notes:', error);
           }
         }
-      }, 1000); // Save notes 1 second after typing stops
+      }, 1000);
     }
-    return () => clearTimeout(noteSaveTimeout.current); // Cleanup timeout on unmount or dependency change
+    return () => clearTimeout(noteSaveTimeout.current);
   }, [sessionNotes, sessionId]);
-
 
   const handleNotesChange = useCallback((e) => {
     setSessionNotes(e.target.value.slice(0, 140));
   }, []);
 
+  if (loading) {
+    return (
+      <div className="homepage-loading">
+        <SoukoLogoHeader className="profile-pic souko-logo-header spinning-logo" />
+      </div>
+    );
+  }
 
   return (
     <div className="time-tracker-page">
@@ -313,7 +365,7 @@ const TimeTrackerPage = React.memo(() => {
           onClick={handleReset}
           disabled={!(isRunning || timer > 0)}
         >
-          {isRunning || timer > 0 ? (
+          {(isRunning || timer > 0) ? (
             <ResetActiveIcon style={{ width: '32px', height: '32px', fill: 'var(--text-color)' }} />
           ) : (
             <ResetMuteIcon style={{ width: '32px', height: '32px', fill: 'var(--text-muted)' }} />
@@ -368,7 +420,7 @@ const TimeTrackerPage = React.memo(() => {
         </select>
         <DropdownIcon className="dropdown-arrow" />
       </div>
-      <div className="input-tile billable-tile" onClick={handleBillableToggle}>
+      <div className="input-tile billable-tile" onClick={handleBillableToggle} style={{ cursor: 'pointer' }}>
         <span className="input-label billable-label">
           {isBillable ? 'Billable' : 'Non-billable'}
         </span>
@@ -382,7 +434,7 @@ const TimeTrackerPage = React.memo(() => {
           className="notes-textarea"
           placeholder="Take a moment to note"
           value={sessionNotes}
-          onChange={handleNotesChange} // Use handleNotesChange
+          onChange={handleNotesChange}
           onBlur={() => {
             timerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
           }}

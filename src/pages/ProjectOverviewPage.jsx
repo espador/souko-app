@@ -13,12 +13,14 @@ import { formatTime } from '../utils/formatTime';
 import Header from '../components/Layout/Header';
 import '@fontsource/shippori-mincho';
 import { TextGenerateEffect } from '../styles/components/text-generate-effect.tsx';
-import '../styles/components/ProjectOverviewPage.css'; // New CSS file for this page
+import '../styles/components/ProjectOverviewPage.css';
 import { ReactComponent as SoukoLogoHeader } from '../styles/components/assets/Souko-logo-header.svg';
+import { startOfWeek, endOfWeek } from 'date-fns';
 
 const ProjectOverviewPage = () => {
   const [user, setUser] = useState(null);
   const [projects, setProjects] = useState([]);
+  // Only load sessions that are finished (status "stopped")
   const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [sortMode, setSortMode] = useState("tracked"); // "tracked" or "recent"
@@ -37,7 +39,8 @@ const ProjectOverviewPage = () => {
     try {
       const [projectSnapshot, sessionSnapshot] = await Promise.all([
         getDocs(query(collection(db, 'projects'), where('userId', '==', uid))),
-        getDocs(query(collection(db, 'sessions'), where('userId', '==', uid))),
+        // Fetch only sessions with status "stopped" to show finished sessions
+        getDocs(query(collection(db, 'sessions'), where('userId', '==', uid), where('status', '==', 'stopped')))
       ]);
 
       const userProjects = projectSnapshot.docs.map((doc) => ({
@@ -98,7 +101,7 @@ const ProjectOverviewPage = () => {
     return formatTotalTimeForQuote(totalTrackedTimeAcrossProjects);
   }, [totalTrackedTimeAcrossProjects, formatTotalTimeForQuote]);
 
-  // Get initials from project name
+  // Get initials from project name.
   const getInitials = (name) => {
     if (!name) return '';
     return name.trim().charAt(0).toUpperCase();
@@ -116,17 +119,35 @@ const ProjectOverviewPage = () => {
     [getInitials]
   );
 
-  // Compute sorted projects based on the sort mode.
+  // Define recentProjects: the 3 projects with the most recent finished sessions.
+  const recentProjects = useMemo(() => {
+    return projects
+      .map(project => {
+        const projectSessions = sessions.filter(
+          session => session.project === project.name && session.startTime
+        );
+        const latestSessionTime =
+          projectSessions.length > 0
+            ? Math.max(...projectSessions.map(session => {
+                const t = parseTimestamp(session.startTime);
+                return t ? t.getTime() : 0;
+              }))
+            : 0;
+        return { ...project, latestSessionTime };
+      })
+      .filter(project => project.latestSessionTime > 0)
+      .sort((a, b) => b.latestSessionTime - a.latestSessionTime)
+      .slice(0, 3);
+  }, [projects, sessions]);
+
   const sortedProjects = useMemo(() => {
     if (sortMode === "tracked") {
-      // Sort by total tracked time (descending)
       return [...projects].sort((a, b) => {
         const aTime = totalSessionTime[a.name] || 0;
         const bTime = totalSessionTime[b.name] || 0;
         return bTime - aTime;
       });
     } else {
-      // Sort by most recent tracked session (using startTime)
       return [...projects].sort((a, b) => {
         const aSessions = sessions.filter(
           session => session.project === a.name && session.startTime
@@ -151,16 +172,18 @@ const ProjectOverviewPage = () => {
     }
   }, [sortMode, projects, sessions, totalSessionTime]);
 
-  // Toggle sort mode between "tracked" and "recent"
   const toggleSortMode = useCallback(() => {
     setSortMode((prevMode) => (prevMode === "tracked" ? "recent" : "tracked"));
   }, []);
 
   const renderProjects = useMemo(() => {
     if (projects.length > 0) {
+      if (recentProjects.length === 0) {
+        return <p>No projects with tracked sessions found. Start tracking to see results here!</p>;
+      }
       return (
         <ul className="projects-list">
-          {sortedProjects.map((project) => (
+          {recentProjects.map((project) => (
             <li
               key={project.id}
               className="project-item"
@@ -180,9 +203,10 @@ const ProjectOverviewPage = () => {
     } else {
       return <p>No projects found. Start tracking to see results here!</p>;
     }
-  }, [projects, navigate, totalSessionTime, renderProjectImage, sortedProjects]);
+  }, [projects, navigate, totalSessionTime, renderProjectImage, recentProjects]);
 
-  // If loading, render the spinning logo as the loading spinner.
+  console.log('ProjectOverviewPage rendered. Loading:', loading);
+
   if (loading) {
     return (
       <div className="homepage-loading">
@@ -209,7 +233,6 @@ const ProjectOverviewPage = () => {
           <div className="projects-header">
             <h2 className="projects-label">All Projects</h2>
             <div className="projects-actions">
-              {/* Toggle label: when in default "tracked" order, show "Most recent" to switch order; when in "recent", show "Most tracked" */}
               <span 
                 onClick={toggleSortMode} 
                 className="projects-label sort-toggle-label"

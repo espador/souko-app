@@ -41,22 +41,22 @@ const HomePage = React.memo(() => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [userProfile, setUserProfile] = useState(null);
   const [hasTrackedEver, setHasTrackedEver] = useState(false);
+  // State for sort mode (remains in state if you wish to add toggling later)
+  const [sortMode, setSortMode] = useState("tracked");
 
   const navigate = useNavigate();
   const fabRef = useRef(null);
   const scrollTimeout = useRef(null);
   const motivationalSectionRef = useRef(null);
 
-  // Helper function to parse timestamps (handling Firestore Timestamps)
-  const parseTimestamp = (timestamp) => {
+  const parseTimestamp = useCallback((timestamp) => {
     if (!timestamp) return null;
     return typeof timestamp.toDate === 'function'
       ? timestamp.toDate()
       : new Date(timestamp);
-  };
+  }, []);
 
   // Determine if there is an active time-tracking session.
-  // We assume that an active session is one without an endTime.
   const hasActiveSession = useMemo(
     () => sessions.some(session => !session.endTime),
     [sessions]
@@ -67,7 +67,8 @@ const HomePage = React.memo(() => {
     try {
       const [projectSnapshot, sessionSnapshot, journalSnapshot, profileSnapshot] = await Promise.all([
         getDocs(query(collection(db, 'projects'), where('userId', '==', uid))),
-        getDocs(query(collection(db, 'sessions'), where('userId', '==', uid))),
+        // Fetch only sessions with status "stopped"
+        getDocs(query(collection(db, 'sessions'), where('userId', '==', uid), where('status', '==', 'stopped'))),
         getDocs(query(collection(db, 'journalEntries'), where('userId', '==', uid))),
         getDoc(doc(db, 'profiles', uid))
       ]);
@@ -124,7 +125,6 @@ const HomePage = React.memo(() => {
     return () => unsubscribe();
   }, [navigate, fetchData]);
 
-  // Compute total session time per project (by project name)
   const totalSessionTime = useMemo(() => {
     return sessions.reduce((acc, session) => {
       const project = session.project || 'Unknown Project';
@@ -133,7 +133,6 @@ const HomePage = React.memo(() => {
     }, {});
   }, [sessions]);
 
-  // Compute the weekly tracked time using date-fns to get week boundaries.
   const weeklyTrackedTime = useMemo(() => {
     const now = new Date();
     const weekStart = startOfWeek(now, { weekStartsOn: 1 });
@@ -188,7 +187,7 @@ const HomePage = React.memo(() => {
     ),
   [getInitials]);
 
-  // Compute the 3 projects with the most recent time-tracking sessions.
+  // Define recentProjects: the 3 projects with the most recent finished sessions.
   const recentProjects = useMemo(() => {
     return projects
       .map(project => {
@@ -197,19 +196,53 @@ const HomePage = React.memo(() => {
         );
         const latestSessionTime =
           projectSessions.length > 0
-            ? Math.max(
-                ...projectSessions.map(session => {
-                  const sessionStartTime = parseTimestamp(session.startTime);
-                  return sessionStartTime ? sessionStartTime.getTime() : 0;
-                })
-              )
+            ? Math.max(...projectSessions.map(session => {
+                const t = parseTimestamp(session.startTime);
+                return t ? t.getTime() : 0;
+              }))
             : 0;
         return { ...project, latestSessionTime };
       })
       .filter(project => project.latestSessionTime > 0)
       .sort((a, b) => b.latestSessionTime - a.latestSessionTime)
       .slice(0, 3);
-  }, [projects, sessions]);
+  }, [projects, sessions, parseTimestamp]);
+
+  const sortedProjects = useMemo(() => {
+    if (sortMode === "tracked") {
+      return [...projects].sort((a, b) => {
+        const aTime = totalSessionTime[a.name] || 0;
+        const bTime = totalSessionTime[b.name] || 0;
+        return bTime - aTime;
+      });
+    } else {
+      return [...projects].sort((a, b) => {
+        const aSessions = sessions.filter(
+          session => session.project === a.name && session.startTime
+        );
+        const bSessions = sessions.filter(
+          session => session.project === b.name && session.startTime
+        );
+        const aLatest = aSessions.length > 0
+          ? Math.max(...aSessions.map(session => {
+              const t = parseTimestamp(session.startTime);
+              return t ? t.getTime() : 0;
+            }))
+          : 0;
+        const bLatest = bSessions.length > 0
+          ? Math.max(...bSessions.map(session => {
+              const t = parseTimestamp(session.startTime);
+              return t ? t.getTime() : 0;
+            }))
+          : 0;
+        return bLatest - aLatest;
+      });
+    }
+  }, [sortMode, projects, sessions, totalSessionTime, parseTimestamp]);
+
+  const toggleSortMode = useCallback(() => {
+    setSortMode((prevMode) => (prevMode === "tracked" ? "recent" : "tracked"));
+  }, []);
 
   const renderProjects = useMemo(() => {
     if (projects.length > 0) {
@@ -242,7 +275,6 @@ const HomePage = React.memo(() => {
 
   console.log('HomePage rendered. Loading:', loading);
 
-  // Single loading state: if loading, render the spinning logo as the loading spinner
   if (loading) {
     return (
       <div className="homepage-loading">
@@ -275,9 +307,6 @@ const HomePage = React.memo(() => {
             <div className="projects-actions">
               <Link to="/projects" className="projects-all-link">
                 All
-              </Link>
-              <Link to="/create-project" className="projects-add-link">
-                <span className="button-icon">✛</span>
               </Link>
             </div>
           </div>

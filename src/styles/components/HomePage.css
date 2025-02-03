@@ -224,10 +224,11 @@ body.allow-scroll {
 .projects-actions {
   display: flex; /* To lay out "All" and "+" side-by-side */
   align-items: center; /* Vertically align items within actions */
+  text-align: right;
 }
 
 .projects-all-link {
-  margin-right: 1rem; /* Add some spacing between "All" and "+" if needed */
+  margin-right: 0px; /* Add some spacing between "All" and "+" if needed */
   /* Inherits styles from existing .projects-all-link */
 }
 
