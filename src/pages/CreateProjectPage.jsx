@@ -12,6 +12,9 @@ const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_KB * 1024;
 const ALLOWED_FILE_TYPES = ['image/jpeg', 'image/png', 'image/gif'];
 const MAX_IMAGE_WIDTH = 1080;
 const MAX_IMAGE_HEIGHT = 1080;
+const TARGET_IMAGE_WIDTH = 164; // Target width for compressed images (pixels)
+const TARGET_IMAGE_HEIGHT = 164; // Target height for compressed images (pixels)
+const COMPRESSION_QUALITY = 0.5; // Quality for JPEG compression (0 to 1). 0.7 is a good balance.
 
 const CreateProjectPage = React.memo(() => {
     const [projectName, setProjectName] = useState('');
@@ -21,6 +24,52 @@ const CreateProjectPage = React.memo(() => {
     const fileInputRef = useRef(null);
     const projectNameInputRef = useRef(null);
     const [uploading, setUploading] = useState(false);
+
+    const compressImage = useCallback(async (file) => {
+        return new Promise((resolve, reject) => {
+            const img = new Image();
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                let width = img.width;
+                let height = img.height;
+
+                if (width > TARGET_IMAGE_WIDTH || height > TARGET_IMAGE_HEIGHT) {
+                    const aspectRatio = width / height;
+                    if (width > height) {
+                        width = TARGET_IMAGE_WIDTH;
+                        height = width / aspectRatio;
+                    } else {
+                        height = TARGET_IMAGE_HEIGHT;
+                        width = height * aspectRatio;
+                    }
+                }
+
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+
+                canvas.toBlob(
+                    (blob) => {
+                        if (blob) {
+                            const compressedFile = new File([blob], file.name, {
+                                type: blob.type,
+                                lastModified: Date.now(),
+                            });
+                            resolve(compressedFile);
+                        } else {
+                            reject(new Error('Failed to compress image.'));
+                        }
+                    },
+                    'image/jpeg', // Compress to JPEG for better size reduction
+                    COMPRESSION_QUALITY
+                );
+            };
+            img.onerror = reject;
+            img.src = URL.createObjectURL(file);
+        });
+    }, []);
+
 
     const handleCreateProject = useCallback(async (e) => {
         e.preventDefault();
@@ -85,7 +134,7 @@ const CreateProjectPage = React.memo(() => {
         fileInputRef.current.click();
     }, []);
 
-    const handleImageChange = useCallback((event) => {
+    const handleImageChange = useCallback(async (event) => {
         const file = event.target.files[0];
 
         if (!file) return;
@@ -103,14 +152,23 @@ const CreateProjectPage = React.memo(() => {
         }
 
         const img = new Image();
-        img.onload = () => {
+        img.onload = async () => {
             if (img.width > MAX_IMAGE_WIDTH || img.height > MAX_IMAGE_HEIGHT) {
                 alert(`Image dimensions should not exceed ${MAX_IMAGE_WIDTH}x${MAX_IMAGE_HEIGHT} pixels.`);
                 setProjectImage(null);
                 event.target.value = '';
                 return;
             }
-            setProjectImage(file);
+
+            try {
+                const compressedImageFile = await compressImage(file);
+                setProjectImage(compressedImageFile);
+            } catch (compressionError) {
+                console.error('Image compression error:', compressionError);
+                alert('Failed to process image. Please try again.');
+                setProjectImage(null);
+                event.target.value = '';
+            }
         };
         img.onerror = () => {
             alert('Error loading image.');
@@ -118,7 +176,7 @@ const CreateProjectPage = React.memo(() => {
             event.target.value = '';
         };
         img.src = URL.createObjectURL(file);
-    }, []);
+    }, [compressImage]);
 
     const getInitials = useCallback((name) => {
         return name.trim().charAt(0).toUpperCase();
@@ -210,6 +268,6 @@ const CreateProjectPage = React.memo(() => {
     );
 });
 
-CreateProjectPage.displayName = 'CreateProjectPage'; // Helps with React DevTools
+CreateProjectPage.displayName = 'CreateProjectPage';
 
 export default CreateProjectPage;

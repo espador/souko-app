@@ -2,6 +2,15 @@
 .journal-confirmation-container {
     text-align: center;
     margin-top: 40px;
+    max-width: 600px;
+    background-color: transparent;
+    color: var(--text-color);
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh; /* Or remove if body handles viewport height */
+    box-sizing: border-box;
+    margin: 0 auto;
+    margin-top: 40px;
   }
   
   .journal-confirmation-quote {
