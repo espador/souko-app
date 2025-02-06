@@ -211,10 +211,9 @@ const JournalForm = () => {
       return (
     <div className="journal-form-page">
       <Header
-        showBackArrow={true}
-        onBack={() => navigate('/home')}
-        hideProfile={true}
-      />
+              variant="journalOverview"
+              showBackArrow={true}
+            />
             <main className="journal-form-content journal-form-single-page">
                 <p className="journal-form-title">In stillness, progress takes its form.</p>
 

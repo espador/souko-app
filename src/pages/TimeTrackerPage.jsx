@@ -354,7 +354,10 @@ const TimeTrackerPage = React.memo(() => {
 
   return (
     <div className="time-tracker-page">
-      <Header showBackArrow={true} onBack={() => navigate('/home')} hideProfile={true} />
+      <Header
+              variant="journalOverview"
+              showBackArrow={true}
+            />
       <div className="timer-quote">{timerQuote}</div>
       <div ref={timerRef} className={`timer ${isPaused ? 'paused' : ''}`}>
         {new Date(timer * 1000).toISOString().substr(11, 8)}

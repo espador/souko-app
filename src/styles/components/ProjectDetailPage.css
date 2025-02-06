@@ -13,31 +13,29 @@
 
 .project-header {
   text-align: center;
-  margin-bottom: 24px; /* Adjust spacing */
+  margin-bottom: 24px;
 }
 
 .project-icon {
-  width: 64px; /* Adjust size to match homepage elements if needed */
+  width: 64px;
   height: 64px;
   border-radius: 50%;
-  background-color: var(--accent-color); /* Use accent color for consistency */
+  background-color: var(--accent-color);
   display: flex;
   justify-content: center;
   align-items: center;
-  margin: 0 auto 16px; /* Add some bottom margin */
-  font-size: 24px; /* Adjust font size */
-  color: var(--background-color); /* Contrast color */
+  margin: 0 auto 16px;
+  font-size: 24px;
+  color: var(--background-color);
 }
 
 .project-title {
-  /* Removed explicit font-family, will inherit from global styles */
   font-size: 24px;
   line-height: 1.2;
   margin-top: 0;
 }
 
 .total-time {
-  /* Removed explicit font-family, will inherit from global styles */
   font-weight: 400;
   color: var(--accent-color);
   font-size: 16px;
@@ -49,17 +47,16 @@
 }
 
 .sessions-by-day {
-  margin-bottom: 24px; /* Spacing between day groups */
+  margin-bottom: 24px;
 }
 
 .sessions-by-day h2 {
-  /* Removed explicit font-family, will inherit from global styles */
   font-weight: 400;
   color: var(--text-color);
   font-size: 16px;
   line-height: 20px;
-  margin-bottom: 16px; /* Spacing above the session tiles */
-  text-align: left; /* Align date title to the left */
+  margin-bottom: 16px;
+  text-align: left;
 }
 
 .sessions-list {
@@ -68,28 +65,26 @@
   margin: 0;
   display: flex;
   flex-direction: column;
-  gap: 16px; /* Spacing between session tiles */
+  gap: 16px;
 }
 
 .session-item.input-tile {
   padding: 16px;
-  margin-bottom: 0; /* Remove default margin for input-tile */
-  cursor: default; /* Remove hover effect from previous implementation */
+  margin-bottom: 0;
+  cursor: default;
   align-items: center;
   justify-content: space-between;
 }
 
 .session-item.input-tile:hover {
-  background-color: var(--card-background); /* Reset hover effect */
+  background-color: var(--card-background);
 }
 
 .session-details {
   color: var(--text-color);
-  /* Removed explicit font-family, will inherit from global styles */
   font-weight: 400;
   font-size: 16px;
   line-height: 1.4;
-  /* Removed specific styling for session details as it's now inline */
 }
 
 .session-start-time {
@@ -99,15 +94,13 @@
 
 .session-time {
   font-size: 16px;
-  /* Color is now applied inline based on isBillable status */
 }
 
 .billable {
   color: #ffd700;
   font-size: 12px;
   font-style: italic;
-  margin-left: 16px; /* Separate from time */
-  /* Removed as this is now handled in the new structure */
+  margin-left: 16px;
 }
 
 .notes {
@@ -115,29 +108,26 @@
   font-size: 14px;
   margin-top: 8px;
   font-style: italic;
-  /* Removed as this is no longer part of the tile */
 }
 
 .button {
-  /* Keeping the existing button style, can be further aligned if needed */
   margin-top: 16px;
-  padding: 12px 24px; /* Adjust padding */
-  background-color: var(--accent-color); /* Consistent with other interactive elements */
+  padding: 12px 24px;
+  background-color: var(--accent-color);
   color: var(--background-color);
   border: none;
   border-radius: 12px;
   cursor: pointer;
-  /* Removed explicit font-family, will inherit from global styles */
   font-weight: bold;
   font-size: 16px;
-  width: auto; /* Adjust width as needed */
+  width: auto;
   display: block;
   margin-left: auto;
   margin-right: auto;
 }
 
 .button:hover {
-  background-color: var(--card-background); /* Darker shade of accent */
+  background-color: var(--card-background);
 }
 
 .loading {
@@ -158,9 +148,10 @@
   background-color: var(--card-background);
   border-radius: 12px;
   padding: 16px;
-  position: relative; /* Add this line */
   gap: 16px;
-  margin-bottom: 40px;
+  margin-bottom: 24px; /* Reduced margin */
+  cursor: pointer; /* Add cursor pointer to indicate click action */
+  justify-content: space-between; /* Align items and space between */
 }
 
 .dropdown-project-image {
@@ -175,7 +166,7 @@
   width: 40px;
   height: 40px;
   border-radius: 20%;
-  background-color: var(--accent-color); /* Or any default color */
+  background-color: var(--accent-color);
   color: var(--background-color);
   display: flex;
   justify-content: center;
@@ -206,17 +197,6 @@
   pointer-events: none;
 }
 
-.timer-quote.project-total-time {
-  font-family: var(--font-commit-mono);
-  font-weight: 400;
-  font-size: 14px;
-  line-height: 24px;
-  color: var(--text-muted);
-  text-align: center;
-  margin-top: 0;
-  margin-bottom: 8px;
-}
-
 .timer.project-time {
   margin: 0px;
   font-size: 40px;
@@ -230,7 +210,7 @@
 .session-link {
   text-decoration: none;
   color: inherit;
-  display: block; /* Make the link a block-level element */
+  display: block;
 }
 
 .session-item.input-tile {
@@ -243,6 +223,144 @@
   margin-bottom: 8px;
 }
 
-.session-link:hover .session-item.input-tile { /* Apply hover to the tile */
+.session-link:hover .session-item.input-tile {
   background-color: var(--border-color);
+}
+
+/* -------------------------------------------------- */
+/* NEW STYLES FOR FILTERS */
+/* -------------------------------------------------- */
+
+.filters-container {
+  display: flex;
+  justify-content: space-between; /* Align items to start and end */
+  align-items: center;
+  margin-bottom: 32px; /* Reduced margin below filters */
+}
+
+.project-header-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.time-range-dropdown {
+  position: relative;
+  margin-right: auto; /* Push to the right - now to the left */
+  margin-left: 0; /* Reset left margin */
+}
+
+.time-range-select {
+  padding: 8px 32px 8px 16px;
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  background-color: transparent;
+  color: var(--text-color);
+  font-family: var(--font-primary);
+  font-size: 14px;
+  appearance: none;
+  outline: none;
+  cursor: pointer;
+  height: 40px; /* ADD THIS LINE */
+}
+
+.time-range-select:hover {
+  border-color: var(--border-color);
+}
+
+.time-range-dropdown .dropdown-arrow {
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 20px;
+  height: 20px;
+  fill: var(--text-color);
+  pointer-events: none;
+}
+
+
+.display-mode-toggle {
+  display: flex;
+  gap: 8px;
+  margin-left: auto; /* Push to the left - now to the right */
+  margin-right: 0; /* Reset right margin */
+}
+
+.display-mode-button {
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  background-color: transparent;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  outline: none;
+}
+
+.display-mode-button.active {
+  border-color: var(--border-color); /* Keep if you want border change on active */
+}
+
+.display-mode-button.muted {
+  border-color: var(--border-color); /* Keep if you want border change on muted */
+}
+
+.display-mode-button:hover {
+  border-color: var(--border-color);
+}
+
+
+.display-mode-icon {
+  width: 20px;
+  height: 20px;
+}
+
+.display-mode-button.active .display-mode-icon {
+  fill: var(--text-color) !important; /* Important! Ensure this style is applied */
+}
+
+.display-mode-button.muted .display-mode-icon {
+  fill: var(--text-muted) !important; /* Important! Ensure this style is applied */
+}
+
+.project-name {
+    flex-grow: 1; /* Take up remaining space */
+    overflow: hidden;      /* Clip overflowing text */
+    text-overflow: ellipsis; /* Ellipsis for overflow */
+    white-space: nowrap;   /* Prevent text wrapping */
+    font-size: 16px;
+    line-height: 24px;
+    color: var(--text-color);
+}
+
+.edit-icon {
+    width: 20px;
+    height: 20px;
+    fill: var(--text-color);
+    opacity: 0.7; /* Slightly muted edit icon */
+}
+
+.project-dropdown-container.top-tile:hover .edit-icon {
+    opacity: 1; /* Full opacity on hover */
+    fill: var(--accent-color);
+}
+
+.update-project-container {
+  margin: 0 auto;
+  max-width: 600px;
+  padding: 20px;
+  color: var(--text-color);
+}
+
+.update-project-content {
+  background-color: var(--card-background);
+  padding: 20px;
+  border-radius: 12px;
+}
+
+.update-project-content h1 {
+  text-align: center;
+  margin-bottom: 20px;
 }

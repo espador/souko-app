@@ -13,6 +13,7 @@ import JournalOverviewPage from './pages/JournalOverviewPage';
 import JournalCountdown from './components/Journal/JournalCountdown';
 import JournalForm from './components/Journal/JournalForm';
 import JournalConfirmation from './components/Journal/JournalConfirmation';
+import UpdateProjectPage from './pages/UpdateProjectPage'; // Import new page
 
 const App = () => {
     return (
@@ -30,6 +31,7 @@ const App = () => {
                 <Route path="/journal-overview" element={<JournalOverviewPage />} />
                 <Route path="/journal-form" element={<JournalForm />} />
                 <Route path="/journal-confirmation" element={<JournalConfirmation />} />
+                <Route path="/projects/:projectId/update" element={<UpdateProjectPage />} />
             </Routes>
         </Router>
     );

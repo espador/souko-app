@@ -1,35 +1,73 @@
-import React, { useState, useRef, useCallback, useMemo } from 'react';
-import { collection, addDoc } from 'firebase/firestore';
+// UpdateProjectPage.jsx
+import React, { useState, useRef, useCallback, useEffect, useMemo } from 'react';
+import { doc, getDoc, updateDoc, deleteDoc, collection, deleteDoc as deleteDocFirestore, getDocs, query, where } from 'firebase/firestore';
 import { db, auth } from '../services/firebase';
-import { getStorage, ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
-import { useNavigate } from 'react-router-dom';
+import { getStorage, ref, uploadBytesResumable, getDownloadURL, deleteObject } from 'firebase/storage';
+import { useNavigate, useParams } from 'react-router-dom';
 import Header from '../components/Layout/Header';
-import '../styles/components/CreateProjectPage.css';
+import '../styles/components/UpdateProjectPage.css';
+
+// Existing icons
 import { ReactComponent as EditIcon } from '../styles/components/assets/edit.svg';
 import { ReactComponent as BillableIcon } from '../styles/components/assets/billable.svg';
+// New icons for update and delete actions:
+import { ReactComponent as UpdateButtonIcon } from '../styles/components/assets/updatebutton.svg';
+import { ReactComponent as EraseIcon } from '../styles/components/assets/erase.svg';
 
-// Increase max file size from 500KB to 1024KB (1MB) to accommodate modern mobile photos.
 const MAX_FILE_SIZE_KB = 2048;
 const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_KB * 1024;
 const ALLOWED_FILE_TYPES = ['image/jpeg', 'image/png', 'image/gif'];
 const MAX_IMAGE_WIDTH = 1080;
 const MAX_IMAGE_HEIGHT = 1080;
-const TARGET_IMAGE_WIDTH = 164; // Target width for compressed images (pixels)
-const TARGET_IMAGE_HEIGHT = 164; // Target height for compressed images (pixels)
-const COMPRESSION_QUALITY = 0.5; // JPEG compression quality (0 to 1)
+const TARGET_IMAGE_WIDTH = 164;
+const TARGET_IMAGE_HEIGHT = 164;
+const COMPRESSION_QUALITY = 0.5;
 
-const CreateProjectPage = React.memo(() => {
+const UpdateProjectPage = React.memo(() => {
+  const { projectId } = useParams();
   const [projectName, setProjectName] = useState('');
-  const [hourRate, setHourRate] = useState(''); // New state for hour rate
+  const [hourRate, setHourRate] = useState('');
   const [error, setError] = useState('');
   const navigate = useNavigate();
   const [projectImage, setProjectImage] = useState(null);
   const fileInputRef = useRef(null);
   const projectNameInputRef = useRef(null);
-  const hourRateInputRef = useRef(null); // Ref for hour rate input
+  const hourRateInputRef = useRef(null);
   const [uploading, setUploading] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false); // For delete confirmation
 
-  // Compress the image using a canvas.
+  useEffect(() => {
+    const fetchProject = async () => {
+      try {
+        console.log("UpdateProjectPage.jsx: Fetching project with projectId:", projectId); // Debug log
+        console.log("UpdateProjectPage.jsx: Current user:", auth.currentUser); // Debug log - Check authentication
+
+        if (!auth.currentUser) {
+          setError('User not authenticated. Please sign in.'); // More specific error
+          return;
+        }
+
+        const projectDoc = doc(db, 'projects', projectId);
+        const docSnap = await getDoc(projectDoc);
+
+        if (docSnap.exists()) {
+          const projectData = docSnap.data();
+          console.log("UpdateProjectPage.jsx: Project data fetched:", projectData); // Debug log - See fetched data
+          setProjectName(projectData.name);
+          setHourRate(projectData.hourRate ? String(projectData.hourRate) : '');
+          setProjectImage(projectData.imageUrl || null);
+        } else {
+          setError('Project not found.');
+        }
+      } catch (err) {
+        console.error('UpdateProjectPage.jsx: Error fetching project:', err);
+        setError('Failed to load project details.');
+      }
+    };
+
+    fetchProject();
+  }, [projectId]);
+
   const compressImage = useCallback(async (file) => {
     return new Promise((resolve, reject) => {
       const img = new Image();
@@ -38,7 +76,6 @@ const CreateProjectPage = React.memo(() => {
         let width = img.width;
         let height = img.height;
 
-        // Scale the image down if it exceeds target dimensions.
         if (width > TARGET_IMAGE_WIDTH || height > TARGET_IMAGE_HEIGHT) {
           const aspectRatio = width / height;
           if (width > height) {
@@ -67,7 +104,7 @@ const CreateProjectPage = React.memo(() => {
               reject(new Error('Failed to compress image.'));
             }
           },
-          'image/jpeg', // Convert image to JPEG for better compression.
+          'image/jpeg',
           COMPRESSION_QUALITY
         );
       };
@@ -76,7 +113,7 @@ const CreateProjectPage = React.memo(() => {
     });
   }, []);
 
-  const handleCreateProject = useCallback(async (e) => {
+  const handleUpdateProject = useCallback(async (e) => {
     e.preventDefault();
 
     if (!projectName.trim()) {
@@ -85,16 +122,27 @@ const CreateProjectPage = React.memo(() => {
     }
 
     try {
-      const user = auth.currentUser;
-      if (!user) {
-        throw new Error('User is not logged in.');
-      }
+      const projectDocRef = doc(db, 'projects', projectId);
+      const projectSnap = await getDoc(projectDocRef);
+      let currentProjectData = projectSnap.data();
+      let imageUrl = currentProjectData.imageUrl;
 
-      let imageUrl = null;
-      if (projectImage && typeof projectImage !== 'string') {
+      if (projectImage && typeof projectImage !== 'string' && projectImage !== currentProjectData.imageUrl) {
         setUploading(true);
         const storage = getStorage();
-        const storageRef = ref(storage, `project-images/${user.uid}/${projectName}-${Date.now()}`);
+
+        // Delete old image if it exists and is not a default image.
+        if (imageUrl && !imageUrl.startsWith('default-')) {
+          const imageRef = ref(storage, imageUrl);
+          try {
+            await deleteObject(imageRef);
+            console.log('Old image deleted');
+          } catch (deleteError) {
+            console.error('Error deleting old image:', deleteError);
+          }
+        }
+
+        const storageRef = ref(storage, `project-images/${auth.currentUser.uid}/${projectName}-${Date.now()}`);
         const uploadTask = uploadBytesResumable(storageRef, projectImage);
 
         await new Promise((resolve, reject) => {
@@ -105,7 +153,7 @@ const CreateProjectPage = React.memo(() => {
             },
             (error) => {
               setUploading(false);
-              setError('Failed to upload image.');
+              setError('Failed to upload new image.');
               console.error('Image upload error:', error);
               reject(error);
             },
@@ -120,21 +168,63 @@ const CreateProjectPage = React.memo(() => {
         imageUrl = projectImage;
       }
 
-      await addDoc(collection(db, 'projects'), {
+      await updateDoc(projectDocRef, {
         name: projectName.trim(),
-        userId: user.uid,
-        trackedTime: 0,
         imageUrl: imageUrl,
-        hourRate: hourRate ? parseInt(hourRate, 10) : 0, // Save hourRate as number, default 0
+        hourRate: hourRate ? parseInt(hourRate, 10) : 0,
       });
 
       navigate('/home');
     } catch (err) {
       setUploading(false);
-      console.error('Error creating project:', err);
-      setError('Failed to create the project. Please try again.');
+      console.error('Error updating project:', err);
+      setError('Failed to update the project. Please try again.');
     }
-  }, [projectName, projectImage, navigate, hourRate]); // Added hourRate to dependencies
+  }, [projectId, projectName, projectImage, navigate, hourRate]);
+
+  const handleDeleteProject = useCallback(async () => {
+    setIsDeleteDialogOpen(true);
+  }, []);
+
+  const confirmDeleteProject = useCallback(async () => {
+    setIsDeleteDialogOpen(false);
+    try {
+      const projectDocRef = doc(db, 'projects', projectId);
+      const projectSnap = await getDoc(projectDocRef);
+      const projectData = projectSnap.data();
+      const imageUrl = projectData.imageUrl;
+      if (imageUrl && !imageUrl.startsWith('default-')) {
+        const storage = getStorage();
+        const imageRef = ref(storage, imageUrl);
+        try {
+          await deleteObject(imageRef);
+          console.log('Project image deleted from storage');
+        } catch (deleteError) {
+          console.error('Error deleting project image from storage:', deleteError);
+        }
+      }
+
+      // Delete related sessions.
+      const sessionsQuery = query(collection(db, 'sessions'), where('projectId', '==', projectId));
+      const sessionsSnapshot = await getDocs(sessionsQuery);
+      const batch = db.batch();
+      sessionsSnapshot.forEach((doc) => {
+        batch.delete(doc.ref);
+      });
+      await batch.commit();
+      console.log('Related sessions deleted');
+
+      await deleteDocFirestore(projectDocRef);
+      navigate('/home');
+    } catch (err) {
+      console.error('Error deleting project:', err);
+      setError('Failed to delete the project.');
+    }
+  }, [projectId, navigate]);
+
+  const cancelDeleteProject = useCallback(() => {
+    setIsDeleteDialogOpen(false);
+  }, []);
 
   const handleImageUploadClick = useCallback(() => {
     fileInputRef.current.click();
@@ -142,17 +232,14 @@ const CreateProjectPage = React.memo(() => {
 
   const handleImageChange = useCallback(async (event) => {
     const file = event.target.files[0];
-
     if (!file) return;
 
-    // Validate file type.
     if (!ALLOWED_FILE_TYPES.includes(file.type)) {
       alert(`Please select a valid image file type: ${ALLOWED_FILE_TYPES.join(', ')}`);
       event.target.value = '';
       return;
     }
 
-    // Validate file size.
     if (file.size > MAX_FILE_SIZE_BYTES) {
       alert(`Image size should be less than ${MAX_FILE_SIZE_KB} KB.`);
       event.target.value = '';
@@ -161,7 +248,6 @@ const CreateProjectPage = React.memo(() => {
 
     const img = new Image();
     img.onload = async () => {
-      // Validate image dimensions.
       if (img.width > MAX_IMAGE_WIDTH || img.height > MAX_IMAGE_HEIGHT) {
         alert(`Image dimensions should not exceed ${MAX_IMAGE_WIDTH}x${MAX_IMAGE_HEIGHT} pixels.`);
         setProjectImage(null);
@@ -209,22 +295,21 @@ const CreateProjectPage = React.memo(() => {
   }, [projectImage, projectName, getInitials]);
 
   return (
-    <div className="create-project-page">
-     <Header
-             variant="journalOverview"
-             showBackArrow={true}
-           />
-      <main className="create-project-content">
+    <div className="update-project-page">
+      <Header
+              variant="journalOverview"
+              showBackArrow={true}
+            />
+      <main className="update-project-content">
         <section className="motivational-section">
           <h1>
-            Every journey begins with{' '}
-            <span style={{ color: 'var(--accent-color)' }}>one moment</span>.
-            Tell me about your project ...
+            Precision fuels progress set it up
+            <span style={{ color: 'var(--accent-color)' }}> your way.</span>
           </h1>
         </section>
         <section className="project-details-section">
           <h2>Project details</h2>
-          <div className="project-input-wrapper"> {/* Renamed wrapper */}
+          <div className="project-input-wrapper">
             <div
               className="project-image-container"
               onClick={handleImageUploadClick}
@@ -254,12 +339,12 @@ const CreateProjectPage = React.memo(() => {
             </div>
           </div>
 
-          <div className="project-input-wrapper"> 
+          <div className="project-input-wrapper">
             <div className="project-icon-container">
               <BillableIcon className="project-visual" style={{ fill: '#FFFFFF' }}/>
             </div>
             <input
-              type="number" 
+              type="number"
               placeholder="Hour rate"
               value={hourRate}
               onChange={(e) => setHourRate(e.target.value)}
@@ -270,7 +355,7 @@ const CreateProjectPage = React.memo(() => {
               }}
               inputMode="numeric"
             />
-             <div className="edit-icon-container">
+            <div className="edit-icon-container">
               <EditIcon className="edit-icon" />
             </div>
           </div>
@@ -279,23 +364,42 @@ const CreateProjectPage = React.memo(() => {
         {error && <p className="error-message">{error}</p>}
 
         <button
-          className="create-project-button sticky-button" 
-          onClick={handleCreateProject}
+          className="update-project-button sticky-button-top"
+          onClick={handleUpdateProject}
           disabled={uploading}
         >
           {uploading ? (
             <div className="spinner"></div>
           ) : (
             <>
-              <span className="button-icon">✛</span> Create your project
+              <UpdateButtonIcon className="button-icon" />
+              Update Project
             </>
           )}
         </button>
+        <button
+          className="delete-project-button sticky-button"
+          onClick={handleDeleteProject}
+        >
+          <EraseIcon className="button-icon" />
+          Delete Project
+        </button>
+
+        {/* Delete Confirmation Dialog */}
+        {isDeleteDialogOpen && (
+          <div className="delete-confirmation-dialog">
+            <p>Are you sure you want to delete this project and all its sessions?</p>
+            <div className="dialog-buttons">
+              <button onClick={confirmDeleteProject} className="confirm-delete">Yes, Delete</button>
+              <button onClick={cancelDeleteProject} className="cancel-delete">Cancel</button>
+            </div>
+          </div>
+        )}
       </main>
     </div>
   );
 });
 
-CreateProjectPage.displayName = 'CreateProjectPage';
+UpdateProjectPage.displayName = 'UpdateProjectPage';
 
-export default CreateProjectPage;
+export default UpdateProjectPage;

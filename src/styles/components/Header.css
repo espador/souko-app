@@ -72,9 +72,10 @@
   font-size: 16px;
   color: var(--text-muted);
   font-weight: 400;
-  color: #43404C;
+  color: #E682FF;
   cursor: pointer;
   font-family: var(--font-commit-mono);
+  font-weight: 700;
 }
 
 @keyframes spin {
