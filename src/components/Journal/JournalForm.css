@@ -48,10 +48,11 @@
 
 .journal-form-label {
   display: block;
+  font-size: 16px;
+  color: var(--text-muted);
   font-family: var(--font-commit-mono);
-  font-size: 16px; /* Slightly larger label font size */
-  color: var(--text-color);
-  margin-bottom: 0; /* Remove bottom margin on label, spacing handled by section gap */
+  margin-bottom: 0;
+  margin-top: 0;
 }
 
 /* Shared styles for both input and textarea */

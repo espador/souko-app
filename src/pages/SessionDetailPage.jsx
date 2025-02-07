@@ -173,11 +173,10 @@ const SessionDetailPage = () => {
 
   return (
     <div className="session-detail-page">
-      <Header
-        showBackArrow={true}
-        onBack={session && session.projectId ? () => navigate(`/project/${session.projectId}`) : undefined}
-        hideProfile={true}
-      />
+       <Header
+              variant="journalOverview"
+              showBackArrow={true}
+            />
 
       <div className="timer-quote">This moment was yours</div>
       <div className="timer">{new Date(session.elapsedTime * 1000).toISOString().substr(11, 8)}</div>
@@ -230,7 +229,7 @@ const SessionDetailPage = () => {
       </div>
 
       <button
-        className={`button save-button ${isSaveActive ? 'active' : ''}`}
+        className={`save-button sticky-button-top ${isSaveActive ? 'active' : ''}`}
         onClick={handleSaveSession}
         disabled={!isSaveActive}
       >
@@ -238,7 +237,7 @@ const SessionDetailPage = () => {
         Save this moment
       </button>
 
-      <button className="button erase-button" onClick={handleDeleteSession}>
+      <button className="erase-button sticky-button" onClick={handleDeleteSession}>
         <EraseIcon className="button-icon" />
         Erase your moment
       </button>

@@ -77,6 +77,7 @@ body.allow-scroll {
   font-size: 16px;
   line-height: 20px;
   margin-top: 40px;
+  margin-bottom: 16px;
 }
 
 .projects-header, .journal-header {

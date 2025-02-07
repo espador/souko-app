@@ -1,69 +1,125 @@
 /* src/components/Journal/JournalCountdown.css */
-.journal-countdown-page { /* Changed container class name to page */
+.journal-countdown-page {
   margin: 0 auto;
   max-width: 600px;
   background-color: transparent;
   color: var(--text-color);
   display: flex;
   flex-direction: column;
-  min-height: 100vh; /* Ensure full viewport height */
-  box-sizing: border-box; /* Include padding in width calculation */
+  min-height: 100vh;
+  box-sizing: border-box;
 }
 
-.journal-countdown-content { /* Added main content container */
+.journal-countdown-content {
   display: flex;
   flex-direction: column;
   gap: 40px;
-  /* Remove margin from here, apply to page container instead if needed */
+  padding-bottom: 80px; /* Add padding to avoid overlap with sticky buttons */
 }
 
-.motivational-section { /* Added motivational section for consistent styling */
+.motivational-section {
   margin-bottom: 0px;
-  /* Removed explicit font-family, will inherit from global styles */
   color: var(--text-muted);
   font-size: 32px;
   line-height: 40px;
   text-align: left;
   color: var(--text-color);
+  overflow: hidden;
+  position: relative; /* Make motivational-section relative for timer positioning */
+  display: flex; /* Use flex to align text and timer inline */
+  flex-wrap: wrap; /* Allow text to wrap if needed */
 }
 
 .journal-countdown-quote {
   line-height: 1.4;
-  margin-bottom: 32px; /* Increased margin below quote */
-  font-weight: 400; /* Set font weight to normal */
-  color: var(--text-color); /* Ensure text color is correct */
-  font-family: var(--font-commit-mono), monospace; /* Ensure font family is correct */
+  margin-bottom: 32px;
+  font-weight: 400;
+  color: var(--text-color);
+  font-family: var(--font-commit-mono), monospace;
+  display: inline; /* Make quote inline to flow with timer */
 }
 
-#countdown-timer {
-  color: var(--accent-color); /* Use your accent color */
+.journal-countdown-quote .word {
+  display: inline-block;
+  margin-right: 0.1em;
 }
+
+.journal-countdown-quote .letter {
+  display: inline-block;
+  opacity: 0;
+  transform: translateY(100%);
+  transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
+}
+
+.journal-countdown-quote.loaded .word .letter {
+  opacity: 1;
+  transform: translateY(0%);
+}
+
+/* Staggering effect example */
+.journal-countdown-quote .word:nth-child(n) .letter {
+  transition-delay: calc(0.05s * n);
+}
+
+#countdown-timer,
+.countdown-timer {
+  color: var(--accent-color);
+  display: inline; /* Make timer inline to flow with text */
+  
+}
+
 
 .journal-countdown-buttons {
   display: flex;
   flex-direction: column;
-  gap: 16px; /* Increased spacing between buttons */
-  width: 100%; /* Make buttons full width */
+  gap: 16px;
+  width: 100%;
 }
 
 .journal-countdown-button {
-  padding: 16px 24px; /* Increased padding for buttons */
+  padding: 16px 24px;
   border: 1px solid var(--card-background);
   border-radius: 12px;
   background-color: transparent;
   color: var(--text-color);
   cursor: pointer;
   font-family: var(--font-commit-mono);
-  font-size: 16px; /* Ensure font size is consistent */
-  text-align: center; /* Center text in button */
+  font-size: 16px;
+  text-align: center;
   width: 100%;
-  box-sizing: border-box; /* Include padding and border in width calculation */
+  box-sizing: border-box;
 }
 
-h1 {
-  color: var(--text-muted);
-  font-size: 32px;
-  line-height: 40px;
-  text-align: left;
-  color: var(--text-color);
-  }
+/* Sticky button styles added here */
+.sticky-button-top {
+  position: fixed;
+  bottom: 132px; /* Adjust bottom margin as needed */
+  left: 24px; /* Fixed left margin */
+  right: 24px; /* Fixed right margin */
+  width: calc(100% - 48px); /* Calculate width to account for 24px left and right margins */
+  max-width: 600px; /* Still respect max-width */
+  margin-left: auto; /* Center horizontally if width is less than max-width */
+  margin-right: auto; /* Center horizontally if width is less than max-width */
+  box-sizing: border-box;
+  background-color: var(--page-background);
+  padding-top: 16px;
+  padding-bottom: 16px;
+  border-radius: 12px;
+  border: 1px solid var(--card-background);
+}
+
+.sticky-button {
+  position: fixed;
+  bottom: 64px; /* Adjust bottom margin as needed */
+  left: 24px; /* Fixed left margin */
+  right: 24px; /* Fixed right margin */
+  width: calc(100% - 48px); /* Calculate width to account for 24px left and right margins */
+  max-width: 600px; /* Still respect max-width */
+  margin-left: auto; /* Center horizontally if width is less than max-width */
+  margin-right: auto; /* Center horizontally if width is less than max-width */
+  box-sizing: border-box;
+  background-color: var(--page-background);
+  padding-top: 16px;
+  padding-bottom: 16px;
+  border-radius: 12px;
+}

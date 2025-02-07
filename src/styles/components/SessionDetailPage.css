@@ -169,7 +169,7 @@
   font-family: var(--font-commit-mono);
   font-weight: 400;
   background-color: transparent;
-  color: var(--border-color);
+  color: var(--text-muted);
   cursor: not-allowed;
 }
 

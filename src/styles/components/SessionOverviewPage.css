@@ -7,7 +7,7 @@
   color: var(--text-color);
   /* min-height: 100vh; Remove this as body should handle the viewport height */
   display: flex;
-  margin-top: 40px;
+  margin-top: 0px;
   flex-direction: column; /* Ensure content flows vertically */
 }
 
@@ -65,14 +65,48 @@
 }
 
 .disabled {
-  color: var(--text-muted);
-   background-color: var(--background-color);
-  cursor: not-allowed;
+  font-family: var(--font-commit-mono);
   font-weight: 400;
-  opacity: 0.3; /* Indicate disabled state */
+  background-color: transparent;
+  color: var(--text-muted);
+  cursor: not-allowed;
 }
 
 .motivational-section .tracked-time {
   color: var(--accent-color);
   font-weight: 400;
+}
+
+/* Sticky button styles added here */
+.sticky-button-top {
+  position: fixed;
+  bottom: 132px; /* Adjust bottom margin as needed */
+  left: 24px; /* Fixed left margin */
+  right: 24px; /* Fixed right margin */
+  width: calc(100% - 48px); /* Calculate width to account for 24px left and right margins */
+  max-width: 600px; /* Still respect max-width */
+  margin-left: auto; /* Center horizontally if width is less than max-width */
+  margin-right: auto; /* Center horizontally if width is less than max-width */
+  box-sizing: border-box;
+  background-color: var(--page-background);
+  padding-top: 16px;
+  padding-bottom: 16px;
+  border-radius: 12px;
+  border: 1px solid var(--card-background);
+}
+
+.sticky-button {
+  position: fixed;
+  bottom: 64px; /* Adjust bottom margin as needed */
+  left: 24px; /* Fixed left margin */
+  right: 24px; /* Fixed right margin */
+  width: calc(100% - 48px); /* Calculate width to account for 24px left and right margins */
+  max-width: 600px; /* Still respect max-width */
+  margin-left: auto; /* Center horizontally if width is less than max-width */
+  margin-right: auto; /* Center horizontally if width is less than max-width */
+  box-sizing: border-box;
+  background-color: var(--page-background);
+  padding-top: 16px;
+  padding-bottom: 16px;
+  border-radius: 12px;
 }

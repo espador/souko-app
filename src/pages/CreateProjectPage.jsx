@@ -10,10 +10,10 @@ import { ReactComponent as BillableIcon } from '../styles/components/assets/bill
 
 // Increase max file size from 500KB to 1024KB (1MB) to accommodate modern mobile photos.
 const MAX_FILE_SIZE_KB = 2048;
-const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_KB * 1024;
+const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_KB * 2048;
 const ALLOWED_FILE_TYPES = ['image/jpeg', 'image/png', 'image/gif'];
-const MAX_IMAGE_WIDTH = 1080;
-const MAX_IMAGE_HEIGHT = 1080;
+const MAX_IMAGE_WIDTH = 5000;
+const MAX_IMAGE_HEIGHT = 5000;
 const TARGET_IMAGE_WIDTH = 164; // Target width for compressed images (pixels)
 const TARGET_IMAGE_HEIGHT = 164; // Target height for compressed images (pixels)
 const COMPRESSION_QUALITY = 0.5; // JPEG compression quality (0 to 1)

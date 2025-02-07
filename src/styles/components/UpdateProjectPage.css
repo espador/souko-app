@@ -118,6 +118,19 @@
   gap: 8px;
 }
 
+.update-project-button.disabled {
+  font-family: var(--font-commit-mono);
+  font-weight: 400;
+  background-color: transparent;
+  color: var(--text-muted);
+  cursor: not-allowed;
+}
+
+.update-project-button.disabled .button-icon {
+  fill: var(--text-muted);
+}
+
+
 .button-icon {
   color: var(--accent-color);
   font-size: 20px;
@@ -259,5 +272,4 @@ h1 {
   padding-top: 16px;
   padding-bottom: 16px;
   border-radius: 12px;
-  border: 1px solid var(--card-background);
 }

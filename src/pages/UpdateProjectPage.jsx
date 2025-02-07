@@ -15,10 +15,10 @@ import { ReactComponent as UpdateButtonIcon } from '../styles/components/assets/
 import { ReactComponent as EraseIcon } from '../styles/components/assets/erase.svg';
 
 const MAX_FILE_SIZE_KB = 2048;
-const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_KB * 1024;
+const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_KB * 2048;
 const ALLOWED_FILE_TYPES = ['image/jpeg', 'image/png', 'image/gif'];
-const MAX_IMAGE_WIDTH = 1080;
-const MAX_IMAGE_HEIGHT = 1080;
+const MAX_IMAGE_WIDTH = 5000;
+const MAX_IMAGE_HEIGHT = 5000;
 const TARGET_IMAGE_WIDTH = 164;
 const TARGET_IMAGE_HEIGHT = 164;
 const COMPRESSION_QUALITY = 0.5;
@@ -35,6 +35,11 @@ const UpdateProjectPage = React.memo(() => {
   const hourRateInputRef = useRef(null);
   const [uploading, setUploading] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false); // For delete confirmation
+  const [initialProjectName, setInitialProjectName] = useState('');
+  const [initialHourRate, setInitialHourRate] = useState('');
+  const [initialProjectImage, setInitialProjectImage] = useState(null);
+  const [isSaveActive, setIsSaveActive] = useState(false);
+
 
   useEffect(() => {
     const fetchProject = async () => {
@@ -56,6 +61,9 @@ const UpdateProjectPage = React.memo(() => {
           setProjectName(projectData.name);
           setHourRate(projectData.hourRate ? String(projectData.hourRate) : '');
           setProjectImage(projectData.imageUrl || null);
+          setInitialProjectName(projectData.name);
+          setInitialHourRate(projectData.hourRate ? String(projectData.hourRate) : '');
+          setInitialProjectImage(projectData.imageUrl || null);
         } else {
           setError('Project not found.');
         }
@@ -67,6 +75,15 @@ const UpdateProjectPage = React.memo(() => {
 
     fetchProject();
   }, [projectId]);
+
+  useEffect(() => {
+    const hasChanged =
+      projectName !== initialProjectName ||
+      hourRate !== initialHourRate ||
+      projectImage !== initialProjectImage; // Simple comparison, might need deeper check for file objects if needed
+    setIsSaveActive(hasChanged);
+  }, [projectName, hourRate, projectImage, initialProjectName, initialHourRate, initialProjectImage]);
+
 
   const compressImage = useCallback(async (file) => {
     return new Promise((resolve, reject) => {
@@ -174,7 +191,7 @@ const UpdateProjectPage = React.memo(() => {
         hourRate: hourRate ? parseInt(hourRate, 10) : 0,
       });
 
-      navigate('/home');
+      navigate(-1); // Navigate to the previous page
     } catch (err) {
       setUploading(false);
       console.error('Error updating project:', err);
@@ -364,9 +381,9 @@ const UpdateProjectPage = React.memo(() => {
         {error && <p className="error-message">{error}</p>}
 
         <button
-          className="update-project-button sticky-button-top"
+          className={`update-project-button sticky-button-top ${!isSaveActive ? 'disabled' : ''}`}
           onClick={handleUpdateProject}
-          disabled={uploading}
+          disabled={uploading || !isSaveActive}
         >
           {uploading ? (
             <div className="spinner"></div>

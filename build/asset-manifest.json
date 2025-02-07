@@ -1,7 +1,7 @@
 {
   "files": {
-    "main.css": "/static/css/main.6aeddac9.css",
-    "main.js": "/static/js/main.430991f5.js",
+    "main.css": "/static/css/main.dcfe8090.css",
+    "main.js": "/static/js/main.4bc5aacf.js",
     "static/media/CommitMono-700-Regular.ttf": "/static/media/CommitMono-700-Regular.abaf71e816dc70e8de48.ttf",
     "static/media/CommitMono-400-Regular.ttf": "/static/media/CommitMono-400-Regular.7acda3e77ae620cd8a41.ttf",
     "static/media/shippori-mincho-5-400-normal.woff": "/static/media/shippori-mincho-5-400-normal.21d9a20d3996449ccd3a.woff",
@@ -261,6 +261,7 @@
     "index.html": "/index.html",
     "static/media/Souko-logo-header.svg": "/static/media/Souko-logo-header.d31024ffe206099b65e30c3861478478.svg",
     "static/media/edit.svg": "/static/media/edit.f17a19aa934da39bad77b391bc6c9227.svg",
+    "static/media/save.svg": "/static/media/save.5ca7cb7e47226c51a3fbad84646ae9b4.svg",
     "static/media/updatebutton.svg": "/static/media/updatebutton.5ca7cb7e47226c51a3fbad84646ae9b4.svg",
     "static/media/google-icon.svg": "/static/media/google-icon.1c335cf830dd9db35c6ad89cdc7e4865.svg",
     "static/media/erase.svg": "/static/media/erase.57853c3b8fa3558f41d28f2735cb59f8.svg",
@@ -271,13 +272,12 @@
     "static/media/mood-unmotivated.svg": "/static/media/mood-unmotivated.7a1b06653a0aa1e529f30bfffc5f4cde.svg",
     "static/media/mood-focused.svg": "/static/media/mood-focused.9998fdcc52defdf80d4c495b39f49ef4.svg",
     "static/media/mood-frustrated.svg": "/static/media/mood-frustrated.0eaffbf08bb20b6923fa3fbdc752529d.svg",
-    "static/media/save.svg": "/static/media/save.cb866ab51aa8aae78a6c6aeb9173727c.svg",
     "static/media/dropdown.svg": "/static/media/dropdown.ced6d20a17c9cb36547b019bbf4721c7.svg",
     "static/media/play.svg": "/static/media/play.96fdd671041bba56eb630fd86c378b13.svg",
     "static/media/pause.svg": "/static/media/pause.6b572bc836f29e47ed6ef737423bb7cd.svg"
   },
   "entrypoints": [
-    "static/css/main.6aeddac9.css",
-    "static/js/main.430991f5.js"
+    "static/css/main.dcfe8090.css",
+    "static/js/main.4bc5aacf.js"
   ]
 }
