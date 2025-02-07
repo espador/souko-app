@@ -4,6 +4,7 @@ import React, {
   useState,
   useCallback,
   useMemo,
+  useRef,
 } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import {
@@ -26,7 +27,8 @@ import { ReactComponent as DropdownIcon } from '../styles/components/assets/drop
 import { ReactComponent as SoukoLogoHeader } from '../styles/components/assets/Souko-logo-header.svg';
 import { ReactComponent as TimerIcon } from '../styles/components/assets/timer.svg';
 import { ReactComponent as BillableIcon } from '../styles/components/assets/billable.svg';
-import { ReactComponent as EditIcon } from '../styles/components/assets/edit.svg'; // Import Edit Icon
+import { ReactComponent as EditIcon } from '../styles/components/assets/edit.svg';
+import { TextGenerateEffect } from '../styles/components/text-generate-effect.tsx';
 
 const ProjectDetailPage = React.memo(() => {
   const { projectId: routeProjectId } = useParams();
@@ -40,7 +42,12 @@ const ProjectDetailPage = React.memo(() => {
 
   // NEW STATE VARIABLES FOR FILTERS
   const [selectedTimeRange, setSelectedTimeRange] = useState('total');
-  const [displayMode, setDisplayMode] = useState('time'); // Default to 'time'
+  const [displayMode, setDisplayMode] = useState('time');
+  const [effectWords, setEffectWords] = useState('Total Time');
+  const projectHeaderRef = useRef(null);
+
+  // NEW STATE TO TRIGGER EFFECT ON EACH TOGGLE CLICK
+  const [effectTrigger, setEffectTrigger] = useState(0);
 
   const fetchProjects = useCallback(async (uid) => {
     try {
@@ -78,14 +85,15 @@ const ProjectDetailPage = React.memo(() => {
           setProject(null);
         } else {
           const projectData = projectSnapshot.data();
-          setProject({ id: projectSnapshot.id, ...projectData }); // Include document ID in project state
-          console.log("ProjectDetailPage.jsx: Project state after setProject:", project); // Debug log after setProject
+          setProject({ id: projectSnapshot.id, ...projectData });
+          console.log("ProjectDetailPage.jsx: Project state after setProject:", project);
 
           const sessionsRef = collection(db, 'sessions');
           const q = query(
             sessionsRef,
             where('project', '==', projectData.name),
             where('userId', '==', uid),
+            where('status', '==', 'stopped'),
             orderBy('startTime', 'desc')
           );
           const sessionsSnapshot = await getDocs(q);
@@ -134,16 +142,21 @@ const ProjectDetailPage = React.memo(() => {
     [navigate]
   );
 
-  // NEW FUNCTIONS TO HANDLE FILTER CHANGES
   const handleTimeRangeChange = useCallback((e) => {
     setSelectedTimeRange(e.target.value);
   }, []);
 
   const handleDisplayModeChange = useCallback((mode) => {
     setDisplayMode(mode);
+    if (mode === 'time') {
+      setEffectWords('Total Time');
+    } else if (mode === 'earned') {
+      setEffectWords('Total Earned');
+    }
+    // Trigger the effect every time by updating a separate state
+    setEffectTrigger(prevTrigger => prevTrigger + 1);
   }, []);
 
-  // FUNCTION TO FILTER SESSIONS BASED ON TIME RANGE
   const getSessionsForTimeRange = useCallback((sessions, timeRange) => {
     if (timeRange === 'total') {
       return sessions;
@@ -153,14 +166,14 @@ const ProjectDetailPage = React.memo(() => {
     let startDate;
 
     if (timeRange === 'week') {
-      const dayOfWeek = now.getDay(); // Sunday is 0, Monday is 1, etc.
-      const mondayOffset = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Calculate offset to Monday
+      const dayOfWeek = now.getDay();
+      const mondayOffset = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
       startDate = new Date(now);
       startDate.setDate(now.getDate() - mondayOffset);
-      startDate.setHours(0, 0, 0, 0); // Set to start of Monday
+      startDate.setHours(0, 0, 0, 0);
     } else if (timeRange === 'month') {
       startDate = new Date(now.getFullYear(), now.getMonth(), 1);
-      startDate.setHours(0, 0, 0, 0); // Set to start of month
+      startDate.setHours(0, 0, 0, 0);
     }
 
     return sessions.filter((session) => {
@@ -168,7 +181,7 @@ const ProjectDetailPage = React.memo(() => {
         const sessionDate = session.startTime.toDate();
         return sessionDate >= startDate && sessionDate <= now;
       }
-      return false; // Exclude sessions with invalid startTime
+      return false;
     });
   }, []);
 
@@ -177,7 +190,6 @@ const ProjectDetailPage = React.memo(() => {
     return getSessionsForTimeRange(sessions, selectedTimeRange);
   }, [sessions, selectedTimeRange, getSessionsForTimeRange]);
 
-
   const totalTime = useMemo(() => {
     return filteredSessions.reduce(
       (sum, session) => sum + (session.elapsedTime || 0),
@@ -185,15 +197,30 @@ const ProjectDetailPage = React.memo(() => {
     );
   }, [filteredSessions]);
 
+  // NEW: Calculate billable time only
+  const billableTime = useMemo(() => {
+    return filteredSessions.reduce(
+      (sum, session) => {
+        if (session.isBillable) { // Only add time if session.isBillable is true
+          return sum + (session.elapsedTime || 0);
+        }
+        return sum;
+      },
+      0
+    );
+  }, [filteredSessions]);
+
+
   const totalEarned = useMemo(() => {
     if (displayMode === 'earned' && project?.hourRate) {
-      const rate = parseFloat(project.hourRate); 
+      const rate = parseFloat(project.hourRate);
       if (!isNaN(rate)) {
-        return (totalTime / 3600) * rate;
+        // Use billableTime instead of totalTime for calculation
+        return (billableTime / 3600) * rate;
       }
     }
     return 0;
-  }, [displayMode, project?.hourRate, totalTime]);
+  }, [displayMode, project?.hourRate, billableTime]); // Depend on billableTime
 
 
   const sessionsByDate = useMemo(() => {
@@ -259,7 +286,7 @@ const ProjectDetailPage = React.memo(() => {
   }, []);
 
   const formatEarnedAmount = (amount) => {
-    return `€ ${amount.toLocaleString('en-DE', {
+    return `€${amount.toLocaleString('en-DE', {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     })}`;
@@ -291,9 +318,27 @@ const ProjectDetailPage = React.memo(() => {
               variant="journalOverview"
               showBackArrow={true}
             />
+      <div className="project-dropdown-container top-tile" onClick={() => {
+          console.log("ProjectDetailPage.jsx: Navigating to update project with projectId:", project.id);
+          navigate(`/projects/${project.id}/update`);
+        }}>
+        {project?.imageUrl ? (
+          <img
+            src={project.imageUrl}
+            alt={project.name}
+            className="dropdown-project-image"
+          />
+        ) : project?.name ? (
+          <div className="dropdown-default-image">
+            {project.name.charAt(0).toUpperCase()}
+          </div>
+        ) : null}
+        <div className="project-name">{project.name}</div>
+        <EditIcon className="edit-icon" />
+      </div>
 
-      <div className="filters-container"> {/* Filters moved to the top */}
-        <div className="time-range-dropdown"> {/* Time range dropdown moved to the left */}
+      <div className="filters-container">
+        <div className="time-range-dropdown">
           <select
             className="time-range-select"
             value={selectedTimeRange}
@@ -306,7 +351,7 @@ const ProjectDetailPage = React.memo(() => {
           <DropdownIcon className="dropdown-arrow" />
         </div>
 
-        <div className="display-mode-toggle"> {/* Display mode toggle moved to the right */}
+        <div className="display-mode-toggle">
           <button
             className={`display-mode-button ${displayMode === 'time' ? 'active' : 'muted'}`}
             onClick={() => handleDisplayModeChange('time')}
@@ -322,30 +367,15 @@ const ProjectDetailPage = React.memo(() => {
         </div>
       </div>
 
-      <div className="project-header-container"> {/* Header container below filters */}
+      <div className="project-header-container" ref={projectHeaderRef}>
         <h1 className="timer project-time">
-          {displayMode === 'time' ? formatTime(totalTime) : formatEarnedAmount(totalEarned)}
+          { displayMode === 'time' ? (
+            <TextGenerateEffect key={`time-value-${effectTrigger}`} words={formatTime(totalTime)} />
+          ) : (
+            <TextGenerateEffect key={`earned-value-${effectTrigger}`} words={formatEarnedAmount(totalEarned)} />
+          )}
         </h1>
-      </div>
-
-
-      <div className="project-dropdown-container top-tile" onClick={() => {
-          console.log("ProjectDetailPage.jsx: Navigating to update project with projectId:", project.id); // Debug Log Added!
-          navigate(`/projects/${project.id}/update`);
-        }}>
-        {project?.imageUrl ? (
-          <img
-            src={project.imageUrl}
-            alt={project.name}
-            className="dropdown-project-image"
-          />
-        ) : project?.name ? (
-          <div className="dropdown-default-image">
-            {project.name.charAt(0).toUpperCase()}
-          </div>
-        ) : null}
-        <div className="project-name">{project.name}</div>
-        <EditIcon className="edit-icon" /> {/* Edit icon on the right */}
+        {/* REMOVED TextGenerateEffect FOR "Total Time" / "Total Earned" LABEL */}
       </div>
 
       <div className="sessions-container">

@@ -147,7 +147,7 @@ const ProjectOverviewPage = () => {
         const bTime = totalSessionTime[b.name] || 0;
         return bTime - aTime;
       });
-    } else {
+    } else { // sortMode === "recent"
       return [...projects].sort((a, b) => {
         const aSessions = sessions.filter(
           session => session.project === a.name && session.startTime
@@ -176,14 +176,21 @@ const ProjectOverviewPage = () => {
     setSortMode((prevMode) => (prevMode === "tracked" ? "recent" : "tracked"));
   }, []);
 
+  // Modified renderProjects to use sortedProjects based on sortMode
   const renderProjects = useMemo(() => {
+    const projectsToRender = sortMode === 'recent' ? recentProjects : sortedProjects;
+
     if (projects.length > 0) {
-      if (recentProjects.length === 0) {
-        return <p>No projects with tracked sessions found. Start tracking to see results here!</p>;
+      if (projectsToRender.length === 0 && sortMode === 'recent') {
+        return <p>No projects with recent sessions found.</p>;
       }
+      if (projectsToRender.length === 0 && sortMode === 'tracked') {
+        return <p>No projects with tracked time found.</p>;
+      }
+
       return (
         <ul className="projects-list">
-          {recentProjects.map((project) => (
+          {projectsToRender.map((project) => (
             <li
               key={project.id}
               className="project-item"
@@ -203,7 +210,8 @@ const ProjectOverviewPage = () => {
     } else {
       return <p>No projects found. Start tracking to see results here!</p>;
     }
-  }, [projects, navigate, totalSessionTime, renderProjectImage, recentProjects]);
+  }, [projects, navigate, totalSessionTime, renderProjectImage, sortedProjects, recentProjects, sortMode]);
+
 
   console.log('ProjectOverviewPage rendered. Loading:', loading);
 
@@ -233,8 +241,8 @@ const ProjectOverviewPage = () => {
           <div className="projects-header">
             <h2 className="projects-label">All Projects</h2>
             <div className="projects-actions">
-              <span 
-                onClick={toggleSortMode} 
+              <span
+                onClick={toggleSortMode}
                 className="projects-label sort-toggle-label"
               >
                 {sortMode === "tracked" ? "Most recent" : "Most tracked"}

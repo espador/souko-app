@@ -1,0 +1,122 @@
+/* LoginPage.css */
+.login-page {
+  margin: 0 auto;
+  max-width: 600px;
+  background-color: transparent;
+  color: var(--text-color);
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh; /* Ensure full viewport height */
+}
+
+.login-content {
+  flex-grow: 1; /* Allow content to take up remaining vertical space */
+  display: flex;
+  flex-direction: column;
+  justify-content: center; /* Vertically center content */
+  align-items: center; /* Horizontally center content */
+  padding: 0px; /* Add some padding around the content */
+  text-align: center; /* Center text within sections */
+  padding-bottom: 80px; /* Add padding at the bottom to accommodate sticky container */
+}
+
+.motivational-section {
+  margin-bottom: 40px;
+  color: var(--text-muted);
+  font-size: 32px;
+  line-height: 40px;
+  text-align: left;
+  color: var(--text-color);
+  overflow: hidden;
+  margin-top: 24px;
+}
+
+.login-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  max-width: 400px; /* Limit button width if needed */
+  margin-bottom: 16px; /* Space between button and terms - Removed from padding bottom of login-actions and moved to sticky container */
+}
+
+.login-button {
+  font-family: var(--font-commit-mono);
+  background-color: transparent;
+  border: 1px solid var(--card-background);
+  border-radius: 12px;
+  text-align: center;
+  font-size: 16px;
+  color: var(--text-color);
+  padding: 16px;
+  cursor: pointer;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+
+.login-button:hover {
+  opacity: 1;
+}
+
+.google-icon {
+  width: 18px;
+  height: 18px;
+  margin-right: 8px;
+  fill: var(--accent-color);
+}
+
+.login-terms {
+  font-family: var(--font-commit-mono);
+  color: var(--text-muted);
+  font-size: 14px; /* Slightly smaller for terms text */
+  line-height: 20px;
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.login-link {
+  color: var(--text-muted); /* Or a different color for links */
+  text-decoration: none; /* Remove underline from links */
+}
+
+.login-link:hover {
+  text-decoration: underline; /* Underline on hover if desired */
+}
+
+
+/* Sticky button and terms at the bottom */
+.login-page > .login-content {
+  justify-content: flex-start; /* Align content to top initially */
+}
+
+.login-page > .login-content > .login-actions {
+  margin-top: auto; /* Push actions to the bottom */
+}
+
+.sticky-login-container {
+  position: fixed;
+  bottom: 0; /* Stick to the bottom */
+  left: 24px; /* Match horizontal margins from UpdateProjectPage */
+  right: 24px; /* Match horizontal margins from UpdateProjectPage */
+  width: calc(100% - 48px); /* Match width calculation */
+  max-width: 600px; /* Match max-width */
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center; /* Center terms text horizontally in the container */
+}
+
+
+/* Ensure logo spins in header - if not already spinning from Header.jsx */
+.souko-logo-header.spinning-logo {
+  animation: spin 30s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}

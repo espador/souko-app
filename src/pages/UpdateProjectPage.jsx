@@ -1,4 +1,3 @@
-// UpdateProjectPage.jsx
 import React, { useState, useRef, useCallback, useEffect, useMemo } from 'react';
 import { doc, getDoc, updateDoc, deleteDoc, collection, deleteDoc as deleteDocFirestore, getDocs, query, where } from 'firebase/firestore';
 import { db, auth } from '../services/firebase';
@@ -13,6 +12,8 @@ import { ReactComponent as BillableIcon } from '../styles/components/assets/bill
 // New icons for update and delete actions:
 import { ReactComponent as UpdateButtonIcon } from '../styles/components/assets/updatebutton.svg';
 import { ReactComponent as EraseIcon } from '../styles/components/assets/erase.svg';
+// Import TextGenerateEffect
+import { TextGenerateEffect } from '../styles/components/text-generate-effect.tsx';
 
 const MAX_FILE_SIZE_KB = 2048;
 const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_KB * 2048;
@@ -74,6 +75,7 @@ const UpdateProjectPage = React.memo(() => {
     };
 
     fetchProject();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [projectId]);
 
   useEffect(() => {
@@ -319,10 +321,11 @@ const UpdateProjectPage = React.memo(() => {
             />
       <main className="update-project-content">
         <section className="motivational-section">
-          <h1>
-            Precision fuels progress set it up
-            <span style={{ color: 'var(--accent-color)' }}> your way.</span>
-          </h1>
+          {/* Replace the h1 tag with TextGenerateEffect */}
+          <TextGenerateEffect
+            words={`Precision fuels \n progress set it\n up <span class="accent-text"> your way.</span>`}
+            element="h1" // Optionally, specify that it should render as an <h1>
+          />
         </section>
         <section className="project-details-section">
           <h2>Project details</h2>

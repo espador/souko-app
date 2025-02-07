@@ -148,7 +148,7 @@
   border-radius: 12px;
   padding: 16px;
   gap: 16px;
-  margin-bottom: 24px; /* Reduced margin */
+  margin-bottom: 16px; /* Reduced margin */
   cursor: pointer; /* Add cursor pointer to indicate click action */
   justify-content: space-between; /* Align items and space between */
 }
@@ -200,7 +200,7 @@
   margin: 0px;
   font-size: 40px;
   line-height: 48px;
-  margin-bottom: 24px;
+  margin-bottom: 0px;
   color: var(--accent-color);
   text-align: center;
   transition: color 0.3s ease;
@@ -273,7 +273,6 @@
   transform: translateY(-50%);
   width: 20px;
   height: 20px;
-  fill: var(--text-color);
   pointer-events: none;
 }
 

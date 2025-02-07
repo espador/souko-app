@@ -27,6 +27,9 @@ import { ReactComponent as SaveIcon } from '../../styles/components/assets/save.
 import { ReactComponent as EraseIcon } from '../../styles/components/assets/erase.svg';
 import { ReactComponent as EditIcon } from '../../styles/components/assets/edit.svg';
 
+// Import TextGenerateEffect
+import { TextGenerateEffect } from '../../styles/components/text-generate-effect.tsx';
+
 
 const moodOptions = [
     { value: 'frustrated', label: 'Frustrated', icon: MoodFrustrated },
@@ -215,7 +218,11 @@ const JournalForm = () => {
               showBackArrow={true}
             />
             <main className="journal-form-content journal-form-single-page">
-                <p className="journal-form-title">In stillness, progress takes its form.</p>
+                {/* Replace the p tag with TextGenerateEffect */}
+                <TextGenerateEffect
+                    words={"In stillness, \n progress takes \nits form."}
+                    className="journal-form-title" // Keep the same class for styling
+                />
 
                 <div className="journal-form-section journal-form-section-mood">
                     <div className="mood-header">Mood: {currentMoodLabel}</div>

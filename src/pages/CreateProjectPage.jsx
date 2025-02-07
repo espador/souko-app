@@ -7,6 +7,8 @@ import Header from '../components/Layout/Header';
 import '../styles/components/CreateProjectPage.css';
 import { ReactComponent as EditIcon } from '../styles/components/assets/edit.svg';
 import { ReactComponent as BillableIcon } from '../styles/components/assets/billable.svg';
+// Import TextGenerateEffect
+import { TextGenerateEffect } from '../styles/components/text-generate-effect.tsx';
 
 // Increase max file size from 500KB to 1024KB (1MB) to accommodate modern mobile photos.
 const MAX_FILE_SIZE_KB = 2048;
@@ -216,11 +218,11 @@ const CreateProjectPage = React.memo(() => {
            />
       <main className="create-project-content">
         <section className="motivational-section">
-          <h1>
-            Every journey begins with{' '}
-            <span style={{ color: 'var(--accent-color)' }}>one moment</span>.
-            Tell me about your project ...
-          </h1>
+          {/* Replace the h1 tag with TextGenerateEffect */}
+          <TextGenerateEffect
+            words={`Every journey \nbegins with one\n moment. Tell me \nabout your project ...`}
+            element="h1" // Optionally, specify that it should render as an <h1>
+          />
         </section>
         <section className="project-details-section">
           <h2>Project details</h2>
@@ -254,12 +256,12 @@ const CreateProjectPage = React.memo(() => {
             </div>
           </div>
 
-          <div className="project-input-wrapper"> 
+          <div className="project-input-wrapper">
             <div className="project-icon-container">
               <BillableIcon className="project-visual" style={{ fill: '#FFFFFF' }}/>
             </div>
             <input
-              type="number" 
+              type="number"
               placeholder="Hour rate"
               value={hourRate}
               onChange={(e) => setHourRate(e.target.value)}
@@ -279,7 +281,7 @@ const CreateProjectPage = React.memo(() => {
         {error && <p className="error-message">{error}</p>}
 
         <button
-          className="create-project-button sticky-button" 
+          className="create-project-button sticky-button"
           onClick={handleCreateProject}
           disabled={uploading}
         >

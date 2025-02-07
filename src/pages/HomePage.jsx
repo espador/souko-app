@@ -67,29 +67,28 @@ const HomePage = React.memo(() => {
     try {
       const [projectSnapshot, sessionSnapshot, journalSnapshot, profileSnapshot] = await Promise.all([
         getDocs(query(collection(db, 'projects'), where('userId', '==', uid))),
-        // Fetch only sessions with status "stopped"
-        getDocs(query(collection(db, 'sessions'), where('userId', '==', uid), where('status', '==', 'stopped'))),
+        getDocs(query(collection(db, 'sessions'), where('userId', '==', uid))), // Removed: where('status', '==', 'stopped')
         getDocs(query(collection(db, 'journalEntries'), where('userId', '==', uid))),
         getDoc(doc(db, 'profiles', uid))
       ]);
-
+  
       const userProjects = projectSnapshot.docs.map((doc) => ({
         id: doc.id,
         name: doc.data().name,
         imageUrl: doc.data().imageUrl,
       }));
       setProjects(userProjects);
-
+  
       const userSessions = sessionSnapshot.docs.map((doc) => doc.data());
       setSessions(userSessions);
       setHasTrackedEver(userSessions.length > 0);
-
+  
       const userJournalEntries = journalSnapshot.docs.map((doc) => ({
         ...doc.data(),
         id: doc.id,
       }));
       setJournalEntries(userJournalEntries);
-
+  
       if (profileSnapshot.exists()) {
         const profileData = profileSnapshot.data();
         setUserProfile(profileData);
