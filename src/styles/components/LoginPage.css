@@ -17,7 +17,7 @@
   align-items: center; /* Horizontally center content */
   padding: 0px; /* Add some padding around the content */
   text-align: center; /* Center text within sections */
-  padding-bottom: 80px; /* Add padding at the bottom to accommodate sticky container */
+  padding-bottom: 80px; /* Add padding at the bottom to accommodate sticky container - maybe adjust this */
 }
 
 .motivational-section {
@@ -37,7 +37,7 @@
   align-items: center;
   width: 100%;
   max-width: 400px; /* Limit button width if needed */
-  margin-bottom: 16px; /* Space between button and terms - Removed from padding bottom of login-actions and moved to sticky container */
+  margin-bottom: 16px; /* Space between button and terms */
 }
 
 .login-button {
@@ -74,8 +74,9 @@
   color: var(--text-muted);
   font-size: 14px; /* Slightly smaller for terms text */
   line-height: 20px;
-  text-align: center;
+  text-align: center; /* Keep text-align: center; for the text itself */
   margin-bottom: 40px;
+  /* Removed display: flex; again - ensure it's just a block element */
 }
 
 .login-link {
@@ -88,26 +89,23 @@
 }
 
 
-/* Sticky button and terms at the bottom */
+/* Sticky button and terms at the bottom - Modified */
 .login-page > .login-content {
-  justify-content: flex-start; /* Align content to top initially */
+  justify-content: space-between; /* Changed to space-between to push content and footer apart */
 }
 
 .login-page > .login-content > .login-actions {
-  margin-top: auto; /* Push actions to the bottom */
+  margin-top: auto; /* Still push actions to the bottom of login-content */
 }
 
 .sticky-login-container {
-  position: fixed;
-  bottom: 0; /* Stick to the bottom */
-  left: 24px; /* Match horizontal margins from UpdateProjectPage */
-  right: 24px; /* Match horizontal margins from UpdateProjectPage */
-  width: calc(100% - 48px); /* Match width calculation */
-  max-width: 600px; /* Match max-width */
-  box-sizing: border-box;
-  display: flex;
-  flex-direction: column;
-  align-items: center; /* Center terms text horizontally in the container */
+  /* Removed position: fixed, bottom, left, right, width, calc, box-sizing */
+  max-width: 600px; /* Keep max-width to match page */
+  margin-left: auto; /* Center horizontally using auto margins */
+  margin-right: auto; /* Center horizontally using auto margins */
+  margin-bottom: 24px; /* Add some bottom margin */
+  display: block; /* Ensure it's a block element */
+  text-align: center; /* Center text content within */
 }
 
 

@@ -53,7 +53,7 @@ const UpdateProjectPage = React.memo(() => {
           return;
         }
 
-        const projectDoc = doc(db, 'projects', projectId);
+        const projectDoc = doc(db, 'projects', projectId); // ✅ Correctly using projectId here
         const docSnap = await getDoc(projectDoc);
 
         if (docSnap.exists()) {
@@ -141,7 +141,7 @@ const UpdateProjectPage = React.memo(() => {
     }
 
     try {
-      const projectDocRef = doc(db, 'projects', projectId);
+      const projectDocRef = doc(db, 'projects', projectId); // ✅ Correctly using projectId here
       const projectSnap = await getDoc(projectDocRef);
       let currentProjectData = projectSnap.data();
       let imageUrl = currentProjectData.imageUrl;
@@ -208,7 +208,7 @@ const UpdateProjectPage = React.memo(() => {
   const confirmDeleteProject = useCallback(async () => {
     setIsDeleteDialogOpen(false);
     try {
-      const projectDocRef = doc(db, 'projects', projectId);
+      const projectDocRef = doc(db, 'projects', projectId); // ✅ Correctly using projectId here
       const projectSnap = await getDoc(projectDocRef);
       const projectData = projectSnap.data();
       const imageUrl = projectData.imageUrl;
@@ -224,7 +224,7 @@ const UpdateProjectPage = React.memo(() => {
       }
 
       // Delete related sessions.
-      const sessionsQuery = query(collection(db, 'sessions'), where('projectId', '==', projectId));
+      const sessionsQuery = query(collection(db, 'sessions'), where('projectId', '==', projectId)); // ✅ Correctly using projectId here for session deletion
       const sessionsSnapshot = await getDocs(sessionsQuery);
       const batch = db.batch();
       sessionsSnapshot.forEach((doc) => {

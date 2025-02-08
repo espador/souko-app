@@ -14,11 +14,8 @@ import { formatTime } from '../utils/formatTime';
 import Header from '../components/Layout/Header';
 import '../styles/global.css';
 import '../styles/components/HomePage.css';
-
-// Updated Icon Imports: Import both start and stop timer icons.
 import { ReactComponent as StartTimerIcon } from '../styles/components/assets/start-timer.svg';
 import { ReactComponent as StopTimerIcon } from '../styles/components/assets/stop-timer.svg';
-
 import '@fontsource/shippori-mincho';
 import Sidebar from '../components/Layout/Sidebar';
 import '../styles/components/Sidebar.css';
@@ -27,10 +24,11 @@ import { twMerge } from 'tailwind-merge';
 import { TextGenerateEffect } from '../styles/components/text-generate-effect.tsx';
 import JournalSection from '../components/Journal/JournalSection';
 import { ReactComponent as SoukoLogoHeader } from '../styles/components/assets/Souko-logo-header.svg';
-// Import date-fns helpers for week boundaries
 import { startOfWeek, endOfWeek } from 'date-fns';
 
 export const cn = (...inputs) => twMerge(clsx(inputs));
+
+const CACHE_DURATION_MS = 30000; // 30 seconds
 
 const HomePage = React.memo(() => {
   const [user, setUser] = useState(null);
@@ -41,7 +39,6 @@ const HomePage = React.memo(() => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [userProfile, setUserProfile] = useState(null);
   const [hasTrackedEver, setHasTrackedEver] = useState(false);
-  // State for sort mode (remains in state if you wish to add toggling later)
   const [sortMode, setSortMode] = useState("tracked");
 
   const navigate = useNavigate();
@@ -56,61 +53,86 @@ const HomePage = React.memo(() => {
       : new Date(timestamp);
   }, []);
 
-  // Determine if there is an active time-tracking session.
   const hasActiveSession = useMemo(
     () => sessions.some(session => !session.endTime),
     [sessions]
   );
 
+  // Caching: try to load cached homepage data from localStorage
+  const loadCachedData = useCallback((uid) => {
+    const cachedStr = localStorage.getItem(`homeData_${uid}`);
+    if (cachedStr) {
+      try {
+        const cached = JSON.parse(cachedStr);
+        if (Date.now() - cached.timestamp < CACHE_DURATION_MS) {
+          setProjects(cached.projects || []);
+          setSessions(cached.sessions || []);
+          setJournalEntries(cached.journalEntries || []);
+          setUserProfile(cached.userProfile || null);
+          setHasTrackedEver((cached.sessions || []).length > 0);
+          setLoading(false);
+        }
+      } catch (e) {
+        console.error("Error parsing cached data", e);
+      }
+    }
+  }, []);
+
   const fetchData = useCallback(async (uid) => {
+    // Attempt to load cached data first
+    loadCachedData(uid);
     setLoading(true);
     try {
       const [projectSnapshot, sessionSnapshot, journalSnapshot, profileSnapshot] = await Promise.all([
         getDocs(query(collection(db, 'projects'), where('userId', '==', uid))),
-        getDocs(query(collection(db, 'sessions'), where('userId', '==', uid))), // Removed: where('status', '==', 'stopped')
+        getDocs(query(collection(db, 'sessions'), where('userId', '==', uid))),
         getDocs(query(collection(db, 'journalEntries'), where('userId', '==', uid))),
         getDoc(doc(db, 'profiles', uid))
       ]);
-  
+
       const userProjects = projectSnapshot.docs.map((doc) => ({
         id: doc.id,
         name: doc.data().name,
         imageUrl: doc.data().imageUrl,
       }));
       setProjects(userProjects);
-  
+
       const userSessions = sessionSnapshot.docs.map((doc) => doc.data());
       setSessions(userSessions);
       setHasTrackedEver(userSessions.length > 0);
-  
+
       const userJournalEntries = journalSnapshot.docs.map((doc) => ({
         ...doc.data(),
         id: doc.id,
       }));
       setJournalEntries(userJournalEntries);
-  
+
       if (profileSnapshot.exists()) {
-        const profileData = profileSnapshot.data();
-        setUserProfile(profileData);
-        console.log('Profile data fetched:', profileData);
-      } else {
-        console.log('No profile found for user:', uid);
-        if (user) {
-          setUserProfile({
-            uid: user.uid,
-            displayName: user.displayName,
-            profileImageUrl: user.photoURL,
-            featureAccessLevel: 'free'
-          });
-        }
+        setUserProfile(profileSnapshot.data());
+      } else if (user) {
+        setUserProfile({
+          uid: user.uid,
+          displayName: user.displayName,
+          profileImageUrl: user.photoURL,
+          featureAccessLevel: 'free'
+        });
       }
+
+      // Cache the data for faster future loads.
+      const dataToCache = {
+        projects: userProjects,
+        sessions: userSessions,
+        journalEntries: userJournalEntries,
+        userProfile: profileSnapshot.exists() ? profileSnapshot.data() : null,
+        timestamp: Date.now(),
+      };
+      localStorage.setItem(`homeData_${uid}`, JSON.stringify(dataToCache));
     } catch (error) {
       console.error('Error fetching data:', error.message);
     } finally {
       setLoading(false);
-      console.log('Data fetching complete.');
     }
-  }, [user]);
+  }, [loadCachedData, user]);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
@@ -126,8 +148,8 @@ const HomePage = React.memo(() => {
 
   const totalSessionTime = useMemo(() => {
     return sessions.reduce((acc, session) => {
-      const project = session.project || 'Unknown Project';
-      acc[project] = (acc[project] || 0) + (session.elapsedTime || 0);
+      const projectId = session.projectId || 'Unknown Project';
+      acc[projectId] = (acc[projectId] || 0) + (session.elapsedTime || 0);
       return acc;
     }, {});
   }, [sessions]);
@@ -143,7 +165,7 @@ const HomePage = React.memo(() => {
       }
       return sum;
     }, 0);
-  }, [sessions]);
+  }, [sessions, parseTimestamp]);
 
   const handleLogout = useCallback(async () => {
     try {
@@ -163,9 +185,7 @@ const HomePage = React.memo(() => {
         fabRef.current.classList.add('scrolling');
         clearTimeout(scrollTimeout.current);
         scrollTimeout.current = setTimeout(() => {
-          if (fabRef.current) {
-            fabRef.current.classList.remove('scrolling');
-          }
+          fabRef.current && fabRef.current.classList.remove('scrolling');
         }, 300);
       }
     };
@@ -186,12 +206,11 @@ const HomePage = React.memo(() => {
     ),
   [getInitials]);
 
-  // Define recentProjects: the 3 projects with the most recent finished sessions.
   const recentProjects = useMemo(() => {
     return projects
       .map(project => {
         const projectSessions = sessions.filter(
-          session => session.project === project.name && session.startTime
+          session => session.projectId === project.id && session.startTime
         );
         const latestSessionTime =
           projectSessions.length > 0
@@ -210,17 +229,17 @@ const HomePage = React.memo(() => {
   const sortedProjects = useMemo(() => {
     if (sortMode === "tracked") {
       return [...projects].sort((a, b) => {
-        const aTime = totalSessionTime[a.name] || 0;
-        const bTime = totalSessionTime[b.name] || 0;
+        const aTime = totalSessionTime[a.id] || 0;
+        const bTime = totalSessionTime[b.id] || 0;
         return bTime - aTime;
       });
     } else {
       return [...projects].sort((a, b) => {
         const aSessions = sessions.filter(
-          session => session.project === a.name && session.startTime
+          session => session.projectId === a.id && session.startTime
         );
         const bSessions = sessions.filter(
-          session => session.project === b.name && session.startTime
+          session => session.projectId === b.id && session.startTime
         );
         const aLatest = aSessions.length > 0
           ? Math.max(...aSessions.map(session => {
@@ -259,8 +278,8 @@ const HomePage = React.memo(() => {
               <div className="project-image-container">{renderProjectImage(project)}</div>
               <div className="project-name">{project.name}</div>
               <div className="project-total-time">
-                {totalSessionTime && totalSessionTime[project.name] !== undefined
-                  ? formatTime(totalSessionTime[project.name])
+                {totalSessionTime && totalSessionTime[project.id] !== undefined
+                  ? formatTime(totalSessionTime[project.id])
                   : formatTime(0)}
               </div>
             </li>
@@ -271,8 +290,6 @@ const HomePage = React.memo(() => {
       return <p>No projects found. Start tracking to see results here!</p>;
     }
   }, [projects, navigate, totalSessionTime, renderProjectImage, recentProjects]);
-
-  console.log('HomePage rendered. Loading:', loading);
 
   if (loading) {
     return (
@@ -328,5 +345,4 @@ const HomePage = React.memo(() => {
 });
 
 HomePage.displayName = 'HomePage';
-
 export default HomePage;

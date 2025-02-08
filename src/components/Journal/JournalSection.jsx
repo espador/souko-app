@@ -34,10 +34,10 @@ const JournalSection = React.memo(({ journalEntries = [], loading }) => {
     return () => clearInterval(timer);
   }, []);
 
-  // Determine journal availability (from 6 PM to 2 AM)
+
   useEffect(() => {
     const currentHour = currentTime.getHours();
-    setIsJournalAvailable(currentHour >= 18 || currentHour < 2);
+    setIsJournalAvailable(currentHour >= 18);
   }, [currentTime]);
 
   const handleDayClick = useCallback(

@@ -91,7 +91,7 @@ const ProjectDetailPage = React.memo(() => {
           const sessionsRef = collection(db, 'sessions');
           const q = query(
             sessionsRef,
-            where('project', '==', projectData.name),
+            where('projectId', '==', projectId), // ✅ Changed to filter by projectId
             where('userId', '==', uid),
             where('status', '==', 'stopped'),
             orderBy('startTime', 'desc')

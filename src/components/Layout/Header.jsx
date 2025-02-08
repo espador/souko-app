@@ -9,7 +9,7 @@ const Header = memo(({
   variant = "home", // "home" (default) or "projectOverview"
   title,
   showBackArrow,
-  onBack,
+  onBack, // Keep the onBack prop for potential custom back actions
   hideProfile,
   children,
   showLiveTime = false,
@@ -21,6 +21,7 @@ const Header = memo(({
   const [isSpinning, setIsSpinning] = useState(true);
 
   useEffect(() => {
+    // ... (your useEffect for live time - remains the same) ...
     let intervalId;
     if (showLiveTime) {
       const tick = () => {
@@ -39,8 +40,7 @@ const Header = memo(({
   }, [showLiveTime]);
 
   // Determine what to render on the right side of the header.
-  // For the projectOverview variant, we want to show "Add project".
-  // Otherwise, we show the profile logo (or any passed children) unless hidden.
+  // ... (right section logic - remains the same) ...
   let rightSection = null;
   if (variant === "projectOverview") {
     rightSection = (
@@ -62,11 +62,20 @@ const Header = memo(({
     }
   }
 
+  const handleBackNavigation = () => {
+    if (onBack) {
+      onBack(); // Call the custom onBack function if provided
+    } else {
+      navigate('/home'); // Navigate to homepage if onBack is not provided
+    }
+  };
+
+
   return (
     <div className="header">
       <div className="header-left-section">
         {showBackArrow && (
-          <button className="back-button" onClick={onBack || (() => navigate(-1))}>
+          <button className="back-button" onClick={handleBackNavigation}>
             <ReturnIcon style={{ width: '40px', height: '40px' }} />
           </button>
         )}

@@ -28,6 +28,7 @@
   overflow: hidden;
   position: relative; /* Make motivational-section relative for timer positioning */
   display: flex; /* Use flex to align text and timer inline */
+  flex-direction: column; /* ADD THIS LINE: Stack items vertically */
   flex-wrap: wrap; /* Allow text to wrap if needed */
 }
 
@@ -65,8 +66,9 @@
 #countdown-timer,
 .countdown-timer {
   color: var(--accent-color);
-  display: inline; /* Make timer inline to flow with text */
-  
+  display: block; /* MODIFIED THIS LINE: Make timer a block element */
+  text-align: left; /* OPTIONAL: Center the timer text */
+  margin-top: 10px; /* OPTIONAL: Add some space between description and timer */
 }
 
 

@@ -17,6 +17,8 @@ import {
   setDoc,
   updateDoc,
   serverTimestamp,
+  Timestamp,
+  arrayUnion,
 } from 'firebase/firestore';
 import { db, auth } from '../services/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
@@ -46,7 +48,6 @@ const TimeTrackerPage = React.memo(() => {
   const [timer, setTimer] = useState(0);
   const [isRunning, setIsRunning] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
-  // sessionId is for the active session document in Firestore.
   const [sessionId, setSessionId] = useState(null);
   const [startTime, setStartTime] = useState(null);
   const navigate = useNavigate();
@@ -55,23 +56,19 @@ const TimeTrackerPage = React.memo(() => {
   const [showResetConfirmModal, setShowResetConfirmModal] = useState(false);
   const noteSaveTimeout = useRef(null);
   const [loading, setLoading] = useState(true);
+  const [pauseEvents, setPauseEvents] = useState([]);
 
-  // Determine the timer quote based on state.
+  // Display messages based on timer state.
   const timerQuote = useMemo(() => {
-    if (timer === 0 && !isRunning) {
-      return 'This moment is yours';
-    } else if (isRunning && !isPaused) {
-      return 'Moment in progress';
-    } else if (isPaused) {
-      return 'Taking a moment';
-    }
+    if (timer === 0 && !isRunning) return 'This moment is yours';
+    if (isRunning && !isPaused) return 'Moment in progress';
+    if (isPaused) return 'Taking a moment';
     return 'This moment is yours...';
   }, [timer, isRunning, isPaused]);
 
-  // Fetch projects and active session for cross-device support.
+  // Fetch projects and active session.
   const fetchData = useCallback(async (uid) => {
     try {
-      // Fetch projects.
       const projectsRef = collection(db, 'projects');
       const projectQuery = query(projectsRef, where('userId', '==', uid));
       const projectSnapshot = await getDocs(projectQuery);
@@ -85,7 +82,6 @@ const TimeTrackerPage = React.memo(() => {
         setSelectedProject(userProjects[0]);
       }
 
-      // Fetch active session (endTime is null).
       const sessionsRef = collection(db, 'sessions');
       const activeSessionQuery = query(
         sessionsRef,
@@ -100,37 +96,32 @@ const TimeTrackerPage = React.memo(() => {
         const matchingProject = userProjects.find(
           (proj) => proj.name === sessionData.project
         );
-        if (matchingProject) {
-          setSelectedProject(matchingProject);
-        }
+        if (matchingProject) setSelectedProject(matchingProject);
         setSessionNotes(sessionData.sessionNotes || '');
         setIsBillable(
           sessionData.isBillable !== undefined ? sessionData.isBillable : true
         );
         setStartTime(sessionData.startTime);
-        // IMPORTANT: Keep isRunning true even when paused so that the stop button remains visible.
         if (sessionData.paused) {
           setTimer(sessionData.elapsedTime || 0);
           setIsRunning(true);
           setIsPaused(true);
         } else {
           const now = Date.now();
-          let sessionStartTime = 0;
-          if (sessionData.startTime && sessionData.startTime.toDate) {
-            sessionStartTime = sessionData.startTime.toDate().getTime();
-          }
+          let sessionStartTime = sessionData.startTime?.toDate().getTime() || 0;
           const elapsedSeconds = Math.floor((now - sessionStartTime) / 1000);
           setTimer((sessionData.elapsedTime || 0) + elapsedSeconds);
           setIsRunning(true);
           setIsPaused(false);
         }
+        if (sessionData.pauseEvents) setPauseEvents(sessionData.pauseEvents);
       }
     } catch (error) {
       console.error('Error fetching data:', error);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [selectedProject]);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
@@ -144,20 +135,47 @@ const TimeTrackerPage = React.memo(() => {
     return () => unsubscribe();
   }, [navigate, fetchData]);
 
-  // Increment the timer every second if running and not paused.
+  // Update local timer every second.
   useEffect(() => {
-    let interval = null;
     if (isRunning && !isPaused) {
-      interval = setInterval(() => {
-        setTimer((prev) => prev + 1);
-      }, 1000);
-    } else {
-      clearInterval(interval);
+      const interval = setInterval(() => setTimer((prev) => prev + 1), 1000);
+      return () => clearInterval(interval);
     }
-    return () => clearInterval(interval);
   }, [isRunning, isPaused]);
 
-  // Start session: if no active session exists, create one immediately.
+  // Sync timer with Firestore every 60 seconds using recursive setTimeout.
+  useEffect(() => {
+    let cancelled = false;
+
+    const syncTimer = async () => {
+      if (cancelled) return;
+      if (isRunning && sessionId && !isPaused) {
+        try {
+          const sessionRef = doc(db, 'sessions', sessionId);
+          const sessionSnap = await getDoc(sessionRef);
+          if (sessionSnap.exists()) {
+            const sessionData = sessionSnap.data();
+            if (sessionData.startTime) {
+              const serverStartTime = sessionData.startTime.toDate().getTime();
+              const now = Date.now();
+              const elapsedSeconds = Math.floor((now - serverStartTime) / 1000);
+              setTimer(elapsedSeconds + (sessionData.elapsedTime || 0));
+            }
+          }
+        } catch (error) {
+          console.error('Timer sync error:', error);
+        }
+      }
+      if (!cancelled) {
+        setTimeout(syncTimer, 60000);
+      }
+    };
+
+    syncTimer();
+    return () => { cancelled = true; };
+  }, [isRunning, sessionId, isPaused]);
+
+  // Start session.
   const handleStart = useCallback(async () => {
     if (!selectedProject) {
       alert('Please select a project to start the timer.');
@@ -169,22 +187,19 @@ const TimeTrackerPage = React.memo(() => {
         await setDoc(sessionRef, {
           userId: user.uid,
           project: selectedProject.name,
+          projectId: selectedProject.id,
           sessionNotes,
           isBillable,
           startTime: serverTimestamp(),
           endTime: null,
           elapsedTime: 0,
           paused: false,
-          status: "running", // New status field
+          status: 'running',
+          pauseEvents: [],
         });
         setSessionId(sessionRef.id);
         const sessionSnap = await getDoc(sessionRef);
-        if (sessionSnap.exists()) {
-          const data = sessionSnap.data();
-          setStartTime(data.startTime);
-        } else {
-          setStartTime(new Date());
-        }
+        setStartTime(sessionSnap.exists() ? sessionSnap.data().startTime : new Date());
       } catch (error) {
         console.error('Error starting session:', error);
       }
@@ -194,26 +209,38 @@ const TimeTrackerPage = React.memo(() => {
     setIsPaused(false);
   }, [selectedProject, sessionId, user, sessionNotes, isBillable]);
 
-  // Pause session: update local state and Firestore.
+  // Pause session.
   const handlePause = useCallback(async () => {
     setIsPaused(true);
     if (sessionId) {
       try {
         const sessionRef = doc(db, 'sessions', sessionId);
-        await updateDoc(sessionRef, { elapsedTime: timer, paused: true, status: "paused" });
+        const pauseEvent = { type: 'pause', timestamp: Timestamp.now() };
+        await updateDoc(sessionRef, {
+          elapsedTime: timer,
+          paused: true,
+          status: 'paused',
+          pauseEvents: arrayUnion(pauseEvent),
+        });
       } catch (error) {
         console.error('Error pausing session:', error);
       }
     }
   }, [sessionId, timer]);
 
-  // Resume session: update Firestore and local state.
+  // Resume session.
   const handleResume = useCallback(async () => {
     setIsPaused(false);
     if (sessionId) {
       try {
         const sessionRef = doc(db, 'sessions', sessionId);
-        await updateDoc(sessionRef, { paused: false, startTime: serverTimestamp(), status: "running" });
+        const resumeEvent = { type: 'resume', timestamp: Timestamp.now() };
+        await updateDoc(sessionRef, {
+          paused: false,
+          startTime: serverTimestamp(),
+          status: 'running',
+          pauseEvents: arrayUnion(resumeEvent),
+        });
         setStartTime(new Date());
       } catch (error) {
         console.error('Error resuming session:', error);
@@ -222,7 +249,7 @@ const TimeTrackerPage = React.memo(() => {
     setIsRunning(true);
   }, [sessionId]);
 
-  // Stop session: confirm and then update the session document.
+  // Stop session.
   const handleStop = useCallback(() => {
     setShowStopConfirmModal(true);
   }, []);
@@ -234,12 +261,27 @@ const TimeTrackerPage = React.memo(() => {
     if (sessionId && selectedProject) {
       try {
         const sessionRef = doc(db, 'sessions', sessionId);
+        let totalPausedTimeMs = 0;
+        let lastPauseTime = null;
+        pauseEvents.sort((a, b) => a.timestamp.seconds - b.timestamp.seconds);
+        for (const event of pauseEvents) {
+          if (event.type === 'pause') {
+            lastPauseTime = event.timestamp;
+          } else if (event.type === 'resume' && lastPauseTime) {
+            totalPausedTimeMs += event.timestamp.seconds * 1000 - lastPauseTime.seconds * 1000;
+            lastPauseTime = null;
+          }
+        }
+        const totalPausedTimeSeconds = Math.round(totalPausedTimeMs / 1000);
         await updateDoc(sessionRef, {
           elapsedTime: timer,
           endTime: serverTimestamp(),
           project: selectedProject.name,
+          projectId: selectedProject.id,
           sessionNotes,
-          status: "stopped",
+          status: 'stopped',
+          pauseEvents: pauseEvents,
+          totalPausedTime: totalPausedTimeSeconds,
         });
       } catch (error) {
         console.error('Error stopping session:', error);
@@ -251,20 +293,20 @@ const TimeTrackerPage = React.memo(() => {
     navigate('/session-overview', {
       state: { totalTime: timer, projectId: selectedProject?.id },
     });
-    // Reset local state.
     setTimer(0);
     setSelectedProject(null);
     setSessionNotes('');
     setIsBillable(true);
     setSessionId(null);
     setStartTime(null);
-  }, [navigate, sessionId, selectedProject, timer, sessionNotes]);
+    setPauseEvents([]);
+  }, [navigate, sessionId, selectedProject, timer, sessionNotes, pauseEvents]);
 
   const cancelStopSession = useCallback(() => {
     setShowStopConfirmModal(false);
   }, []);
 
-  // Reset session: confirm then reset local state and update Firestore if needed.
+  // Reset session.
   const handleReset = useCallback(() => {
     if (isRunning || timer > 0) {
       setShowResetConfirmModal(true);
@@ -319,18 +361,15 @@ const TimeTrackerPage = React.memo(() => {
     [projects]
   );
 
-  // Debounced note saving – update session document if it exists.
+  // Debounced note saving.
   useEffect(() => {
     if (sessionId) {
-      if (noteSaveTimeout.current) {
-        clearTimeout(noteSaveTimeout.current);
-      }
+      if (noteSaveTimeout.current) clearTimeout(noteSaveTimeout.current);
       noteSaveTimeout.current = setTimeout(async () => {
         if (sessionNotes !== '') {
           try {
             const sessionRef = doc(db, 'sessions', sessionId);
             await updateDoc(sessionRef, { sessionNotes });
-            console.log('Session notes saved automatically.');
           } catch (error) {
             console.error('Error saving session notes:', error);
           }
@@ -354,10 +393,7 @@ const TimeTrackerPage = React.memo(() => {
 
   return (
     <div className="time-tracker-page">
-      <Header
-              variant="journalOverview"
-              showBackArrow={true}
-            />
+      <Header variant="journalOverview" showBackArrow={true} />
       <div className="timer-quote">{timerQuote}</div>
       <div ref={timerRef} className={`timer ${isPaused ? 'paused' : ''}`}>
         {new Date(timer * 1000).toISOString().substr(11, 8)}
@@ -467,5 +503,4 @@ const TimeTrackerPage = React.memo(() => {
 });
 
 TimeTrackerPage.displayName = 'TimeTrackerPage';
-
 export default TimeTrackerPage;
