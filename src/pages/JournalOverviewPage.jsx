@@ -1,18 +1,15 @@
 // JournalOverviewPage.jsx
-import React, {
-  useEffect,
-  useState,
-  useCallback,
-  useMemo,
-} from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { auth, db } from '../services/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
-import { collection, getDocs, query, where } from 'firebase/firestore';
+import { collection, getDocs, query, where, onSnapshot } from 'firebase/firestore';
 import { useNavigate } from 'react-router-dom';
 import Header from '../components/Layout/Header';
 import '@fontsource/shippori-mincho';
 import { TextGenerateEffect } from '../styles/components/text-generate-effect.tsx';
 import '../styles/components/JournalOverviewPage.css';
+
+const CACHE_DURATION_MS = 30000; // 30 seconds
 
 const JournalOverviewPage = () => {
   const [user, setUser] = useState(null);
@@ -27,39 +24,64 @@ const JournalOverviewPage = () => {
       : null;
   };
 
-  const fetchData = useCallback(async (uid) => {
+  // Load cached journal data if available.
+  const loadCachedData = useCallback((uid) => {
+    const cachedStr = localStorage.getItem(`journalOverviewData_${uid}`);
+    if (cachedStr) {
+      try {
+        const cached = JSON.parse(cachedStr);
+        if (Date.now() - cached.timestamp < CACHE_DURATION_MS) {
+          setJournalEntries(cached.journalEntries || []);
+          return true;
+        }
+      } catch (e) {
+        console.error("Error parsing cached journal data", e);
+      }
+    }
+    return false;
+  }, []);
+
+  // Modified fetchData to accept forceRefresh parameter.
+  const fetchData = useCallback(async (uid, forceRefresh = false) => {
+    if (!forceRefresh) {
+      const cacheValid = loadCachedData(uid);
+      if (cacheValid) {
+        setLoading(false);
+        return;
+      }
+    }
     setLoading(true);
     try {
-      // Removed orderBy from query to avoid issues if createdAt is missing
       const q = query(
         collection(db, 'journalEntries'),
         where('userId', '==', uid)
       );
-
       const journalSnapshot = await getDocs(q);
-
-      // Map each document to an entry and convert createdAt to a Date
       const fetchedEntries = journalSnapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
         createdAt: doc.data().createdAt ? convertTimestamp(doc.data().createdAt) : null,
       }));
-
       // Sort entries locally in descending order by createdAt (most recent first)
       const sortedEntries = fetchedEntries.sort((a, b) => {
         const aTime = a.createdAt ? a.createdAt.getTime() : 0;
         const bTime = b.createdAt ? b.createdAt.getTime() : 0;
         return bTime - aTime;
       });
-
       setJournalEntries(sortedEntries);
+      // Cache the data
+      const dataToCache = {
+        journalEntries: sortedEntries,
+        timestamp: Date.now(),
+      };
+      localStorage.setItem(`journalOverviewData_${uid}`, JSON.stringify(dataToCache));
     } catch (error) {
       console.error('Error fetching journal entries:', error.message);
     } finally {
       setLoading(false);
       console.log('Journal Overview Data fetching complete.');
     }
-  }, []);
+  }, [convertTimestamp, loadCachedData]);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
@@ -73,6 +95,21 @@ const JournalOverviewPage = () => {
     return () => unsubscribe();
   }, [navigate, fetchData]);
 
+  // Real-time listener for journal entries.
+  useEffect(() => {
+    if (!user) return;
+    let initialJournal = true;
+    const journalQuery = query(collection(db, 'journalEntries'), where('userId', '==', user.uid));
+    const unsubJournal = onSnapshot(journalQuery, (snapshot) => {
+      if (initialJournal) {
+        initialJournal = false;
+        return;
+      }
+      fetchData(user.uid, true);
+    });
+    return () => unsubJournal();
+  }, [user, fetchData]);
+
   const journalEntryCount = journalEntries.length;
 
   const renderJournalEntriesByMonth = useMemo(() => {
@@ -80,7 +117,7 @@ const JournalOverviewPage = () => {
       return <p>Loading journal entries...</p>;
     } else if (journalEntries.length > 0) {
       const entriesByMonth = journalEntries.reduce((acc, entry) => {
-        if (!entry.createdAt) return acc; // Skip entries without a valid createdAt
+        if (!entry.createdAt) return acc;
         const monthYear = entry.createdAt.toLocaleString('en-US', { month: 'long', year: 'numeric' });
         if (!acc[monthYear]) {
           acc[monthYear] = [];
@@ -88,7 +125,6 @@ const JournalOverviewPage = () => {
         acc[monthYear].push(entry);
         return acc;
       }, {});
-
       return Object.entries(entriesByMonth).map(([monthYear, entries]) => (
         <section key={monthYear} className="month-section">
           <h2 className="month-header">{monthYear}</h2>
@@ -97,12 +133,12 @@ const JournalOverviewPage = () => {
               <li key={entry.id} className="journal-entry-item">
                 <div className="entry-date">
                   {entry.createdAt.toLocaleString('en-US', {
-                    weekday: 'short',   // e.g., Mon, Tue
-                    hour: 'numeric',    // e.g., 18
-                    minute: 'numeric',  // e.g., 23
-                    second: 'numeric',  // e.g., 27
-                    hour12: false,      // 24-hour format
-                    day: 'numeric'      // e.g., 27
+                    weekday: 'short',
+                    hour: 'numeric',
+                    minute: 'numeric',
+                    second: 'numeric',
+                    hour12: false,
+                    day: 'numeric'
                   }).replace(/,/g, '.')}
                 </div>
                 <div className="entry-mood">{entry.mood}</div>

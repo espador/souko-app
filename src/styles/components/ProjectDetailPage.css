@@ -362,3 +362,18 @@
   text-align: center;
   margin-bottom: 20px;
 }
+
+.load-more-container {
+  text-align: center;
+  margin-top: 16px;
+}
+
+.load-more-button {
+  background-color: transparent;
+  border: 1px solid var(--card-background);
+  border-radius: 12px;
+  padding: 12px 24px;
+  font-size: 16px;
+  color: var(--text-color);
+  cursor: pointer;
+}

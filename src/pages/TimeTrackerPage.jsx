@@ -19,6 +19,7 @@ import {
   serverTimestamp,
   Timestamp,
   arrayUnion,
+  onSnapshot,
 } from 'firebase/firestore';
 import { db, auth } from '../services/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
@@ -50,15 +51,20 @@ const TimeTrackerPage = React.memo(() => {
   const [isPaused, setIsPaused] = useState(false);
   const [sessionId, setSessionId] = useState(null);
   const [startTime, setStartTime] = useState(null);
+  const [pauseEvents, setPauseEvents] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // States for local timer sync.
+  const [baseElapsedTime, setBaseElapsedTime] = useState(0);
+  const [sessionClientStartTime, setSessionClientStartTime] = useState(null);
+
   const navigate = useNavigate();
   const timerRef = useRef(null);
   const [showStopConfirmModal, setShowStopConfirmModal] = useState(false);
   const [showResetConfirmModal, setShowResetConfirmModal] = useState(false);
   const noteSaveTimeout = useRef(null);
-  const [loading, setLoading] = useState(true);
-  const [pauseEvents, setPauseEvents] = useState([]);
 
-  // Display messages based on timer state.
+  // Timer quote.
   const timerQuote = useMemo(() => {
     if (timer === 0 && !isRunning) return 'This moment is yours';
     if (isRunning && !isPaused) return 'Moment in progress';
@@ -107,10 +113,6 @@ const TimeTrackerPage = React.memo(() => {
           setIsRunning(true);
           setIsPaused(true);
         } else {
-          const now = Date.now();
-          let sessionStartTime = sessionData.startTime?.toDate().getTime() || 0;
-          const elapsedSeconds = Math.floor((now - sessionStartTime) / 1000);
-          setTimer((sessionData.elapsedTime || 0) + elapsedSeconds);
           setIsRunning(true);
           setIsPaused(false);
         }
@@ -124,7 +126,7 @@ const TimeTrackerPage = React.memo(() => {
   }, [selectedProject]);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+    const unsubscribeAuth = onAuthStateChanged(auth, async (currentUser) => {
       if (!currentUser) {
         navigate('/');
       } else {
@@ -132,48 +134,55 @@ const TimeTrackerPage = React.memo(() => {
         await fetchData(currentUser.uid);
       }
     });
-    return () => unsubscribe();
+    return () => unsubscribeAuth();
   }, [navigate, fetchData]);
 
-  // Update local timer every second.
+  // Local timer update: use sessionClientStartTime to update timer every second.
   useEffect(() => {
-    if (isRunning && !isPaused) {
-      const interval = setInterval(() => setTimer((prev) => prev + 1), 1000);
-      return () => clearInterval(interval);
+    let interval;
+    if (sessionClientStartTime) {
+      interval = setInterval(() => {
+        const now = Date.now();
+        let elapsedSeconds = Math.floor((now - sessionClientStartTime) / 1000);
+        elapsedSeconds = Math.max(0, elapsedSeconds);
+        setTimer(baseElapsedTime + elapsedSeconds);
+      }, 1000);
     }
-  }, [isRunning, isPaused]);
-
-  // Sync timer with Firestore every 60 seconds using recursive setTimeout.
-  useEffect(() => {
-    let cancelled = false;
-
-    const syncTimer = async () => {
-      if (cancelled) return;
-      if (isRunning && sessionId && !isPaused) {
-        try {
-          const sessionRef = doc(db, 'sessions', sessionId);
-          const sessionSnap = await getDoc(sessionRef);
-          if (sessionSnap.exists()) {
-            const sessionData = sessionSnap.data();
-            if (sessionData.startTime) {
-              const serverStartTime = sessionData.startTime.toDate().getTime();
-              const now = Date.now();
-              const elapsedSeconds = Math.floor((now - serverStartTime) / 1000);
-              setTimer(elapsedSeconds + (sessionData.elapsedTime || 0));
-            }
-          }
-        } catch (error) {
-          console.error('Timer sync error:', error);
-        }
-      }
-      if (!cancelled) {
-        setTimeout(syncTimer, 60000);
-      }
+    return () => {
+      if (interval) clearInterval(interval);
     };
+  }, [sessionClientStartTime, baseElapsedTime]);
 
-    syncTimer();
-    return () => { cancelled = true; };
-  }, [isRunning, sessionId, isPaused]);
+  // Real-time sync with Firestore for session updates.
+  useEffect(() => {
+    let unsubscribe;
+    if (sessionId) {
+      const sessionRef = doc(db, 'sessions', sessionId);
+      unsubscribe = onSnapshot(sessionRef, (sessionSnap) => {
+        if (sessionSnap.exists()) {
+          const sessionData = sessionSnap.data();
+          if (sessionData.pauseEvents) {
+            setPauseEvents(sessionData.pauseEvents);
+          }
+          if (!sessionData.paused) {
+            // Compute client start using our new approach:
+            const clientStart =
+              sessionData.clientStartTime ||
+              sessionData.startTimeMs ||
+              (sessionData.startTime ? sessionData.startTime.toDate().getTime() : Date.now());
+            setSessionClientStartTime(clientStart);
+            setBaseElapsedTime(sessionData.elapsedTime || 0);
+          } else {
+            setSessionClientStartTime(null);
+            setTimer(sessionData.elapsedTime || 0);
+          }
+        }
+      });
+    }
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
+  }, [sessionId]);
 
   // Start session.
   const handleStart = useCallback(async () => {
@@ -191,6 +200,8 @@ const TimeTrackerPage = React.memo(() => {
           sessionNotes,
           isBillable,
           startTime: serverTimestamp(),
+          startTimeMs: Date.now(), // Reliable numeric start time
+          clientStartTime: Date.now(),
           endTime: null,
           elapsedTime: 0,
           paused: false,
@@ -238,10 +249,11 @@ const TimeTrackerPage = React.memo(() => {
         await updateDoc(sessionRef, {
           paused: false,
           startTime: serverTimestamp(),
+          clientStartTime: Date.now(),
+          startTimeMs: Date.now(), // Update numeric start time on resume
           status: 'running',
           pauseEvents: arrayUnion(resumeEvent),
         });
-        setStartTime(new Date());
       } catch (error) {
         console.error('Error resuming session:', error);
       }
@@ -263,8 +275,8 @@ const TimeTrackerPage = React.memo(() => {
         const sessionRef = doc(db, 'sessions', sessionId);
         let totalPausedTimeMs = 0;
         let lastPauseTime = null;
-        pauseEvents.sort((a, b) => a.timestamp.seconds - b.timestamp.seconds);
-        for (const event of pauseEvents) {
+        const sortedPauseEvents = [...pauseEvents].sort((a, b) => a.timestamp.seconds - b.timestamp.seconds);
+        for (const event of sortedPauseEvents) {
           if (event.type === 'pause') {
             lastPauseTime = event.timestamp;
           } else if (event.type === 'resume' && lastPauseTime) {
@@ -315,16 +327,22 @@ const TimeTrackerPage = React.memo(() => {
 
   const confirmResetTimer = useCallback(async () => {
     setShowResetConfirmModal(false);
+    // Clear local timer state.
     setTimer(0);
     setIsRunning(false);
     setIsPaused(false);
     setStartTime(null);
+    setSessionClientStartTime(null);
+    setBaseElapsedTime(0);
+    
     if (sessionId) {
       try {
         const sessionRef = doc(db, 'sessions', sessionId);
         await updateDoc(sessionRef, {
           elapsedTime: 0,
           endTime: serverTimestamp(),
+          paused: true,
+          status: 'reset',
         });
         setSessionId(null);
       } catch (error) {
@@ -334,7 +352,7 @@ const TimeTrackerPage = React.memo(() => {
       setSessionId(null);
     }
   }, [sessionId]);
-
+  
   const cancelResetTimer = useCallback(() => {
     setShowResetConfirmModal(false);
   }, []);

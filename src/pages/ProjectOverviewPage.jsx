@@ -1,13 +1,8 @@
 // ProjectOverviewPage.jsx
-import React, {
-  useEffect,
-  useState,
-  useCallback,
-  useMemo,
-} from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { auth, db } from '../services/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
-import { collection, getDocs, query, where } from 'firebase/firestore';
+import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { useNavigate } from 'react-router-dom';
 import { formatTime } from '../utils/formatTime';
 import Header from '../components/Layout/Header';
@@ -17,60 +12,145 @@ import '../styles/components/ProjectOverviewPage.css';
 import { ReactComponent as SoukoLogoHeader } from '../styles/components/assets/Souko-logo-header.svg';
 import { startOfWeek, endOfWeek } from 'date-fns';
 
+const CACHE_DURATION_MS = 30000; // 30 seconds
+
+// Enhanced parseTimestamp: use startTimeMs if available
+const parseTimestamp = (timestamp, fallbackTimestamp) => {
+  if (!timestamp && !fallbackTimestamp) return null;
+
+  // If we have a numeric startTimeMs, use it.
+  if (fallbackTimestamp != null) {
+    const num = Number(fallbackTimestamp);
+    const date = new Date(num);
+    return isNaN(date.getTime()) ? null : date;
+  }
+
+  // Otherwise, if the timestamp is a string, try to parse it.
+  if (typeof timestamp === 'string') {
+    let parsed = new Date(timestamp);
+    if (isNaN(parsed.getTime())) {
+      const modified = timestamp.replace(" at ", " ");
+      parsed = new Date(modified);
+    }
+    return isNaN(parsed.getTime()) ? null : parsed;
+  }
+
+  // If it's a Firestore Timestamp instance.
+  if (typeof timestamp.toDate === 'function') {
+    return timestamp.toDate();
+  }
+
+  // If it's an object with seconds and nanoseconds.
+  if (timestamp.seconds != null && timestamp.nanoseconds != null) {
+    const seconds = Number(timestamp.seconds);
+    const nanoseconds = Number(timestamp.nanoseconds);
+    if (!isNaN(seconds) && !isNaN(nanoseconds)) {
+      const ms = seconds * 1000 + nanoseconds / 1000000;
+      const date = new Date(ms);
+      return isNaN(date.getTime()) ? null : date;
+    }
+  }
+
+  // Fallback: attempt a direct conversion.
+  const date = new Date(timestamp);
+  return isNaN(date.getTime()) ? null : date;
+};
+
+// Load cached project overview data if available.
+const loadCachedData = (uid, setProjects, setSessions) => {
+  const cachedStr = localStorage.getItem(`projectOverviewData_${uid}`);
+  if (cachedStr) {
+    try {
+      const cached = JSON.parse(cachedStr);
+      if (Date.now() - cached.timestamp < CACHE_DURATION_MS) {
+        setProjects(cached.projects || []);
+        setSessions(cached.sessions || []);
+        return true;
+      }
+    } catch (e) {
+      console.error("Error parsing cached project overview data", e);
+    }
+  }
+  return false;
+};
+
 const ProjectOverviewPage = () => {
   const [user, setUser] = useState(null);
   const [projects, setProjects] = useState([]);
-  // Only load sessions that are finished (status "stopped")
   const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [sortMode, setSortMode] = useState("tracked"); // "tracked" or "recent"
+  const [sortMode, setSortMode] = useState("tracked");
   const navigate = useNavigate();
 
-  // Helper to parse timestamps (handle Firestore Timestamps)
-  const parseTimestamp = (timestamp) => {
-    if (!timestamp) return null;
-    return typeof timestamp.toDate === 'function'
-      ? timestamp.toDate()
-      : new Date(timestamp);
-  };
-
-  const fetchData = useCallback(async (uid) => {
-    setLoading(true);
-    try {
-      const [projectSnapshot, sessionSnapshot] = await Promise.all([
-        getDocs(query(collection(db, 'projects'), where('userId', '==', uid))),
-        // Fetch only sessions with status "stopped" to show finished sessions
-        getDocs(query(collection(db, 'sessions'), where('userId', '==', uid), where('status', '==', 'stopped')))
-      ]);
-
-      const userProjects = projectSnapshot.docs.map((doc) => ({
-        id: doc.id,
-        name: doc.data().name,
-        imageUrl: doc.data().imageUrl,
-      }));
-      setProjects(userProjects);
-
-      const userSessions = sessionSnapshot.docs.map((doc) => doc.data());
-      setSessions(userSessions);
-    } catch (error) {
-      console.error('Error fetching data:', error.message);
-    } finally {
-      setLoading(false);
-      console.log('Project Overview Data fetching complete.');
-    }
-  }, []);
-
+  // Setup authentication and caching.
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+    const unsubscribeAuth = onAuthStateChanged(auth, (currentUser) => {
       if (!currentUser) {
         navigate('/');
       } else {
         setUser(currentUser);
-        fetchData(currentUser.uid);
+        loadCachedData(currentUser.uid, setProjects, setSessions);
+
+        const projectsQuery = query(
+          collection(db, 'projects'),
+          where('userId', '==', currentUser.uid)
+        );
+        const sessionsQuery = query(
+          collection(db, 'sessions'),
+          where('userId', '==', currentUser.uid),
+          where('status', '==', 'stopped')
+        );
+
+        const unsubProjects = onSnapshot(projectsQuery, (snapshot) => {
+          const userProjects = snapshot.docs.map((doc) => ({
+            id: doc.id,
+            name: doc.data().name,
+            imageUrl: doc.data().imageUrl,
+          }));
+          setProjects(userProjects);
+          const cachedStr = localStorage.getItem(`projectOverviewData_${currentUser.uid}`);
+          let cachedData = {};
+          try {
+            cachedData = cachedStr ? JSON.parse(cachedStr) : {};
+          } catch (e) {
+            console.error("Error parsing cached data:", e);
+          }
+          const newCache = { 
+            ...cachedData, 
+            projects: userProjects,
+            timestamp: Date.now()
+          };
+          localStorage.setItem(`projectOverviewData_${currentUser.uid}`, JSON.stringify(newCache));
+          setLoading(false);
+        });
+
+        const unsubSessions = onSnapshot(sessionsQuery, (snapshot) => {
+          const userSessions = snapshot.docs.map((doc) => doc.data());
+          setSessions(userSessions);
+          const cachedStr = localStorage.getItem(`projectOverviewData_${currentUser.uid}`);
+          let cachedData = {};
+          try {
+            cachedData = cachedStr ? JSON.parse(cachedStr) : {};
+          } catch (e) {
+            console.error("Error parsing cached data:", e);
+          }
+          const newCache = { 
+            ...cachedData, 
+            sessions: userSessions,
+            timestamp: Date.now()
+          };
+          localStorage.setItem(`projectOverviewData_${currentUser.uid}`, JSON.stringify(newCache));
+          setLoading(false);
+        });
+
+        return () => {
+          unsubProjects();
+          unsubSessions();
+        };
       }
     });
-    return () => unsubscribe();
-  }, [navigate, fetchData]);
+    return () => unsubscribeAuth();
+  }, [navigate]);
 
   // Total tracked time per project (by project name)
   const totalSessionTime = useMemo(() => {
@@ -81,7 +161,6 @@ const ProjectOverviewPage = () => {
     }, {});
   }, [sessions]);
 
-  // Calculate total tracked time across all projects
   const totalTrackedTimeAcrossProjects = useMemo(() => {
     return sessions.reduce((sum, session) => sum + (session.elapsedTime || 0), 0);
   }, [sessions]);
@@ -90,36 +169,32 @@ const ProjectOverviewPage = () => {
     const formattedTime = formatTime(totalTime);
     const parts = formattedTime.split(' ');
     if (parts.length === 2) {
-      return `${parts[0]} ${parts[1]}`; // e.g. "21h 30m" or "1d 2h"
+      return `${parts[0]} ${parts[1]}`;
     } else if (parts.length === 4 && parts[1] === 'days') {
-      return `${parts[0]}d ${parts[2]}h`; // e.g. "2d 3h"
+      return `${parts[0]}d ${parts[2]}h`;
     }
-    return formattedTime; // fallback
+    return formattedTime;
   }, []);
 
   const formattedTotalTime = useMemo(() => {
     return formatTotalTimeForQuote(totalTrackedTimeAcrossProjects);
   }, [totalTrackedTimeAcrossProjects, formatTotalTimeForQuote]);
 
-  // Get initials from project name.
   const getInitials = (name) => {
     if (!name) return '';
     return name.trim().charAt(0).toUpperCase();
   };
 
-  const renderProjectImage = useMemo(
-    () => (project) =>
-      project.imageUrl ? (
-        <img src={project.imageUrl} alt={project.name} className="project-image" />
-      ) : (
-        <div className="default-project-image" style={{ backgroundColor: '#FE2F00' }}>
-          <span>{getInitials(project.name || 'P')}</span>
-        </div>
-      ),
-    [getInitials]
-  );
+  const renderProjectImage = useMemo(() => (project) =>
+    project.imageUrl ? (
+      <img src={project.imageUrl} alt={project.name} className="project-image" />
+    ) : (
+      <div className="default-project-image" style={{ backgroundColor: '#FE2F00' }}>
+        <span>{getInitials(project.name || 'P')}</span>
+      </div>
+    ),
+  [getInitials]);
 
-  // Define recentProjects: the 3 projects with the most recent finished sessions.
   const recentProjects = useMemo(() => {
     return projects
       .map(project => {
@@ -129,8 +204,9 @@ const ProjectOverviewPage = () => {
         const latestSessionTime =
           projectSessions.length > 0
             ? Math.max(...projectSessions.map(session => {
-                const t = parseTimestamp(session.startTime);
-                return t ? t.getTime() : 0;
+                // Use startTimeMs if available; else fallback.
+                const date = parseTimestamp(session.startTime, session.startTimeMs);
+                return date ? date.getTime() : 0;
               }))
             : 0;
         return { ...project, latestSessionTime };
@@ -147,7 +223,7 @@ const ProjectOverviewPage = () => {
         const bTime = totalSessionTime[b.name] || 0;
         return bTime - aTime;
       });
-    } else { // sortMode === "recent"
+    } else {
       return [...projects].sort((a, b) => {
         const aSessions = sessions.filter(
           session => session.project === a.name && session.startTime
@@ -157,14 +233,14 @@ const ProjectOverviewPage = () => {
         );
         const aLatest = aSessions.length > 0
           ? Math.max(...aSessions.map(session => {
-              const t = parseTimestamp(session.startTime);
-              return t ? t.getTime() : 0;
+              const date = parseTimestamp(session.startTime, session.startTimeMs);
+              return date ? date.getTime() : 0;
             }))
           : 0;
         const bLatest = bSessions.length > 0
           ? Math.max(...bSessions.map(session => {
-              const t = parseTimestamp(session.startTime);
-              return t ? t.getTime() : 0;
+              const date = parseTimestamp(session.startTime, session.startTimeMs);
+              return date ? date.getTime() : 0;
             }))
           : 0;
         return bLatest - aLatest;
@@ -176,10 +252,8 @@ const ProjectOverviewPage = () => {
     setSortMode((prevMode) => (prevMode === "tracked" ? "recent" : "tracked"));
   }, []);
 
-  // Modified renderProjects to use sortedProjects based on sortMode
   const renderProjects = useMemo(() => {
     const projectsToRender = sortMode === 'recent' ? recentProjects : sortedProjects;
-
     if (projects.length > 0) {
       if (projectsToRender.length === 0 && sortMode === 'recent') {
         return <p>No projects with recent sessions found.</p>;
@@ -187,7 +261,6 @@ const ProjectOverviewPage = () => {
       if (projectsToRender.length === 0 && sortMode === 'tracked') {
         return <p>No projects with tracked time found.</p>;
       }
-
       return (
         <ul className="projects-list">
           {projectsToRender.map((project) => (
@@ -210,10 +283,7 @@ const ProjectOverviewPage = () => {
     } else {
       return <p>No projects found. Start tracking to see results here!</p>;
     }
-  }, [projects, navigate, totalSessionTime, renderProjectImage, sortedProjects, recentProjects, sortMode]);
-
-
-  console.log('ProjectOverviewPage rendered. Loading:', loading);
+  }, [projects, navigate, totalSessionTime, renderProjectImage, recentProjects, sortMode, sortedProjects]);
 
   if (loading) {
     return (
@@ -241,10 +311,7 @@ const ProjectOverviewPage = () => {
           <div className="projects-header">
             <h2 className="projects-label">All Projects</h2>
             <div className="projects-actions">
-              <span
-                onClick={toggleSortMode}
-                className="projects-label sort-toggle-label"
-              >
+              <span onClick={toggleSortMode} className="projects-label sort-toggle-label">
                 {sortMode === "tracked" ? "Most recent" : "Most tracked"}
               </span>
             </div>

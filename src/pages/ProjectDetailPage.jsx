@@ -1,22 +1,7 @@
 // ProjectDetailPage.jsx
-import React, {
-  useEffect,
-  useState,
-  useCallback,
-  useMemo,
-  useRef,
-} from 'react';
+import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import {
-  doc,
-  getDoc,
-  collection,
-  query,
-  where,
-  orderBy,
-  getDocs,
-  Timestamp,
-} from 'firebase/firestore';
+import { doc, getDoc, collection, query, where, orderBy, getDocs, Timestamp, onSnapshot, startAfter, limit } from 'firebase/firestore';
 import { db, auth } from '../services/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import { formatTime } from '../utils/formatTime';
@@ -30,6 +15,55 @@ import { ReactComponent as BillableIcon } from '../styles/components/assets/bill
 import { ReactComponent as EditIcon } from '../styles/components/assets/edit.svg';
 import { TextGenerateEffect } from '../styles/components/text-generate-effect.tsx';
 
+const CACHE_DURATION_MS = 30000; // 30 seconds
+const SESSIONS_LIMIT = 30; // Load 30 sessions at a time
+
+// Helper to convert session start time into a Date object.
+const convertToDate = (session) => {
+  if (session.startTimeMs != null) {
+    const num = Number(session.startTimeMs);
+    const date = new Date(num);
+    if (!isNaN(date.getTime())) return date;
+  }
+  if (session.startTime && typeof session.startTime.toDate === 'function') {
+    try {
+      return session.startTime.toDate();
+    } catch (error) {
+      console.error('Error converting Timestamp:', error);
+    }
+  }
+  if (session.startTime && session.startTime.seconds != null && session.startTime.nanoseconds != null) {
+    const seconds = Number(session.startTime.seconds);
+    const nanoseconds = Number(session.startTime.nanoseconds);
+    const date = new Date(seconds * 1000 + nanoseconds / 1000000);
+    if (!isNaN(date.getTime())) return date;
+  }
+  if (session.startTime && typeof session.startTime === 'string') {
+    let parsed = new Date(session.startTime);
+    if (isNaN(parsed.getTime())) {
+      parsed = new Date(session.startTime.replace(" at ", " "));
+    }
+    if (!isNaN(parsed.getTime())) return parsed;
+  }
+  return null;
+};
+
+const loadCachedProjectDetail = (uid, projectId) => {
+  const cacheKey = `projectDetailData_${uid}_${projectId}`;
+  const cachedStr = localStorage.getItem(cacheKey);
+  if (cachedStr) {
+    try {
+      const cached = JSON.parse(cachedStr);
+      if (Date.now() - cached.timestamp < CACHE_DURATION_MS) {
+        return cached;
+      }
+    } catch (e) {
+      console.error("Error parsing cached project detail data", e);
+    }
+  }
+  return null;
+};
+
 const ProjectDetailPage = React.memo(() => {
   const { projectId: routeProjectId } = useParams();
   const [project, setProject] = useState(null);
@@ -39,6 +73,10 @@ const ProjectDetailPage = React.memo(() => {
   const navigate = useNavigate();
   const [projects, setProjects] = useState([]);
   const [selectedProjectId, setSelectedProjectId] = useState(routeProjectId);
+  
+  // Pagination state:
+  const [lastSessionDoc, setLastSessionDoc] = useState(null);
+  const [hasMoreSessions, setHasMoreSessions] = useState(true);
 
   // NEW STATE VARIABLES FOR FILTERS
   const [selectedTimeRange, setSelectedTimeRange] = useState('total');
@@ -65,54 +103,113 @@ const ProjectDetailPage = React.memo(() => {
     }
   }, []);
 
-  const fetchProjectDetails = useCallback(
-    async (projectId, uid) => {
-      if (!uid || !projectId) return;
-
-      setLoading(true);
-      setProject(null);
-      setSessions([]);
-
-      try {
-        const projectRef = doc(db, 'projects', projectId);
-        const projectSnapshot = await getDoc(projectRef);
-
-        if (!projectSnapshot.exists()) {
-          console.error('Project not found in Firestore.');
-          setProject(null);
-        } else if (projectSnapshot.data().userId !== uid) {
-          console.error('Project belongs to a different user.');
-          setProject(null);
-        } else {
-          const projectData = projectSnapshot.data();
-          setProject({ id: projectSnapshot.id, ...projectData });
-          console.log("ProjectDetailPage.jsx: Project state after setProject:", project);
-
-          const sessionsRef = collection(db, 'sessions');
-          const q = query(
-            sessionsRef,
-            where('projectId', '==', projectId), // ✅ Changed to filter by projectId
-            where('userId', '==', uid),
-            where('status', '==', 'stopped'),
-            orderBy('startTime', 'desc')
-          );
-          const sessionsSnapshot = await getDocs(q);
-
-          const fetchedSessions = sessionsSnapshot.docs.map((doc) => ({
-            id: doc.id,
-            ...doc.data(),
-          }));
-          setSessions(fetchedSessions);
-        }
-      } catch (error) {
-        console.error('Error fetching project or sessions:', error);
-        setProject(null);
-      } finally {
-        setLoading(false);
+  // Function to fetch sessions with pagination
+  const fetchSessions = useCallback(
+    async (projectId, uid, reset = false) => {
+      const sessionsRef = collection(db, 'sessions');
+      let q;
+      if (reset) {
+        q = query(
+          sessionsRef,
+          where('projectId', '==', projectId),
+          where('userId', '==', uid),
+          where('status', '==', 'stopped'),
+          orderBy('startTime', 'desc'),
+          // Limit initial query
+          limit(SESSIONS_LIMIT)
+        );
+      } else {
+        q = query(
+          sessionsRef,
+          where('projectId', '==', projectId),
+          where('userId', '==', uid),
+          where('status', '==', 'stopped'),
+          orderBy('startTime', 'desc'),
+          startAfter(lastSessionDoc),
+          limit(SESSIONS_LIMIT)
+        );
       }
+      const sessionsSnapshot = await getDocs(q);
+      const fetchedSessions = sessionsSnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      // Update pagination state.
+      if (sessionsSnapshot.docs.length < SESSIONS_LIMIT) {
+        setHasMoreSessions(false);
+      } else {
+        setLastSessionDoc(sessionsSnapshot.docs[sessionsSnapshot.docs.length - 1]);
+      }
+      return fetchedSessions;
     },
-    []
+    [lastSessionDoc]
   );
+
+  // Modified fetchProjectDetails: use initial sessions load with pagination.
+  const fetchProjectDetails = useCallback(async (projectId, uid, forceRefresh = false) => {
+    if (!uid || !projectId) return;
+    const cacheKey = `projectDetailData_${uid}_${projectId}`;
+    if (!forceRefresh) {
+      const cached = loadCachedProjectDetail(uid, projectId);
+      if (cached) {
+        setProject(cached.project || null);
+        setSessions(cached.sessions || []);
+        // For cached data, assume we have more sessions if count is exactly the limit.
+        setHasMoreSessions((cached.sessions || []).length >= SESSIONS_LIMIT);
+        setLoading(false);
+        return;
+      }
+    }
+    setLoading(true);
+    setProject(null);
+    setSessions([]);
+    try {
+      const projectRef = doc(db, 'projects', projectId);
+      const projectSnapshot = await getDoc(projectRef);
+      if (!projectSnapshot.exists()) {
+        console.error('Project not found in Firestore.');
+        setProject(null);
+      } else if (projectSnapshot.data().userId !== uid) {
+        console.error('Project belongs to a different user.');
+        setProject(null);
+      } else {
+        const projectData = projectSnapshot.data();
+        setProject({ id: projectSnapshot.id, ...projectData });
+        // Reset pagination state on fresh load.
+        setLastSessionDoc(null);
+        setHasMoreSessions(true);
+        const initialSessions = await fetchSessions(projectId, uid, true);
+        setSessions(initialSessions);
+        // Cache the data.
+        const dataToCache = {
+          project: { id: projectSnapshot.id, ...projectData },
+          sessions: initialSessions,
+          timestamp: Date.now(),
+        };
+        localStorage.setItem(cacheKey, JSON.stringify(dataToCache));
+      }
+    } catch (error) {
+      console.error('Error fetching project or sessions:', error);
+      setProject(null);
+    } finally {
+      setLoading(false);
+    }
+  }, [fetchSessions]);
+
+  // Load more sessions handler.
+  const handleLoadMore = useCallback(async () => {
+    if (!currentUser || !routeProjectId || !hasMoreSessions) return;
+    setLoading(true);
+    try {
+      const moreSessions = await fetchSessions(routeProjectId, currentUser.uid, false);
+      setSessions(prev => [...prev, ...moreSessions]);
+      // Optionally, update the cache here if desired.
+    } catch (error) {
+      console.error('Error loading more sessions:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [currentUser, routeProjectId, fetchSessions, hasMoreSessions]);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -134,6 +231,40 @@ const ProjectDetailPage = React.memo(() => {
     }
   }, [currentUser, routeProjectId, fetchProjectDetails]);
 
+  // Real-time listeners for project detail and sessions.
+  useEffect(() => {
+    if (!currentUser || !routeProjectId) return;
+    let initialProject = true;
+    let initialSessions = true;
+    const projectDocRef = doc(db, 'projects', routeProjectId);
+    const sessionsQuery = query(
+      collection(db, 'sessions'),
+      where('projectId', '==', routeProjectId),
+      where('userId', '==', currentUser.uid),
+      where('status', '==', 'stopped'),
+      orderBy('startTime', 'desc'),
+      limit(SESSIONS_LIMIT)
+    );
+    const unsubProject = onSnapshot(projectDocRef, (snapshot) => {
+      if (initialProject) {
+        initialProject = false;
+        return;
+      }
+      fetchProjectDetails(routeProjectId, currentUser.uid, true);
+    });
+    const unsubSessions = onSnapshot(sessionsQuery, (snapshot) => {
+      if (initialSessions) {
+        initialSessions = false;
+        return;
+      }
+      fetchProjectDetails(routeProjectId, currentUser.uid, true);
+    });
+    return () => {
+      unsubProject();
+      unsubSessions();
+    };
+  }, [currentUser, routeProjectId, fetchProjectDetails]);
+
   const handleProjectChange = useCallback(
     (e) => {
       const newProjectId = e.target.value;
@@ -153,18 +284,15 @@ const ProjectDetailPage = React.memo(() => {
     } else if (mode === 'earned') {
       setEffectWords('Total Earned');
     }
-    // Trigger the effect every time by updating a separate state
-    setEffectTrigger(prevTrigger => prevTrigger + 1);
+    setEffectTrigger(prev => prev + 1);
   }, []);
 
   const getSessionsForTimeRange = useCallback((sessions, timeRange) => {
     if (timeRange === 'total') {
       return sessions;
     }
-
     const now = new Date();
     let startDate;
-
     if (timeRange === 'week') {
       const dayOfWeek = now.getDay();
       const mondayOffset = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
@@ -175,16 +303,11 @@ const ProjectDetailPage = React.memo(() => {
       startDate = new Date(now.getFullYear(), now.getMonth(), 1);
       startDate.setHours(0, 0, 0, 0);
     }
-
     return sessions.filter((session) => {
-      if (session.startTime instanceof Timestamp) {
-        const sessionDate = session.startTime.toDate();
-        return sessionDate >= startDate && sessionDate <= now;
-      }
-      return false;
+      const sessionDate = convertToDate(session);
+      return sessionDate && sessionDate >= startDate && sessionDate <= now;
     });
   }, []);
-
 
   const filteredSessions = useMemo(() => {
     return getSessionsForTimeRange(sessions, selectedTimeRange);
@@ -197,60 +320,46 @@ const ProjectDetailPage = React.memo(() => {
     );
   }, [filteredSessions]);
 
-  // NEW: Calculate billable time only
   const billableTime = useMemo(() => {
     return filteredSessions.reduce(
-      (sum, session) => {
-        if (session.isBillable) { // Only add time if session.isBillable is true
-          return sum + (session.elapsedTime || 0);
-        }
-        return sum;
-      },
+      (sum, session) => (session.isBillable ? sum + (session.elapsedTime || 0) : sum),
       0
     );
   }, [filteredSessions]);
-
 
   const totalEarned = useMemo(() => {
     if (displayMode === 'earned' && project?.hourRate) {
       const rate = parseFloat(project.hourRate);
       if (!isNaN(rate)) {
-        // Use billableTime instead of totalTime for calculation
         return (billableTime / 3600) * rate;
       }
     }
     return 0;
-  }, [displayMode, project?.hourRate, billableTime]); // Depend on billableTime
+  }, [displayMode, project?.hourRate, billableTime]);
 
-
+  // Group sessions by date.
   const sessionsByDate = useMemo(() => {
     return filteredSessions.reduce((acc, session) => {
-      let date;
-      if (session.startTime instanceof Timestamp) {
+      let dateStr = 'Invalid Date';
+      const dateObj = convertToDate(session);
+      if (dateObj) {
         try {
-          date = session.startTime.toDate().toLocaleDateString('en-US', {
+          dateStr = dateObj.toLocaleDateString('en-US', {
             weekday: 'long',
             month: 'long',
             day: 'numeric',
             year: 'numeric',
           });
         } catch (error) {
-          console.error(
-            'Error converting Timestamp to Date:',
-            error,
-            session.startTime
-          );
-          date = 'Invalid Date';
+          console.error('Error converting date:', error, session.startTime);
         }
       } else {
         console.warn('Invalid startTime for session:', session.id, session.startTime);
-        date = 'Invalid Date';
       }
-
-      if (!acc[date]) {
-        acc[date] = [];
+      if (!acc[dateStr]) {
+        acc[dateStr] = [];
       }
-      acc[date].push(session);
+      acc[dateStr].push(session);
       return acc;
     }, {});
   }, [filteredSessions]);
@@ -270,17 +379,12 @@ const ProjectDetailPage = React.memo(() => {
     });
   }, [sessionsByDate]);
 
-  const formatStartTime = useCallback((startTime) => {
-    if (startTime instanceof Timestamp) {
-      try {
-        const date = startTime.toDate();
-        const hours = String(date.getHours()).padStart(2, '0');
-        const minutes = String(date.getMinutes()).padStart(2, '0');
-        return `${hours}:${minutes}`;
-      } catch (error) {
-        console.error('Error formatting start time:', error, startTime);
-        return 'N/A';
-      }
+  const formatStartTime = useCallback((session) => {
+    const date = convertToDate(session);
+    if (date) {
+      const hours = String(date.getHours()).padStart(2, '0');
+      const minutes = String(date.getMinutes()).padStart(2, '0');
+      return `${hours}:${minutes}`;
     }
     return 'N/A';
   }, []);
@@ -291,7 +395,6 @@ const ProjectDetailPage = React.memo(() => {
       maximumFractionDigits: 2,
     })}`;
   };
-
 
   if (loading) {
     return (
@@ -314,20 +417,13 @@ const ProjectDetailPage = React.memo(() => {
 
   return (
     <div className="project-container">
-      <Header
-              variant="journalOverview"
-              showBackArrow={true}
-            />
+      <Header variant="journalOverview" showBackArrow={true} />
       <div className="project-dropdown-container top-tile" onClick={() => {
-          console.log("ProjectDetailPage.jsx: Navigating to update project with projectId:", project.id);
+          console.log("Navigating to update project with projectId:", project.id);
           navigate(`/projects/${project.id}/update`);
         }}>
         {project?.imageUrl ? (
-          <img
-            src={project.imageUrl}
-            alt={project.name}
-            className="dropdown-project-image"
-          />
+          <img src={project.imageUrl} alt={project.name} className="dropdown-project-image" />
         ) : project?.name ? (
           <div className="dropdown-default-image">
             {project.name.charAt(0).toUpperCase()}
@@ -339,11 +435,7 @@ const ProjectDetailPage = React.memo(() => {
 
       <div className="filters-container">
         <div className="time-range-dropdown">
-          <select
-            className="time-range-select"
-            value={selectedTimeRange}
-            onChange={handleTimeRangeChange}
-          >
+          <select className="time-range-select" value={selectedTimeRange} onChange={handleTimeRangeChange}>
             <option value="total">Total</option>
             <option value="week">This week</option>
             <option value="month">This month</option>
@@ -375,7 +467,6 @@ const ProjectDetailPage = React.memo(() => {
             <TextGenerateEffect key={`earned-value-${effectTrigger}`} words={formatEarnedAmount(totalEarned)} />
           )}
         </h1>
-        {/* REMOVED TextGenerateEffect FOR "Total Time" / "Total Earned" LABEL */}
       </div>
 
       <div className="sessions-container">
@@ -393,14 +484,10 @@ const ProjectDetailPage = React.memo(() => {
               </h2>
               <ul className="sessions-list">
                 {sessionsByDate[date].map((session) => (
-                  <Link
-                    key={session.id}
-                    to={`/session/${session.id}`}
-                    className="session-link"
-                  >
+                  <Link key={session.id} to={`/session/${session.id}`} className="session-link">
                     <li className="session-item input-tile">
                       <span className="session-start-time">
-                        {formatStartTime(session.startTime)}
+                        {formatStartTime(session)}
                       </span>
                       <span
                         className="session-time"
@@ -421,11 +508,17 @@ const ProjectDetailPage = React.memo(() => {
         ) : (
           <p>No sessions tracked for this project yet.</p>
         )}
+        {hasMoreSessions && (
+          <div className="load-more-container">
+            <button className="load-more-button" onClick={handleLoadMore}>
+              Load More Moments
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
 });
 
 ProjectDetailPage.displayName = 'ProjectDetailPage';
-
 export default ProjectDetailPage;

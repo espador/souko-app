@@ -1,14 +1,8 @@
 // HomePage.jsx
-import React, {
-  useEffect,
-  useState,
-  useRef,
-  useCallback,
-  useMemo,
-} from 'react';
+import React, { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import { auth, db } from '../services/firebase';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
-import { collection, getDocs, query, where, doc, getDoc } from 'firebase/firestore';
+import { collection, getDocs, query, where, doc, getDoc, onSnapshot } from 'firebase/firestore';
 import { useNavigate, Link } from 'react-router-dom';
 import { formatTime } from '../utils/formatTime';
 import Header from '../components/Layout/Header';
@@ -40,25 +34,39 @@ const HomePage = React.memo(() => {
   const [userProfile, setUserProfile] = useState(null);
   const [hasTrackedEver, setHasTrackedEver] = useState(false);
   const [sortMode, setSortMode] = useState("tracked");
+  const [refreshing, setRefreshing] = useState(false);
 
   const navigate = useNavigate();
   const fabRef = useRef(null);
   const scrollTimeout = useRef(null);
   const motivationalSectionRef = useRef(null);
 
+  // Improved parseTimestamp function
   const parseTimestamp = useCallback((timestamp) => {
     if (!timestamp) return null;
-    return typeof timestamp.toDate === 'function'
-      ? timestamp.toDate()
-      : new Date(timestamp);
+    // If the timestamp is a string, try to parse it.
+    if (typeof timestamp === 'string') {
+      const parsed = new Date(timestamp);
+      return isNaN(parsed.getTime()) ? null : parsed;
+    }
+    // If it's a Firestore Timestamp instance.
+    if (typeof timestamp.toDate === 'function') {
+      return timestamp.toDate();
+    }
+    // If it's a plain object with seconds and nanoseconds properties.
+    if (typeof timestamp.seconds === 'number' && typeof timestamp.nanoseconds === 'number') {
+      const ms = timestamp.seconds * 1000 + timestamp.nanoseconds / 1000000;
+      const date = new Date(ms);
+      return isNaN(date.getTime()) ? null : date;
+    }
+    // Fallback: attempt direct conversion.
+    const date = new Date(timestamp);
+    return isNaN(date.getTime()) ? null : date;
   }, []);
 
-  const hasActiveSession = useMemo(
-    () => sessions.some(session => !session.endTime),
-    [sessions]
-  );
+  const hasActiveSession = useMemo(() => sessions.some(session => !session.endTime), [sessions]);
 
-  // Caching: try to load cached homepage data from localStorage
+  // Try loading cached data for the homepage.
   const loadCachedData = useCallback((uid) => {
     const cachedStr = localStorage.getItem(`homeData_${uid}`);
     if (cachedStr) {
@@ -70,18 +78,26 @@ const HomePage = React.memo(() => {
           setJournalEntries(cached.journalEntries || []);
           setUserProfile(cached.userProfile || null);
           setHasTrackedEver((cached.sessions || []).length > 0);
-          setLoading(false);
+          return true;
         }
       } catch (e) {
         console.error("Error parsing cached data", e);
       }
     }
+    return false;
   }, []);
 
-  const fetchData = useCallback(async (uid) => {
-    // Attempt to load cached data first
-    loadCachedData(uid);
+  // Modified fetchData: if forceRefresh is true, bypass the cache.
+  const fetchData = useCallback(async (uid, forceRefresh = false) => {
+    if (!forceRefresh) {
+      const cacheValid = loadCachedData(uid);
+      if (cacheValid) {
+        setLoading(false);
+        return; // Skip fetching if cache is valid.
+      }
+    }
     setLoading(true);
+    setRefreshing(true);
     try {
       const [projectSnapshot, sessionSnapshot, journalSnapshot, profileSnapshot] = await Promise.all([
         getDocs(query(collection(db, 'projects'), where('userId', '==', uid))),
@@ -90,21 +106,25 @@ const HomePage = React.memo(() => {
         getDoc(doc(db, 'profiles', uid))
       ]);
 
-      const userProjects = projectSnapshot.docs.map((doc) => ({
+      const userProjects = projectSnapshot.docs.map(doc => ({
         id: doc.id,
         name: doc.data().name,
         imageUrl: doc.data().imageUrl,
       }));
       setProjects(userProjects);
 
-      const userSessions = sessionSnapshot.docs.map((doc) => doc.data());
+      const userSessions = sessionSnapshot.docs.map(doc => doc.data());
       setSessions(userSessions);
       setHasTrackedEver(userSessions.length > 0);
 
-      const userJournalEntries = journalSnapshot.docs.map((doc) => ({
-        ...doc.data(),
-        id: doc.id,
-      }));
+      const userJournalEntries = journalSnapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          ...data,
+          id: doc.id,
+          createdAt: parseTimestamp(data.createdAt), // Parse createdAt here
+        };
+      });
       setJournalEntries(userJournalEntries);
 
       if (profileSnapshot.exists()) {
@@ -118,7 +138,7 @@ const HomePage = React.memo(() => {
         });
       }
 
-      // Cache the data for faster future loads.
+      // Cache the data for future loads.
       const dataToCache = {
         projects: userProjects,
         sessions: userSessions,
@@ -131,9 +151,11 @@ const HomePage = React.memo(() => {
       console.error('Error fetching data:', error.message);
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
-  }, [loadCachedData, user]);
+  }, [loadCachedData, user, parseTimestamp]);
 
+  // Authentication and initial data fetch.
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       if (!currentUser) {
@@ -145,6 +167,53 @@ const HomePage = React.memo(() => {
     });
     return () => unsubscribe();
   }, [navigate, fetchData]);
+
+  // Real‑time listeners for all writes on crucial collections.
+  useEffect(() => {
+    if (!user) return;
+    // These flags ensure we ignore the initial onSnapshot events.
+    let initialProjects = true;
+    let initialSessions = true;
+    let initialJournal = true;
+
+    const projectsQuery = query(collection(db, 'projects'), where('userId', '==', user.uid));
+    const sessionsQuery = query(collection(db, 'sessions'), where('userId', '==', user.uid));
+    const journalQuery = query(collection(db, 'journalEntries'), where('userId', '==', user.uid));
+
+    const unsubProjects = onSnapshot(projectsQuery, (snapshot) => {
+      if (initialProjects) {
+        initialProjects = false;
+        return;
+      }
+      if (!refreshing) {
+        fetchData(user.uid, true);
+      }
+    });
+    const unsubSessions = onSnapshot(sessionsQuery, (snapshot) => {
+      if (initialSessions) {
+        initialSessions = false;
+        return;
+      }
+      if (!refreshing) {
+        fetchData(user.uid, true);
+      }
+    });
+    const unsubJournal = onSnapshot(journalQuery, (snapshot) => {
+      if (initialJournal) {
+        initialJournal = false;
+        return;
+      }
+      if (!refreshing) {
+        fetchData(user.uid, true);
+      }
+    });
+
+    return () => {
+      unsubProjects();
+      unsubSessions();
+      unsubJournal();
+    };
+  }, [user, fetchData, refreshing]);
 
   const totalSessionTime = useMemo(() => {
     return sessions.reduce((acc, session) => {
@@ -264,12 +333,13 @@ const HomePage = React.memo(() => {
 
   const renderProjects = useMemo(() => {
     if (projects.length > 0) {
-      if (recentProjects.length === 0) {
-        return <p>No projects with tracked sessions found. Start tracking to see results here!</p>;
+      const projectsToRender = sortMode === 'recent' ? recentProjects : sortedProjects;
+      if (projectsToRender.length === 0) {
+        return <p>{sortMode === 'recent' ? "No projects with recent sessions found." : "No projects with tracked time found."}</p>;
       }
       return (
         <ul className="projects-list">
-          {recentProjects.map((project) => (
+          {projectsToRender.map((project) => (
             <li
               key={project.id}
               className="project-item"
@@ -289,7 +359,7 @@ const HomePage = React.memo(() => {
     } else {
       return <p>No projects found. Start tracking to see results here!</p>;
     }
-  }, [projects, navigate, totalSessionTime, renderProjectImage, recentProjects]);
+  }, [projects, navigate, totalSessionTime, renderProjectImage, recentProjects, sortMode, sortedProjects]);
 
   if (loading) {
     return (

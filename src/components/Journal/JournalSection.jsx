@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import './JournalSection.css';
 import { useNavigate, Link } from 'react-router-dom'; // Added Link here
-import { format, startOfWeek, addDays } from 'date-fns';
+import { format, startOfWeek, addDays, parseISO } from 'date-fns';
 
 // PNG Imports
 import MoodNeutral from '../../styles/components/assets/mood-neutral.png';
@@ -40,6 +40,20 @@ const JournalSection = React.memo(({ journalEntries = [], loading }) => {
     setIsJournalAvailable(currentHour >= 18);
   }, [currentTime]);
 
+  const parseDateForJournal = useCallback((date) => {
+    if (!date) return null;
+    if (date instanceof Date) return date; // Already a Date object
+    if (typeof date === 'string') {
+      return parseISO(date); // Parse ISO string if it's a string
+    }
+    // If it's a Firebase Timestamp object
+    if (typeof date?.toDate === 'function') {
+      return date.toDate();
+    }
+    return null; // Return null if cannot parse
+  }, []);
+
+
   const handleDayClick = useCallback(
     (index) => {
       const dayDate = addDays(startOfCurrentWeek, index);
@@ -53,9 +67,10 @@ const JournalSection = React.memo(({ journalEntries = [], loading }) => {
       const isFutureDay = dayDate > today;
 
       const entryForDay = journalEntries.find(
-        (entry) =>
-          entry?.createdAt &&
-          format(entry.createdAt.toDate(), 'yyyy-MM-dd') === dayDateFormatted
+        (entry) => {
+          const entryCreatedAtDate = parseDateForJournal(entry.createdAt);
+          return entryCreatedAtDate && format(entryCreatedAtDate, 'yyyy-MM-dd') === dayDateFormatted;
+        }
       );
 
       if (isToday) {
@@ -66,18 +81,20 @@ const JournalSection = React.memo(({ journalEntries = [], loading }) => {
         }
       } else if (!isToday && !isFutureDay) {
         if (entryForDay && entryForDay.createdAt) {
-          const entryTimestamp = entryForDay.createdAt.toDate();
-          const entryHour = entryTimestamp.getHours();
-          const isWithinEditWindow =
-            (entryHour >= 18 || entryHour < 2) &&
-            format(entryTimestamp, 'yyyy-MM-dd') === dayDateFormatted;
-          if (isWithinEditWindow) {
-            navigate(`/journal-form?date=${dayDateFormatted}`);
+          const entryTimestamp = parseDateForJournal(entryForDay.createdAt);
+          if (entryTimestamp) {
+            const entryHour = entryTimestamp.getHours();
+            const isWithinEditWindow =
+              (entryHour >= 18 || entryHour < 2) &&
+              format(entryTimestamp, 'yyyy-MM-dd') === dayDateFormatted;
+            if (isWithinEditWindow) {
+              navigate(`/journal-form?date=${dayDateFormatted}`);
+            }
           }
         }
       }
     },
-    [startOfCurrentWeek, navigate, journalEntries, today]
+    [startOfCurrentWeek, navigate, journalEntries, today, parseDateForJournal]
   );
 
   // Precompute the days of the current week
@@ -89,9 +106,10 @@ const JournalSection = React.memo(({ journalEntries = [], loading }) => {
     return weekDays.map((dayDate, i) => {
       const dateKey = format(dayDate, 'yyyy-MM-dd');
       const entryForDay = journalEntries.find(
-        (entry) =>
-          entry?.createdAt &&
-          format(entry.createdAt.toDate(), 'yyyy-MM-dd') === dateKey
+        (entry) => {
+          const entryCreatedAtDate = parseDateForJournal(entry.createdAt);
+          return entryCreatedAtDate && format(entryCreatedAtDate, 'yyyy-MM-dd') === dateKey;
+        }
       );
 
       const isToday = format(dayDate, 'yyyy-MM-dd') === format(today, 'yyyy-MM-dd');
@@ -133,7 +151,7 @@ const JournalSection = React.memo(({ journalEntries = [], loading }) => {
         </div>
       );
     });
-  }, [weekDays, today, journalEntries, loading, handleDayClick]);
+  }, [weekDays, today, journalEntries, loading, handleDayClick, parseDateForJournal]);
 
   return (
     <section className="journal-section">
