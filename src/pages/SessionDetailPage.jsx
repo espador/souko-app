@@ -25,7 +25,7 @@ import { ReactComponent as RadioMutedIcon } from '../styles/components/assets/ra
 import { ReactComponent as SaveIcon } from '../styles/components/assets/save.svg';
 import { ReactComponent as EraseIcon } from '../styles/components/assets/erase.svg';
 import { ReactComponent as SoukoLogoHeader } from '../styles/components/assets/Souko-logo-header.svg';
-import ConfirmModal from '../components/ConfirmModal'; // Import the ConfirmModal component
+import ConfirmModal from '../components/ConfirmModal';
 
 const SessionDetailPage = () => {
   const { sessionId } = useParams();
@@ -38,7 +38,7 @@ const SessionDetailPage = () => {
   const [isBillable, setIsBillable] = useState(true);
   const [loading, setLoading] = useState(true);
   const [isSaveActive, setIsSaveActive] = useState(false);
-  const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false); // State for delete confirmation modal
+  const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false); // For delete confirmation
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -74,7 +74,6 @@ const SessionDetailPage = () => {
         setSession(sessionData);
         setSessionNotes(sessionData.sessionNotes || '');
         setIsBillable(sessionData.isBillable);
-
         // Find and set the selected project object
         const project = projects.find(p => p.name === sessionData.project);
         setSelectedProject(project);
@@ -133,7 +132,8 @@ const SessionDetailPage = () => {
         sessionNotes: sessionNotes,
       });
       setIsSaveActive(false);
-      // Optionally show a success message
+      // After successful save, navigate to the home page.
+      navigate('/home');
     } catch (error) {
       console.error("Error updating session:", error);
       // Optionally show an error message
@@ -141,7 +141,7 @@ const SessionDetailPage = () => {
   };
 
   const handleDeleteSession = () => {
-    setShowDeleteConfirmModal(true); // Open the delete confirmation modal
+    setShowDeleteConfirmModal(true);
   };
 
   const confirmDeleteSession = async () => {
@@ -173,13 +173,11 @@ const SessionDetailPage = () => {
 
   return (
     <div className="session-detail-page">
-       <Header
-              variant="journalOverview"
-              showBackArrow={true}
-            />
-
+      <Header variant="journalOverview" showBackArrow={true} />
       <div className="timer-quote">This moment was yours</div>
-      <div className="timer">{new Date(session.elapsedTime * 1000).toISOString().substr(11, 8)}</div>
+      <div className="timer">
+        {new Date(session.elapsedTime * 1000).toISOString().substr(11, 8)}
+      </div>
 
       <h2 className="projects-label">Details</h2>
       <div className="project-dropdown-container">

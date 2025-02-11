@@ -7,9 +7,9 @@ const Sidebar = ({ isOpen, onClose, onLogout }) => {
   return (
     <div className={`sidebar ${isOpen ? 'open' : ''}`}>
       <div className="sidebar-content">
-        <div className="close-button-container"> {/* New div for the close button */}
+        <div className="close-button-container">
           <button className="close-button" onClick={onClose}>
-            <CloseIcon className="close-icon" /> {/* Renamed class to "close-icon" */}
+            <CloseIcon className="close-icon" />
           </button>
         </div>
         <h1>Every journey begins with one moment.</h1>

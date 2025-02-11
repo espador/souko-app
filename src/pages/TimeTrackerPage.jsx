@@ -20,10 +20,12 @@ import {
   Timestamp,
   arrayUnion,
   onSnapshot,
+  runTransaction, // For transactions
 } from 'firebase/firestore';
 import { db, auth } from '../services/firebase';
-import { onAuthStateChanged } from 'firebase/auth';
+import { onAuthStateChanged, signOut } from 'firebase/auth';
 import Header from '../components/Layout/Header';
+import Sidebar from '../components/Layout/Sidebar';
 import '../styles/global.css';
 import '../styles/components/TimeTrackerPage.css';
 import { ReactComponent as ResetMuteIcon } from '../styles/components/assets/reset-mute.svg';
@@ -40,31 +42,49 @@ import '@fontsource/shippori-mincho';
 import ConfirmModal from '../components/ConfirmModal';
 import { ReactComponent as SoukoLogoHeader } from '../styles/components/assets/Souko-logo-header.svg';
 
+// --- Helper: Persist Instance ID ---
+const getInstanceId = () => {
+  let id = localStorage.getItem('timeTrackerInstanceId');
+  if (!id) {
+    id = `${Date.now()}-${Math.random()}`;
+    localStorage.setItem('timeTrackerInstanceId', id);
+  }
+  return id;
+};
+
 const TimeTrackerPage = React.memo(() => {
+  // Component state
   const [user, setUser] = useState(null);
   const [projects, setProjects] = useState([]);
   const [selectedProject, setSelectedProject] = useState(null);
   const [sessionNotes, setSessionNotes] = useState('');
+  const [notesLoaded, setNotesLoaded] = useState(false);
   const [isBillable, setIsBillable] = useState(true);
   const [timer, setTimer] = useState(0);
   const [isRunning, setIsRunning] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [sessionId, setSessionId] = useState(null);
-  const [startTime, setStartTime] = useState(null);
   const [pauseEvents, setPauseEvents] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // States for local timer sync.
+  // Timer sync states
   const [baseElapsedTime, setBaseElapsedTime] = useState(0);
   const [sessionClientStartTime, setSessionClientStartTime] = useState(null);
 
+  // Instance locking state
+  const [activeInstanceId, setActiveInstanceId] = useState(null);
+  const [conflictModalVisible, setConflictModalVisible] = useState(false);
+  const instanceId = useMemo(() => getInstanceId(), []);
+
+  // Sidebar state
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
   const navigate = useNavigate();
   const timerRef = useRef(null);
+  const noteSaveTimeout = useRef(null);
   const [showStopConfirmModal, setShowStopConfirmModal] = useState(false);
   const [showResetConfirmModal, setShowResetConfirmModal] = useState(false);
-  const noteSaveTimeout = useRef(null);
 
-  // Timer quote.
   const timerQuote = useMemo(() => {
     if (timer === 0 && !isRunning) return 'This moment is yours';
     if (isRunning && !isPaused) return 'Moment in progress';
@@ -72,16 +92,36 @@ const TimeTrackerPage = React.memo(() => {
     return 'This moment is yours...';
   }, [timer, isRunning, isPaused]);
 
+  // --- Sign Out Handler ---
+  const handleSignOut = useCallback(async () => {
+    try {
+      if (sessionId) {
+        const sessionRef = doc(db, 'sessions', sessionId);
+        await updateDoc(sessionRef, {
+          activeInstanceId: null,
+          endTime: serverTimestamp(),
+          status: 'signedOut',
+        });
+      }
+      await signOut(auth);
+      navigate('/');
+    } catch (error) {
+      console.error('Error during sign out:', error);
+    }
+  }, [sessionId, navigate]);
+  // --- End Sign Out Handler ---
+
   // Fetch projects and active session.
   const fetchData = useCallback(async (uid) => {
     try {
       const projectsRef = collection(db, 'projects');
-      const projectQuery = query(projectsRef, where('userId', '==', uid));
+      const projectQuery = query(projectsRef, where('userId', '==', uid)); // Define query first
       const projectSnapshot = await getDocs(projectQuery);
       const userProjects = projectSnapshot.docs.map((doc) => ({
         id: doc.id,
         name: doc.data().name,
         imageUrl: doc.data().imageUrl,
+        lastTrackedTime: doc.data().lastTrackedTime, // For aggregation
       }));
       setProjects(userProjects);
       if (userProjects.length > 0 && !selectedProject) {
@@ -103,11 +143,13 @@ const TimeTrackerPage = React.memo(() => {
           (proj) => proj.name === sessionData.project
         );
         if (matchingProject) setSelectedProject(matchingProject);
-        setSessionNotes(sessionData.sessionNotes || '');
+        if (!notesLoaded) {
+          setSessionNotes(sessionData.sessionNotes || '');
+          setNotesLoaded(true);
+        }
         setIsBillable(
           sessionData.isBillable !== undefined ? sessionData.isBillable : true
         );
-        setStartTime(sessionData.startTime);
         if (sessionData.paused) {
           setTimer(sessionData.elapsedTime || 0);
           setIsRunning(true);
@@ -123,7 +165,7 @@ const TimeTrackerPage = React.memo(() => {
     } finally {
       setLoading(false);
     }
-  }, [selectedProject]);
+  }, [selectedProject, notesLoaded]);
 
   useEffect(() => {
     const unsubscribeAuth = onAuthStateChanged(auth, async (currentUser) => {
@@ -137,7 +179,6 @@ const TimeTrackerPage = React.memo(() => {
     return () => unsubscribeAuth();
   }, [navigate, fetchData]);
 
-  // Local timer update: use sessionClientStartTime to update timer every second.
   useEffect(() => {
     let interval;
     if (sessionClientStartTime) {
@@ -153,7 +194,6 @@ const TimeTrackerPage = React.memo(() => {
     };
   }, [sessionClientStartTime, baseElapsedTime]);
 
-  // Real-time sync with Firestore for session updates.
   useEffect(() => {
     let unsubscribe;
     if (sessionId) {
@@ -161,11 +201,33 @@ const TimeTrackerPage = React.memo(() => {
       unsubscribe = onSnapshot(sessionRef, (sessionSnap) => {
         if (sessionSnap.exists()) {
           const sessionData = sessionSnap.data();
+          // --- Instance Locking ---
+          if (sessionData.activeInstanceId) {
+            if (sessionData.activeInstanceId !== instanceId) {
+              if (document.hasFocus()) {
+                updateDoc(sessionRef, { activeInstanceId: instanceId })
+                  .then(() => {
+                    setActiveInstanceId(instanceId);
+                    setConflictModalVisible(false);
+                  })
+                  .catch(console.error);
+              } else {
+                setActiveInstanceId(sessionData.activeInstanceId);
+                setConflictModalVisible(true);
+              }
+            } else {
+              setConflictModalVisible(false);
+              setActiveInstanceId(instanceId);
+            }
+          } else {
+            updateDoc(sessionRef, { activeInstanceId: instanceId }).catch(console.error);
+            setActiveInstanceId(instanceId);
+          }
+          // --- End Instance Locking ---
           if (sessionData.pauseEvents) {
             setPauseEvents(sessionData.pauseEvents);
           }
           if (!sessionData.paused) {
-            // Compute client start using our new approach:
             const clientStart =
               sessionData.clientStartTime ||
               sessionData.startTimeMs ||
@@ -176,15 +238,15 @@ const TimeTrackerPage = React.memo(() => {
             setSessionClientStartTime(null);
             setTimer(sessionData.elapsedTime || 0);
           }
+          // Do not update sessionNotes here.
         }
       });
     }
     return () => {
       if (unsubscribe) unsubscribe();
     };
-  }, [sessionId]);
+  }, [sessionId, instanceId]);
 
-  // Start session.
   const handleStart = useCallback(async () => {
     if (!selectedProject) {
       alert('Please select a project to start the timer.');
@@ -200,17 +262,17 @@ const TimeTrackerPage = React.memo(() => {
           sessionNotes,
           isBillable,
           startTime: serverTimestamp(),
-          startTimeMs: Date.now(), // Reliable numeric start time
+          startTimeMs: Date.now(),
           clientStartTime: Date.now(),
           endTime: null,
           elapsedTime: 0,
           paused: false,
           status: 'running',
           pauseEvents: [],
+          activeInstanceId: instanceId,
         });
         setSessionId(sessionRef.id);
-        const sessionSnap = await getDoc(sessionRef);
-        setStartTime(sessionSnap.exists() ? sessionSnap.data().startTime : new Date());
+        await getDoc(sessionRef);
       } catch (error) {
         console.error('Error starting session:', error);
       }
@@ -218,9 +280,8 @@ const TimeTrackerPage = React.memo(() => {
     setTimer(0);
     setIsRunning(true);
     setIsPaused(false);
-  }, [selectedProject, sessionId, user, sessionNotes, isBillable]);
+  }, [selectedProject, sessionId, user, sessionNotes, isBillable, instanceId]);
 
-  // Pause session.
   const handlePause = useCallback(async () => {
     setIsPaused(true);
     if (sessionId) {
@@ -239,7 +300,6 @@ const TimeTrackerPage = React.memo(() => {
     }
   }, [sessionId, timer]);
 
-  // Resume session.
   const handleResume = useCallback(async () => {
     setIsPaused(false);
     if (sessionId) {
@@ -250,7 +310,7 @@ const TimeTrackerPage = React.memo(() => {
           paused: false,
           startTime: serverTimestamp(),
           clientStartTime: Date.now(),
-          startTimeMs: Date.now(), // Update numeric start time on resume
+          startTimeMs: Date.now(),
           status: 'running',
           pauseEvents: arrayUnion(resumeEvent),
         });
@@ -261,7 +321,6 @@ const TimeTrackerPage = React.memo(() => {
     setIsRunning(true);
   }, [sessionId]);
 
-  // Stop session.
   const handleStop = useCallback(() => {
     setShowStopConfirmModal(true);
   }, []);
@@ -285,6 +344,7 @@ const TimeTrackerPage = React.memo(() => {
           }
         }
         const totalPausedTimeSeconds = Math.round(totalPausedTimeMs / 1000);
+        // Update session document.
         await updateDoc(sessionRef, {
           elapsedTime: timer,
           endTime: serverTimestamp(),
@@ -295,6 +355,26 @@ const TimeTrackerPage = React.memo(() => {
           pauseEvents: pauseEvents,
           totalPausedTime: totalPausedTimeSeconds,
         });
+        // ---- Update Project Document with lastTrackedTime ----
+        await runTransaction(db, async (transaction) => {
+          const projectRef = doc(db, 'projects', selectedProject.id);
+          const projectDoc = await transaction.get(projectRef);
+          const currentLastTracked = projectDoc.data().lastTrackedTime;
+          const newEndTime = Date.now();
+          if (!currentLastTracked || newEndTime > currentLastTracked.seconds * 1000) {
+            transaction.update(projectRef, { lastTrackedTime: serverTimestamp() });
+          }
+        });
+        // ---- Update Profile Document with weeklyTrackedTime ----
+        await runTransaction(db, async (transaction) => {
+          const profileRef = doc(db, 'profiles', user.uid);
+          const profileDoc = await transaction.get(profileRef);
+          let currentWeeklyTime = profileDoc.data().weeklyTrackedTime || 0;
+          const sessionDuration = timer;
+          const newWeeklyTime = currentWeeklyTime + sessionDuration;
+          transaction.update(profileRef, { weeklyTrackedTime: newWeeklyTime });
+        });
+        // ------------------------------------------------------
       } catch (error) {
         console.error('Error stopping session:', error);
       }
@@ -310,15 +390,13 @@ const TimeTrackerPage = React.memo(() => {
     setSessionNotes('');
     setIsBillable(true);
     setSessionId(null);
-    setStartTime(null);
     setPauseEvents([]);
-  }, [navigate, sessionId, selectedProject, timer, sessionNotes, pauseEvents]);
+  }, [navigate, sessionId, selectedProject, timer, sessionNotes, pauseEvents, user]);
 
   const cancelStopSession = useCallback(() => {
     setShowStopConfirmModal(false);
   }, []);
 
-  // Reset session.
   const handleReset = useCallback(() => {
     if (isRunning || timer > 0) {
       setShowResetConfirmModal(true);
@@ -327,14 +405,11 @@ const TimeTrackerPage = React.memo(() => {
 
   const confirmResetTimer = useCallback(async () => {
     setShowResetConfirmModal(false);
-    // Clear local timer state.
     setTimer(0);
     setIsRunning(false);
     setIsPaused(false);
-    setStartTime(null);
     setSessionClientStartTime(null);
     setBaseElapsedTime(0);
-    
     if (sessionId) {
       try {
         const sessionRef = doc(db, 'sessions', sessionId);
@@ -379,9 +454,8 @@ const TimeTrackerPage = React.memo(() => {
     [projects]
   );
 
-  // Debounced note saving.
   useEffect(() => {
-    if (sessionId) {
+    if (sessionId && activeInstanceId === instanceId) {
       if (noteSaveTimeout.current) clearTimeout(noteSaveTimeout.current);
       noteSaveTimeout.current = setTimeout(async () => {
         if (sessionNotes !== '') {
@@ -395,11 +469,28 @@ const TimeTrackerPage = React.memo(() => {
       }, 1000);
     }
     return () => clearTimeout(noteSaveTimeout.current);
-  }, [sessionNotes, sessionId]);
+  }, [sessionNotes, sessionId, activeInstanceId, instanceId]);
 
   const handleNotesChange = useCallback((e) => {
     setSessionNotes(e.target.value.slice(0, 140));
   }, []);
+
+  const handleTakeOver = async () => {
+    if (sessionId) {
+      const sessionRef = doc(db, 'sessions', sessionId);
+      try {
+        await updateDoc(sessionRef, { activeInstanceId: instanceId });
+        setConflictModalVisible(false);
+        setActiveInstanceId(instanceId);
+      } catch (error) {
+        console.error('Error taking over session:', error);
+      }
+    }
+  };
+
+  const handleCloseSession = () => {
+    navigate('/home');
+  };
 
   if (loading) {
     return (
@@ -411,7 +502,13 @@ const TimeTrackerPage = React.memo(() => {
 
   return (
     <div className="time-tracker-page">
-      <Header variant="journalOverview" showBackArrow={true} />
+      {/* Header with onProfileClick to open the sidebar */}
+      <Header
+        variant="journalOverview"
+        showBackArrow={true}
+        onProfileClick={() => setIsSidebarOpen(true)}
+      />
+      {/* Removed sign out button from the page; sign out is now in the Sidebar */}
       <div className="timer-quote">{timerQuote}</div>
       <div ref={timerRef} className={`timer ${isPaused ? 'paused' : ''}`}>
         {new Date(timer * 1000).toISOString().substr(11, 8)}
@@ -485,13 +582,14 @@ const TimeTrackerPage = React.memo(() => {
           {isBillable ? <RadioActiveIcon /> : <RadioMutedIcon />}
         </div>
       </div>
-      <div className="input-tile notes-input-tile">
+      <div className="input-tile notes-input-tile" style={{ position: 'relative' }}>
         <textarea
           id="session-notes"
           className="notes-textarea"
           placeholder="Take a moment to note"
           value={sessionNotes}
           onChange={handleNotesChange}
+          disabled={activeInstanceId !== instanceId}
           onBlur={() => {
             timerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
           }}
@@ -500,7 +598,7 @@ const TimeTrackerPage = React.memo(() => {
       </div>
       <ConfirmModal
         show={showStopConfirmModal}
-        onHide={cancelStopSession}
+        onHide={() => setShowStopConfirmModal(false)}
         title="Stop Timer Session?"
         body="Do you want to save this session?"
         onConfirm={confirmStopSession}
@@ -509,13 +607,31 @@ const TimeTrackerPage = React.memo(() => {
       />
       <ConfirmModal
         show={showResetConfirmModal}
-        onHide={cancelResetTimer}
+        onHide={() => setShowResetConfirmModal(false)}
         title="Reset Timer?"
         body="Are you sure you want to reset the timer? Any unsaved progress will be lost."
         onConfirm={confirmResetTimer}
         confirmText="Yes, Reset"
         cancelText="Cancel"
       />
+      <ConfirmModal
+        show={conflictModalVisible}
+        onHide={handleCloseSession}
+        title="Session Open on Another Device"
+        body="This session is currently open on another device. To prevent conflicts, please close the other instance or click 'Take Over' to use this device."
+        onConfirm={handleTakeOver}
+        confirmText="Take Over"
+        cancelText="Return Home"
+      />
+      {/* Sidebar and overlay */}
+      <Sidebar
+        isOpen={isSidebarOpen}
+        onClose={() => setIsSidebarOpen(false)}
+        onLogout={handleSignOut}
+      />
+      {isSidebarOpen && (
+        <div className="sidebar-overlay" onClick={() => setIsSidebarOpen(false)}></div>
+      )}
     </div>
   );
 });

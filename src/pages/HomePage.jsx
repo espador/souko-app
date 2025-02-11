@@ -22,8 +22,6 @@ import { startOfWeek, endOfWeek } from 'date-fns';
 
 export const cn = (...inputs) => twMerge(clsx(inputs));
 
-const CACHE_DURATION_MS = 30000; // 30 seconds
-
 const HomePage = React.memo(() => {
   const [user, setUser] = useState(null);
   const [projects, setProjects] = useState([]);
@@ -44,89 +42,59 @@ const HomePage = React.memo(() => {
   // Improved parseTimestamp function
   const parseTimestamp = useCallback((timestamp) => {
     if (!timestamp) return null;
-    // If the timestamp is a string, try to parse it.
     if (typeof timestamp === 'string') {
       const parsed = new Date(timestamp);
       return isNaN(parsed.getTime()) ? null : parsed;
     }
-    // If it's a Firestore Timestamp instance.
     if (typeof timestamp.toDate === 'function') {
       return timestamp.toDate();
     }
-    // If it's a plain object with seconds and nanoseconds properties.
     if (typeof timestamp.seconds === 'number' && typeof timestamp.nanoseconds === 'number') {
       const ms = timestamp.seconds * 1000 + timestamp.nanoseconds / 1000000;
       const date = new Date(ms);
       return isNaN(date.getTime()) ? null : date;
     }
-    // Fallback: attempt direct conversion.
     const date = new Date(timestamp);
     return isNaN(date.getTime()) ? null : date;
   }, []);
 
   const hasActiveSession = useMemo(() => sessions.some(session => !session.endTime), [sessions]);
 
-  // Try loading cached data for the homepage.
-  const loadCachedData = useCallback((uid) => {
-    const cachedStr = localStorage.getItem(`homeData_${uid}`);
-    if (cachedStr) {
-      try {
-        const cached = JSON.parse(cachedStr);
-        if (Date.now() - cached.timestamp < CACHE_DURATION_MS) {
-          setProjects(cached.projects || []);
-          setSessions(cached.sessions || []);
-          setJournalEntries(cached.journalEntries || []);
-          setUserProfile(cached.userProfile || null);
-          setHasTrackedEver((cached.sessions || []).length > 0);
-          return true;
-        }
-      } catch (e) {
-        console.error("Error parsing cached data", e);
-      }
-    }
-    return false;
-  }, []);
-
-  // Modified fetchData: if forceRefresh is true, bypass the cache.
-  const fetchData = useCallback(async (uid, forceRefresh = false) => {
-    if (!forceRefresh) {
-      const cacheValid = loadCachedData(uid);
-      if (cacheValid) {
-        setLoading(false);
-        return; // Skip fetching if cache is valid.
-      }
-    }
+  // Fetch fresh data without caching.
+  const fetchData = useCallback(async (uid) => {
     setLoading(true);
     setRefreshing(true);
     try {
-      const [projectSnapshot, sessionSnapshot, journalSnapshot, profileSnapshot] = await Promise.all([
-        getDocs(query(collection(db, 'projects'), where('userId', '==', uid))),
-        getDocs(query(collection(db, 'sessions'), where('userId', '==', uid))),
-        getDocs(query(collection(db, 'journalEntries'), where('userId', '==', uid))),
-        getDoc(doc(db, 'profiles', uid))
-      ]);
-
+      // Fetch projects
+      const projectSnapshot = await getDocs(query(collection(db, 'projects'), where('userId', '==', uid)));
       const userProjects = projectSnapshot.docs.map(doc => ({
         id: doc.id,
-        name: doc.data().name,
-        imageUrl: doc.data().imageUrl,
+        ...doc.data(),
       }));
       setProjects(userProjects);
 
+      // Fetch sessions (you may later replace this with aggregated data)
+      const sessionSnapshot = await getDocs(query(collection(db, 'sessions'), where('userId', '==', uid)));
       const userSessions = sessionSnapshot.docs.map(doc => doc.data());
       setSessions(userSessions);
       setHasTrackedEver(userSessions.length > 0);
 
+      // Fetch journal entries from the last 7 days
+      const sevenDaysAgo = new Date();
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+      const journalSnapshot = await getDocs(query(
+        collection(db, 'journalEntries'),
+        where('userId', '==', uid),
+        where('createdAt', '>=', sevenDaysAgo)
+      ));
       const userJournalEntries = journalSnapshot.docs.map(doc => {
         const data = doc.data();
-        return {
-          ...data,
-          id: doc.id,
-          createdAt: parseTimestamp(data.createdAt), // Parse createdAt here
-        };
+        return { ...data, id: doc.id, createdAt: parseTimestamp(data.createdAt) };
       });
       setJournalEntries(userJournalEntries);
 
+      // Fetch user profile (which now should include aggregated fields like weeklyTrackedTime)
+      const profileSnapshot = await getDoc(doc(db, 'profiles', uid));
       if (profileSnapshot.exists()) {
         setUserProfile(profileSnapshot.data());
       } else if (user) {
@@ -134,26 +102,16 @@ const HomePage = React.memo(() => {
           uid: user.uid,
           displayName: user.displayName,
           profileImageUrl: user.photoURL,
-          featureAccessLevel: 'free'
+          featureAccessLevel: 'free',
         });
       }
-
-      // Cache the data for future loads.
-      const dataToCache = {
-        projects: userProjects,
-        sessions: userSessions,
-        journalEntries: userJournalEntries,
-        userProfile: profileSnapshot.exists() ? profileSnapshot.data() : null,
-        timestamp: Date.now(),
-      };
-      localStorage.setItem(`homeData_${uid}`, JSON.stringify(dataToCache));
     } catch (error) {
       console.error('Error fetching data:', error.message);
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [loadCachedData, user, parseTimestamp]);
+  }, [parseTimestamp]);
 
   // Authentication and initial data fetch.
   useEffect(() => {
@@ -168,53 +126,11 @@ const HomePage = React.memo(() => {
     return () => unsubscribe();
   }, [navigate, fetchData]);
 
-  // Real‑time listeners for all writes on crucial collections.
-  useEffect(() => {
-    if (!user) return;
-    // These flags ensure we ignore the initial onSnapshot events.
-    let initialProjects = true;
-    let initialSessions = true;
-    let initialJournal = true;
+  // Instead of real‑time onSnapshot listeners for every collection, you might
+  // attach a listener only for critical aggregated fields (like profile) or rely on foreground events.
+  // For simplicity, here we omit the extra onSnapshot listeners.
 
-    const projectsQuery = query(collection(db, 'projects'), where('userId', '==', user.uid));
-    const sessionsQuery = query(collection(db, 'sessions'), where('userId', '==', user.uid));
-    const journalQuery = query(collection(db, 'journalEntries'), where('userId', '==', user.uid));
-
-    const unsubProjects = onSnapshot(projectsQuery, (snapshot) => {
-      if (initialProjects) {
-        initialProjects = false;
-        return;
-      }
-      if (!refreshing) {
-        fetchData(user.uid, true);
-      }
-    });
-    const unsubSessions = onSnapshot(sessionsQuery, (snapshot) => {
-      if (initialSessions) {
-        initialSessions = false;
-        return;
-      }
-      if (!refreshing) {
-        fetchData(user.uid, true);
-      }
-    });
-    const unsubJournal = onSnapshot(journalQuery, (snapshot) => {
-      if (initialJournal) {
-        initialJournal = false;
-        return;
-      }
-      if (!refreshing) {
-        fetchData(user.uid, true);
-      }
-    });
-
-    return () => {
-      unsubProjects();
-      unsubSessions();
-      unsubJournal();
-    };
-  }, [user, fetchData, refreshing]);
-
+  // Compute total session time per project (if needed)
   const totalSessionTime = useMemo(() => {
     return sessions.reduce((acc, session) => {
       const projectId = session.projectId || 'Unknown Project';
@@ -223,18 +139,10 @@ const HomePage = React.memo(() => {
     }, {});
   }, [sessions]);
 
+  // Use the aggregated weeklyTrackedTime from the profile (if available)
   const weeklyTrackedTime = useMemo(() => {
-    const now = new Date();
-    const weekStart = startOfWeek(now, { weekStartsOn: 1 });
-    const weekEnd = endOfWeek(now, { weekStartsOn: 1 });
-    return sessions.reduce((sum, session) => {
-      const sessionStartTime = parseTimestamp(session.startTime);
-      if (sessionStartTime && sessionStartTime >= weekStart && sessionStartTime <= weekEnd) {
-        return sum + (session.elapsedTime || 0);
-      }
-      return sum;
-    }, 0);
-  }, [sessions, parseTimestamp]);
+    return userProfile && userProfile.weeklyTrackedTime ? userProfile.weeklyTrackedTime : 0;
+  }, [userProfile]);
 
   const handleLogout = useCallback(async () => {
     try {
@@ -258,7 +166,6 @@ const HomePage = React.memo(() => {
         }, 300);
       }
     };
-
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
@@ -275,26 +182,15 @@ const HomePage = React.memo(() => {
     ),
   [getInitials]);
 
+  // For recent projects, if the project document has lastTrackedTime (server‑aggregated), use it.
   const recentProjects = useMemo(() => {
     return projects
-      .map(project => {
-        const projectSessions = sessions.filter(
-          session => session.projectId === project.id && session.startTime
-        );
-        const latestSessionTime =
-          projectSessions.length > 0
-            ? Math.max(...projectSessions.map(session => {
-                const t = parseTimestamp(session.startTime);
-                return t ? t.getTime() : 0;
-              }))
-            : 0;
-        return { ...project, latestSessionTime };
-      })
-      .filter(project => project.latestSessionTime > 0)
-      .sort((a, b) => b.latestSessionTime - a.latestSessionTime)
+      .filter(project => project.lastTrackedTime)
+      .sort((a, b) => b.lastTrackedTime - a.lastTrackedTime)
       .slice(0, 3);
-  }, [projects, sessions, parseTimestamp]);
+  }, [projects]);
 
+  // For sorted projects (tracked mode), you may keep your current logic.
   const sortedProjects = useMemo(() => {
     if (sortMode === "tracked") {
       return [...projects].sort((a, b) => {
