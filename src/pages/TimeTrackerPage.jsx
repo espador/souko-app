@@ -115,13 +115,13 @@ const TimeTrackerPage = React.memo(() => {
   const fetchData = useCallback(async (uid) => {
     try {
       const projectsRef = collection(db, 'projects');
-      const projectQuery = query(projectsRef, where('userId', '==', uid)); // Define query first
+      const projectQuery = query(projectsRef, where('userId', '==', uid));
       const projectSnapshot = await getDocs(projectQuery);
       const userProjects = projectSnapshot.docs.map((doc) => ({
         id: doc.id,
         name: doc.data().name,
         imageUrl: doc.data().imageUrl,
-        lastTrackedTime: doc.data().lastTrackedTime, // For aggregation
+        lastTrackedTime: doc.data().lastTrackedTime,
       }));
       setProjects(userProjects);
       if (userProjects.length > 0 && !selectedProject) {
@@ -202,26 +202,17 @@ const TimeTrackerPage = React.memo(() => {
         if (sessionSnap.exists()) {
           const sessionData = sessionSnap.data();
           // --- Instance Locking ---
-          if (sessionData.activeInstanceId) {
-            if (sessionData.activeInstanceId !== instanceId) {
-              if (document.hasFocus()) {
-                updateDoc(sessionRef, { activeInstanceId: instanceId })
-                  .then(() => {
-                    setActiveInstanceId(instanceId);
-                    setConflictModalVisible(false);
-                  })
-                  .catch(console.error);
-              } else {
-                setActiveInstanceId(sessionData.activeInstanceId);
-                setConflictModalVisible(true);
-              }
-            } else {
-              setConflictModalVisible(false);
-              setActiveInstanceId(instanceId);
-            }
+          if (sessionData.activeInstanceId && sessionData.activeInstanceId !== instanceId) {
+            // Another instance is active; show the modal.
+            setActiveInstanceId(sessionData.activeInstanceId);
+            setConflictModalVisible(true);
           } else {
-            updateDoc(sessionRef, { activeInstanceId: instanceId }).catch(console.error);
+            // Either no active instance exists or this instance is active.
+            if (!sessionData.activeInstanceId) {
+              updateDoc(sessionRef, { activeInstanceId: instanceId }).catch(console.error);
+            }
             setActiveInstanceId(instanceId);
+            setConflictModalVisible(false);
           }
           // --- End Instance Locking ---
           if (sessionData.pauseEvents) {
@@ -238,7 +229,6 @@ const TimeTrackerPage = React.memo(() => {
             setSessionClientStartTime(null);
             setTimer(sessionData.elapsedTime || 0);
           }
-          // Do not update sessionNotes here.
         }
       });
     }
@@ -344,7 +334,6 @@ const TimeTrackerPage = React.memo(() => {
           }
         }
         const totalPausedTimeSeconds = Math.round(totalPausedTimeMs / 1000);
-        // Update session document.
         await updateDoc(sessionRef, {
           elapsedTime: timer,
           endTime: serverTimestamp(),
@@ -355,7 +344,6 @@ const TimeTrackerPage = React.memo(() => {
           pauseEvents: pauseEvents,
           totalPausedTime: totalPausedTimeSeconds,
         });
-        // ---- Update Project Document with lastTrackedTime ----
         await runTransaction(db, async (transaction) => {
           const projectRef = doc(db, 'projects', selectedProject.id);
           const projectDoc = await transaction.get(projectRef);
@@ -365,7 +353,6 @@ const TimeTrackerPage = React.memo(() => {
             transaction.update(projectRef, { lastTrackedTime: serverTimestamp() });
           }
         });
-        // ---- Update Profile Document with weeklyTrackedTime ----
         await runTransaction(db, async (transaction) => {
           const profileRef = doc(db, 'profiles', user.uid);
           const profileDoc = await transaction.get(profileRef);
@@ -374,7 +361,6 @@ const TimeTrackerPage = React.memo(() => {
           const newWeeklyTime = currentWeeklyTime + sessionDuration;
           transaction.update(profileRef, { weeklyTrackedTime: newWeeklyTime });
         });
-        // ------------------------------------------------------
       } catch (error) {
         console.error('Error stopping session:', error);
       }
@@ -392,10 +378,6 @@ const TimeTrackerPage = React.memo(() => {
     setSessionId(null);
     setPauseEvents([]);
   }, [navigate, sessionId, selectedProject, timer, sessionNotes, pauseEvents, user]);
-
-  const cancelStopSession = useCallback(() => {
-    setShowStopConfirmModal(false);
-  }, []);
 
   const handleReset = useCallback(() => {
     if (isRunning || timer > 0) {
@@ -427,10 +409,6 @@ const TimeTrackerPage = React.memo(() => {
       setSessionId(null);
     }
   }, [sessionId]);
-  
-  const cancelResetTimer = useCallback(() => {
-    setShowResetConfirmModal(false);
-  }, []);
 
   const handleBillableToggle = useCallback(() => {
     const newIsBillable = !isBillable;
@@ -502,13 +480,11 @@ const TimeTrackerPage = React.memo(() => {
 
   return (
     <div className="time-tracker-page">
-      {/* Header with onProfileClick to open the sidebar */}
       <Header
         variant="journalOverview"
         showBackArrow={true}
         onProfileClick={() => setIsSidebarOpen(true)}
       />
-      {/* Removed sign out button from the page; sign out is now in the Sidebar */}
       <div className="timer-quote">{timerQuote}</div>
       <div ref={timerRef} className={`timer ${isPaused ? 'paused' : ''}`}>
         {new Date(timer * 1000).toISOString().substr(11, 8)}
@@ -623,7 +599,6 @@ const TimeTrackerPage = React.memo(() => {
         confirmText="Take Over"
         cancelText="Return Home"
       />
-      {/* Sidebar and overlay */}
       <Sidebar
         isOpen={isSidebarOpen}
         onClose={() => setIsSidebarOpen(false)}

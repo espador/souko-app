@@ -1,9 +1,9 @@
 console.log('Service worker registered!');
 
-const CACHE_VERSION = 'v14'; // Increment this version with each deployment
+const CACHE_VERSION = 'v15'; // Increment this version with each deployment
 const CACHE_NAME = `my-pwa-cache-${CACHE_VERSION}`;
 const urlsToCache = [
-  '/', // Cache the root (index.html) but see note below on fetch strategy.
+  '/', // Cache the root (index.html)
   '/index.html',
   '/manifest.json',
   '/favicon.ico',
@@ -38,17 +38,22 @@ self.addEventListener('activate', event => {
           }
         })
       );
-    }).then(() => self.clients.claim()) // Claim clients immediately so that the new SW starts controlling pages
+    }).then(() => self.clients.claim()) // Claim clients immediately
   );
 });
 
 self.addEventListener('fetch', event => {
+  // Bypass caching for Firebase Auth endpoints to prevent auth state issues.
+  if (event.request.url.includes('/__/auth/')) {
+    return event.respondWith(fetch(event.request));
+  }
+  
   // For navigation requests, use a network-first strategy.
   if (event.request.mode === 'navigate') {
     event.respondWith(
       fetch(event.request)
         .then(response => {
-          // Optionally update the cache with the fresh index.html
+          // Update the cache with the fresh index.html
           return caches.open(CACHE_NAME).then(cache => {
             cache.put('/index.html', response.clone());
             return response;
@@ -59,7 +64,7 @@ self.addEventListener('fetch', event => {
     return;
   }
   
-  // For other requests, use a cache-first strategy.
+  // For all other requests, use a cache-first strategy.
   event.respondWith(
     caches.match(event.request)
       .then(response => {
