@@ -1,7 +1,6 @@
-// ProjectDetailPage.jsx
 import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { doc, getDoc, collection, query, where, orderBy, getDocs, Timestamp, onSnapshot, startAfter, limit } from 'firebase/firestore';
+import { doc, getDoc, collection, query, where, orderBy, getDocs, onSnapshot, startAfter, limit } from 'firebase/firestore';
 import { db, auth } from '../services/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import { formatTime } from '../utils/formatTime';
@@ -14,6 +13,9 @@ import { ReactComponent as TimerIcon } from '../styles/components/assets/timer.s
 import { ReactComponent as BillableIcon } from '../styles/components/assets/billable.svg';
 import { ReactComponent as EditIcon } from '../styles/components/assets/edit.svg';
 import { TextGenerateEffect } from '../styles/components/text-generate-effect.tsx';
+// Import FAB icons
+import { ReactComponent as StartTimerIcon } from '../styles/components/assets/start-timer.svg';
+import { ReactComponent as StopTimerIcon } from '../styles/components/assets/stop-timer.svg';
 
 const CACHE_DURATION_MS = 30000; // 30 seconds
 const SESSIONS_LIMIT = 30; // Load 30 sessions at a time
@@ -71,37 +73,21 @@ const ProjectDetailPage = React.memo(() => {
   const [loading, setLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState(null);
   const navigate = useNavigate();
-  const [projects, setProjects] = useState([]);
-  const [selectedProjectId, setSelectedProjectId] = useState(routeProjectId);
-  
+
   // Pagination state:
   const [lastSessionDoc, setLastSessionDoc] = useState(null);
   const [hasMoreSessions, setHasMoreSessions] = useState(true);
 
-  // NEW STATE VARIABLES FOR FILTERS
+  // State for filters and display mode
   const [selectedTimeRange, setSelectedTimeRange] = useState('total');
   const [displayMode, setDisplayMode] = useState('time');
-  const [effectWords, setEffectWords] = useState('Total Time');
+  const [effectTrigger, setEffectTrigger] = useState(0);
   const projectHeaderRef = useRef(null);
 
-  // NEW STATE TO TRIGGER EFFECT ON EACH TOGGLE CLICK
-  const [effectTrigger, setEffectTrigger] = useState(0);
-
-  const fetchProjects = useCallback(async (uid) => {
-    try {
-      const projectsRef = collection(db, 'projects');
-      const projectQuery = query(projectsRef, where('userId', '==', uid));
-      const projectSnapshot = await getDocs(projectQuery);
-      const userProjects = projectSnapshot.docs.map((doc) => ({
-        id: doc.id,
-        name: doc.data().name,
-        imageUrl: doc.data().imageUrl,
-      }));
-      setProjects(userProjects);
-    } catch (error) {
-      console.error('Error fetching projects for dropdown:', error);
-    }
-  }, []);
+  // Optimized active session state for FAB
+  const [activeSession, setActiveSession] = useState(null);
+  const fabRef = useRef(null);
+  const scrollTimeout = useRef(null);
 
   // Function to fetch sessions with pagination
   const fetchSessions = useCallback(
@@ -115,7 +101,6 @@ const ProjectDetailPage = React.memo(() => {
           where('userId', '==', uid),
           where('status', '==', 'stopped'),
           orderBy('startTime', 'desc'),
-          // Limit initial query
           limit(SESSIONS_LIMIT)
         );
       } else {
@@ -134,7 +119,6 @@ const ProjectDetailPage = React.memo(() => {
         id: doc.id,
         ...doc.data(),
       }));
-      // Update pagination state.
       if (sessionsSnapshot.docs.length < SESSIONS_LIMIT) {
         setHasMoreSessions(false);
       } else {
@@ -145,7 +129,6 @@ const ProjectDetailPage = React.memo(() => {
     [lastSessionDoc]
   );
 
-  // Modified fetchProjectDetails: use initial sessions load with pagination.
   const fetchProjectDetails = useCallback(async (projectId, uid, forceRefresh = false) => {
     if (!uid || !projectId) return;
     const cacheKey = `projectDetailData_${uid}_${projectId}`;
@@ -154,7 +137,6 @@ const ProjectDetailPage = React.memo(() => {
       if (cached) {
         setProject(cached.project || null);
         setSessions(cached.sessions || []);
-        // For cached data, assume we have more sessions if count is exactly the limit.
         setHasMoreSessions((cached.sessions || []).length >= SESSIONS_LIMIT);
         setLoading(false);
         return;
@@ -175,12 +157,10 @@ const ProjectDetailPage = React.memo(() => {
       } else {
         const projectData = projectSnapshot.data();
         setProject({ id: projectSnapshot.id, ...projectData });
-        // Reset pagination state on fresh load.
         setLastSessionDoc(null);
         setHasMoreSessions(true);
         const initialSessions = await fetchSessions(projectId, uid, true);
         setSessions(initialSessions);
-        // Cache the data.
         const dataToCache = {
           project: { id: projectSnapshot.id, ...projectData },
           sessions: initialSessions,
@@ -196,14 +176,12 @@ const ProjectDetailPage = React.memo(() => {
     }
   }, [fetchSessions]);
 
-  // Load more sessions handler.
   const handleLoadMore = useCallback(async () => {
     if (!currentUser || !routeProjectId || !hasMoreSessions) return;
     setLoading(true);
     try {
       const moreSessions = await fetchSessions(routeProjectId, currentUser.uid, false);
       setSessions(prev => [...prev, ...moreSessions]);
-      // Optionally, update the cache here if desired.
     } catch (error) {
       console.error('Error loading more sessions:', error);
     } finally {
@@ -215,19 +193,17 @@ const ProjectDetailPage = React.memo(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
         setCurrentUser(user);
-        fetchProjects(user.uid);
       } else {
         navigate('/');
       }
       setLoading(false);
     });
     return () => unsubscribe();
-  }, [navigate, fetchProjects]);
+  }, [navigate]);
 
   useEffect(() => {
     if (currentUser && routeProjectId) {
       fetchProjectDetails(routeProjectId, currentUser.uid);
-      setSelectedProjectId(routeProjectId);
     }
   }, [currentUser, routeProjectId, fetchProjectDetails]);
 
@@ -265,25 +241,12 @@ const ProjectDetailPage = React.memo(() => {
     };
   }, [currentUser, routeProjectId, fetchProjectDetails]);
 
-  const handleProjectChange = useCallback(
-    (e) => {
-      const newProjectId = e.target.value;
-      navigate(`/project/${newProjectId}`);
-    },
-    [navigate]
-  );
-
   const handleTimeRangeChange = useCallback((e) => {
     setSelectedTimeRange(e.target.value);
   }, []);
 
   const handleDisplayModeChange = useCallback((mode) => {
     setDisplayMode(mode);
-    if (mode === 'time') {
-      setEffectWords('Total Time');
-    } else if (mode === 'earned') {
-      setEffectWords('Total Earned');
-    }
     setEffectTrigger(prev => prev + 1);
   }, []);
 
@@ -337,7 +300,6 @@ const ProjectDetailPage = React.memo(() => {
     return 0;
   }, [displayMode, project?.hourRate, billableTime]);
 
-  // Group sessions by date.
   const sessionsByDate = useMemo(() => {
     return filteredSessions.reduce((acc, session) => {
       let dateStr = 'Invalid Date';
@@ -353,8 +315,6 @@ const ProjectDetailPage = React.memo(() => {
         } catch (error) {
           console.error('Error converting date:', error, session.startTime);
         }
-      } else {
-        console.warn('Invalid startTime for session:', session.id, session.startTime);
       }
       if (!acc[dateStr]) {
         acc[dateStr] = [];
@@ -395,6 +355,41 @@ const ProjectDetailPage = React.memo(() => {
       maximumFractionDigits: 2,
     })}`;
   };
+
+  // Listen for active session for FAB
+  useEffect(() => {
+    if (currentUser) {
+      const activeSessionQuery = query(
+        collection(db, 'sessions'),
+        where('userId', '==', currentUser.uid),
+        where('endTime', '==', null)
+      );
+      const unsubActiveSession = onSnapshot(activeSessionQuery, (snapshot) => {
+        if (!snapshot.empty) {
+          setActiveSession(snapshot.docs[0].data());
+        } else {
+          setActiveSession(null);
+        }
+      });
+      return () => unsubActiveSession();
+    }
+  }, [currentUser]);
+
+  const hasActiveSession = Boolean(activeSession);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (fabRef.current) {
+        fabRef.current.classList.add('scrolling');
+        clearTimeout(scrollTimeout.current);
+        scrollTimeout.current = setTimeout(() => {
+          fabRef.current && fabRef.current.classList.remove('scrolling');
+        }, 300);
+      }
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   if (loading) {
     return (
@@ -516,6 +511,13 @@ const ProjectDetailPage = React.memo(() => {
           </div>
         )}
       </div>
+      <button ref={fabRef} className="fab" onClick={() => navigate('/time-tracker')}>
+        {hasActiveSession ? (
+          <StopTimerIcon className="fab-icon" />
+        ) : (
+          <StartTimerIcon className="fab-icon" />
+        )}
+      </button>
     </div>
   );
 });

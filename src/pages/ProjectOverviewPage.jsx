@@ -1,5 +1,4 @@
-// ProjectOverviewPage.jsx
-import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { auth, db } from '../services/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
@@ -10,22 +9,17 @@ import '@fontsource/shippori-mincho';
 import { TextGenerateEffect } from '../styles/components/text-generate-effect.tsx';
 import '../styles/components/ProjectOverviewPage.css';
 import { ReactComponent as SoukoLogoHeader } from '../styles/components/assets/Souko-logo-header.svg';
-import { startOfWeek, endOfWeek } from 'date-fns';
+import { ReactComponent as StartTimerIcon } from '../styles/components/assets/start-timer.svg';
+import { ReactComponent as StopTimerIcon } from '../styles/components/assets/stop-timer.svg';
 
-const CACHE_DURATION_MS = 30000; // 30 seconds
-
-// Enhanced parseTimestamp: use startTimeMs if available
+// Define parseTimestamp function to convert a timestamp to a Date object.
 const parseTimestamp = (timestamp, fallbackTimestamp) => {
   if (!timestamp && !fallbackTimestamp) return null;
-
-  // If we have a numeric startTimeMs, use it.
   if (fallbackTimestamp != null) {
     const num = Number(fallbackTimestamp);
     const date = new Date(num);
     return isNaN(date.getTime()) ? null : date;
   }
-
-  // Otherwise, if the timestamp is a string, try to parse it.
   if (typeof timestamp === 'string') {
     let parsed = new Date(timestamp);
     if (isNaN(parsed.getTime())) {
@@ -34,13 +28,9 @@ const parseTimestamp = (timestamp, fallbackTimestamp) => {
     }
     return isNaN(parsed.getTime()) ? null : parsed;
   }
-
-  // If it's a Firestore Timestamp instance.
   if (typeof timestamp.toDate === 'function') {
     return timestamp.toDate();
   }
-
-  // If it's an object with seconds and nanoseconds.
   if (timestamp.seconds != null && timestamp.nanoseconds != null) {
     const seconds = Number(timestamp.seconds);
     const nanoseconds = Number(timestamp.nanoseconds);
@@ -50,13 +40,12 @@ const parseTimestamp = (timestamp, fallbackTimestamp) => {
       return isNaN(date.getTime()) ? null : date;
     }
   }
-
-  // Fallback: attempt a direct conversion.
   const date = new Date(timestamp);
   return isNaN(date.getTime()) ? null : date;
 };
 
-// Load cached project overview data if available.
+const CACHE_DURATION_MS = 30000; // 30 seconds
+
 const loadCachedData = (uid, setProjects, setSessions) => {
   const cachedStr = localStorage.getItem(`projectOverviewData_${uid}`);
   if (cachedStr) {
@@ -78,11 +67,16 @@ const ProjectOverviewPage = () => {
   const [user, setUser] = useState(null);
   const [projects, setProjects] = useState([]);
   const [sessions, setSessions] = useState([]);
+  // Active session state for FAB optimization.
+  const [activeSession, setActiveSession] = useState(null);
   const [loading, setLoading] = useState(true);
   const [sortMode, setSortMode] = useState("tracked");
   const navigate = useNavigate();
 
-  // Setup authentication and caching.
+  // Refs for FAB scroll effect
+  const fabRef = useRef(null);
+  const scrollTimeout = useRef(null);
+
   useEffect(() => {
     const unsubscribeAuth = onAuthStateChanged(auth, (currentUser) => {
       if (!currentUser) {
@@ -152,7 +146,41 @@ const ProjectOverviewPage = () => {
     return () => unsubscribeAuth();
   }, [navigate]);
 
-  // Total tracked time per project (by project name)
+  // Optimized active session query for FAB.
+  useEffect(() => {
+    if (user) {
+      const activeSessionQuery = query(
+        collection(db, 'sessions'),
+        where('userId', '==', user.uid),
+        where('endTime', '==', null)
+      );
+      const unsubActiveSession = onSnapshot(activeSessionQuery, (snapshot) => {
+        if (!snapshot.empty) {
+          setActiveSession(snapshot.docs[0].data());
+        } else {
+          setActiveSession(null);
+        }
+      });
+      return () => unsubActiveSession();
+    }
+  }, [user]);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (fabRef.current) {
+        fabRef.current.classList.add('scrolling');
+        clearTimeout(scrollTimeout.current);
+        scrollTimeout.current = setTimeout(() => {
+          fabRef.current && fabRef.current.classList.remove('scrolling');
+        }, 300);
+      }
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const hasActiveSession = Boolean(activeSession);
+
   const totalSessionTime = useMemo(() => {
     return sessions.reduce((acc, session) => {
       const project = session.project || 'Unknown Project';
@@ -180,10 +208,10 @@ const ProjectOverviewPage = () => {
     return formatTotalTimeForQuote(totalTrackedTimeAcrossProjects);
   }, [totalTrackedTimeAcrossProjects, formatTotalTimeForQuote]);
 
-  const getInitials = (name) => {
+  const getInitials = useCallback((name) => {
     if (!name) return '';
     return name.trim().charAt(0).toUpperCase();
-  };
+  }, []);
 
   const renderProjectImage = useMemo(() => (project) =>
     project.imageUrl ? (
@@ -204,7 +232,6 @@ const ProjectOverviewPage = () => {
         const latestSessionTime =
           projectSessions.length > 0
             ? Math.max(...projectSessions.map(session => {
-                // Use startTimeMs if available; else fallback.
                 const date = parseTimestamp(session.startTime, session.startTimeMs);
                 return date ? date.getTime() : 0;
               }))
@@ -319,6 +346,13 @@ const ProjectOverviewPage = () => {
           {renderProjects}
         </section>
       </main>
+      <button ref={fabRef} className="fab" onClick={() => navigate('/time-tracker')}>
+        {hasActiveSession ? (
+          <StopTimerIcon className="fab-icon" />
+        ) : (
+          <StartTimerIcon className="fab-icon" />
+        )}
+      </button>
     </div>
   );
 };

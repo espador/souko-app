@@ -20,7 +20,7 @@ import {
   Timestamp,
   arrayUnion,
   onSnapshot,
-  runTransaction, // For transactions
+  runTransaction,
 } from 'firebase/firestore';
 import { db, auth } from '../services/firebase';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
@@ -203,11 +203,9 @@ const TimeTrackerPage = React.memo(() => {
           const sessionData = sessionSnap.data();
           // --- Instance Locking ---
           if (sessionData.activeInstanceId && sessionData.activeInstanceId !== instanceId) {
-            // Another instance is active; show the modal.
             setActiveInstanceId(sessionData.activeInstanceId);
             setConflictModalVisible(true);
           } else {
-            // Either no active instance exists or this instance is active.
             if (!sessionData.activeInstanceId) {
               updateDoc(sessionRef, { activeInstanceId: instanceId }).catch(console.error);
             }
@@ -215,9 +213,14 @@ const TimeTrackerPage = React.memo(() => {
             setConflictModalVisible(false);
           }
           // --- End Instance Locking ---
+
           if (sessionData.pauseEvents) {
             setPauseEvents(sessionData.pauseEvents);
           }
+          // **New:** Update local pause/run state from Firestore
+          setIsPaused(!!sessionData.paused);
+          setIsRunning(sessionData.status === 'running' || sessionData.status === 'paused');
+
           if (!sessionData.paused) {
             const clientStart =
               sessionData.clientStartTime ||
@@ -458,6 +461,24 @@ const TimeTrackerPage = React.memo(() => {
       const sessionRef = doc(db, 'sessions', sessionId);
       try {
         await updateDoc(sessionRef, { activeInstanceId: instanceId });
+        // **New:** Immediately fetch the current session data to sync local state
+        const sessionSnap = await getDoc(sessionRef);
+        if (sessionSnap.exists()) {
+          const sessionData = sessionSnap.data();
+          setIsPaused(!!sessionData.paused);
+          setIsRunning(sessionData.status === 'running' || sessionData.status === 'paused');
+          if (!sessionData.paused) {
+            const clientStart =
+              sessionData.clientStartTime ||
+              sessionData.startTimeMs ||
+              (sessionData.startTime ? sessionData.startTime.toDate().getTime() : Date.now());
+            setSessionClientStartTime(clientStart);
+            setBaseElapsedTime(sessionData.elapsedTime || 0);
+          } else {
+            setSessionClientStartTime(null);
+            setTimer(sessionData.elapsedTime || 0);
+          }
+        }
         setConflictModalVisible(false);
         setActiveInstanceId(instanceId);
       } catch (error) {

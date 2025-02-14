@@ -1,4 +1,3 @@
-// HomePage.jsx
 import React, { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import { auth, db } from '../services/firebase';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
@@ -18,7 +17,6 @@ import { twMerge } from 'tailwind-merge';
 import { TextGenerateEffect } from '../styles/components/text-generate-effect.tsx';
 import JournalSection from '../components/Journal/JournalSection';
 import { ReactComponent as SoukoLogoHeader } from '../styles/components/assets/Souko-logo-header.svg';
-import { startOfWeek, endOfWeek } from 'date-fns';
 
 export const cn = (...inputs) => twMerge(clsx(inputs));
 
@@ -31,13 +29,13 @@ const HomePage = React.memo(() => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [userProfile, setUserProfile] = useState(null);
   const [hasTrackedEver, setHasTrackedEver] = useState(false);
-  const [sortMode, setSortMode] = useState("tracked");
-  const [refreshing, setRefreshing] = useState(false);
+
+  // Active session state (optimized query returns only the active session)
+  const [activeSession, setActiveSession] = useState(null);
 
   const navigate = useNavigate();
   const fabRef = useRef(null);
   const scrollTimeout = useRef(null);
-  const motivationalSectionRef = useRef(null);
 
   // Improved parseTimestamp function
   const parseTimestamp = useCallback((timestamp) => {
@@ -58,12 +56,10 @@ const HomePage = React.memo(() => {
     return isNaN(date.getTime()) ? null : date;
   }, []);
 
-  const hasActiveSession = useMemo(() => sessions.some(session => !session.endTime), [sessions]);
+  const hasActiveSession = Boolean(activeSession);
 
-  // Fetch fresh data without caching.
   const fetchData = useCallback(async (uid) => {
     setLoading(true);
-    setRefreshing(true);
     try {
       // Fetch projects
       const projectSnapshot = await getDocs(query(collection(db, 'projects'), where('userId', '==', uid)));
@@ -73,7 +69,7 @@ const HomePage = React.memo(() => {
       }));
       setProjects(userProjects);
 
-      // Fetch sessions (you may later replace this with aggregated data)
+      // Fetch all sessions for other UI parts
       const sessionSnapshot = await getDocs(query(collection(db, 'sessions'), where('userId', '==', uid)));
       const userSessions = sessionSnapshot.docs.map(doc => doc.data());
       setSessions(userSessions);
@@ -93,27 +89,18 @@ const HomePage = React.memo(() => {
       });
       setJournalEntries(userJournalEntries);
 
-      // Fetch user profile (which now should include aggregated fields like weeklyTrackedTime)
+      // Fetch user profile
       const profileSnapshot = await getDoc(doc(db, 'profiles', uid));
       if (profileSnapshot.exists()) {
         setUserProfile(profileSnapshot.data());
-      } else if (user) {
-        setUserProfile({
-          uid: user.uid,
-          displayName: user.displayName,
-          profileImageUrl: user.photoURL,
-          featureAccessLevel: 'free',
-        });
       }
     } catch (error) {
       console.error('Error fetching data:', error.message);
     } finally {
       setLoading(false);
-      setRefreshing(false);
     }
   }, [parseTimestamp]);
 
-  // Authentication and initial data fetch.
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       if (!currentUser) {
@@ -126,35 +113,24 @@ const HomePage = React.memo(() => {
     return () => unsubscribe();
   }, [navigate, fetchData]);
 
-  // Instead of real‑time onSnapshot listeners for every collection, you might
-  // attach a listener only for critical aggregated fields (like profile) or rely on foreground events.
-  // For simplicity, here we omit the extra onSnapshot listeners.
-
-  // Compute total session time per project (if needed)
-  const totalSessionTime = useMemo(() => {
-    return sessions.reduce((acc, session) => {
-      const projectId = session.projectId || 'Unknown Project';
-      acc[projectId] = (acc[projectId] || 0) + (session.elapsedTime || 0);
-      return acc;
-    }, {});
-  }, [sessions]);
-
-  // Use the aggregated weeklyTrackedTime from the profile (if available)
-  const weeklyTrackedTime = useMemo(() => {
-    return userProfile && userProfile.weeklyTrackedTime ? userProfile.weeklyTrackedTime : 0;
-  }, [userProfile]);
-
-  const handleLogout = useCallback(async () => {
-    try {
-      await signOut(auth);
-      navigate('/');
-    } catch (error) {
-      console.error('Logout Error:', error.message);
+  // Optimized: Listen only for the active session (where endTime == null)
+  useEffect(() => {
+    if (user) {
+      const activeSessionQuery = query(
+        collection(db, 'sessions'),
+        where('userId', '==', user.uid),
+        where('endTime', '==', null)
+      );
+      const unsubActiveSession = onSnapshot(activeSessionQuery, (snapshot) => {
+        if (!snapshot.empty) {
+          setActiveSession(snapshot.docs[0].data());
+        } else {
+          setActiveSession(null);
+        }
+      });
+      return () => unsubActiveSession();
     }
-  }, [navigate]);
-
-  const openSidebar = useCallback(() => setIsSidebarOpen(true), []);
-  const closeSidebar = useCallback(() => setIsSidebarOpen(false), []);
+  }, [user]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -182,94 +158,40 @@ const HomePage = React.memo(() => {
     ),
   [getInitials]);
 
-  // For recent projects, if the project document has lastTrackedTime (server‑aggregated), use it.
-  const recentProjects = useMemo(() => {
-    return projects
-      .filter(project => project.lastTrackedTime)
-      .sort((a, b) => b.lastTrackedTime - a.lastTrackedTime)
-      .slice(0, 3);
+  // Sort projects by most recent based on the aggregated lastTrackedTime
+  const projectsToRender = useMemo(() => {
+    return [...projects].sort((a, b) => (b.lastTrackedTime || 0) - (a.lastTrackedTime || 0));
   }, [projects]);
 
-  // For sorted projects (tracked mode), you may keep your current logic.
-  const sortedProjects = useMemo(() => {
-    if (sortMode === "tracked") {
-      return [...projects].sort((a, b) => {
-        const aTime = totalSessionTime[a.id] || 0;
-        const bTime = totalSessionTime[b.id] || 0;
-        return bTime - aTime;
-      });
-    } else {
-      return [...projects].sort((a, b) => {
-        const aSessions = sessions.filter(
-          session => session.projectId === a.id && session.startTime
-        );
-        const bSessions = sessions.filter(
-          session => session.projectId === b.id && session.startTime
-        );
-        const aLatest = aSessions.length > 0
-          ? Math.max(...aSessions.map(session => {
-              const t = parseTimestamp(session.startTime);
-              return t ? t.getTime() : 0;
-            }))
-          : 0;
-        const bLatest = bSessions.length > 0
-          ? Math.max(...bSessions.map(session => {
-              const t = parseTimestamp(session.startTime);
-              return t ? t.getTime() : 0;
-            }))
-          : 0;
-        return bLatest - aLatest;
-      });
+  const totalSessionTime = useMemo(() => {
+    return sessions.reduce((acc, session) => {
+      const projectId = session.projectId || 'Unknown Project';
+      acc[projectId] = (acc[projectId] || 0) + (session.elapsedTime || 0);
+      return acc;
+    }, {});
+  }, [sessions]);
+
+  const weeklyTrackedTime = useMemo(() => {
+    return userProfile && userProfile.weeklyTrackedTime ? userProfile.weeklyTrackedTime : 0;
+  }, [userProfile]);
+
+  const handleLogout = useCallback(async () => {
+    try {
+      await signOut(auth);
+      navigate('/');
+    } catch (error) {
+      console.error('Logout Error:', error.message);
     }
-  }, [sortMode, projects, sessions, totalSessionTime, parseTimestamp]);
+  }, [navigate]);
 
-  const toggleSortMode = useCallback(() => {
-    setSortMode((prevMode) => (prevMode === "tracked" ? "recent" : "tracked"));
-  }, []);
-
-  const renderProjects = useMemo(() => {
-    if (projects.length > 0) {
-      const projectsToRender = sortMode === 'recent' ? recentProjects : sortedProjects;
-      if (projectsToRender.length === 0) {
-        return <p>{sortMode === 'recent' ? "No projects with recent sessions found." : "No projects with tracked time found."}</p>;
-      }
-      return (
-        <ul className="projects-list">
-          {projectsToRender.map((project) => (
-            <li
-              key={project.id}
-              className="project-item"
-              onClick={() => navigate(`/project/${project.id}`)}
-            >
-              <div className="project-image-container">{renderProjectImage(project)}</div>
-              <div className="project-name">{project.name}</div>
-              <div className="project-total-time">
-                {totalSessionTime && totalSessionTime[project.id] !== undefined
-                  ? formatTime(totalSessionTime[project.id])
-                  : formatTime(0)}
-              </div>
-            </li>
-          ))}
-        </ul>
-      );
-    } else {
-      return <p>No projects found. Start tracking to see results here!</p>;
-    }
-  }, [projects, navigate, totalSessionTime, renderProjectImage, recentProjects, sortMode, sortedProjects]);
-
-  if (loading) {
-    return (
-      <div className="homepage-loading">
-        <SoukoLogoHeader className="profile-pic souko-logo-header spinning-logo" />
-      </div>
-    );
-  }
+  const openSidebar = useCallback(() => setIsSidebarOpen(true), []);
+  const closeSidebar = useCallback(() => setIsSidebarOpen(false), []);
 
   return (
     <div className="homepage">
       <Header user={userProfile} showLiveTime={true} onProfileClick={openSidebar} />
       <main className="homepage-content">
-        <section className="motivational-section" ref={motivationalSectionRef}>
+        <section className="motivational-section">
           <TextGenerateEffect
             words={
               !hasTrackedEver
@@ -292,20 +214,38 @@ const HomePage = React.memo(() => {
               </Link>
             </div>
           </div>
-          {renderProjects}
+          {projectsToRender.length > 0 ? (
+            <ul className="projects-list">
+              {projectsToRender.map((project) => (
+                <li
+                  key={project.id}
+                  className="project-item"
+                  onClick={() => navigate(`/project/${project.id}`)}
+                >
+                  <div className="project-image-container">{renderProjectImage(project)}</div>
+                  <div className="project-name">{project.name}</div>
+                  <div className="project-total-time">
+                    {totalSessionTime && totalSessionTime[project.id] !== undefined
+                      ? formatTime(totalSessionTime[project.id])
+                      : formatTime(0)}
+                  </div>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p>No projects found. Start tracking to see results here!</p>
+          )}
         </section>
       </main>
       <Sidebar isOpen={isSidebarOpen} onClose={closeSidebar} onLogout={handleLogout} />
       {isSidebarOpen && <div className="sidebar-overlay" onClick={closeSidebar}></div>}
-      {projects.length >= 0 && (
-        <button ref={fabRef} className="fab" onClick={() => navigate('/time-tracker')}>
-          {hasActiveSession ? (
-            <StopTimerIcon className="fab-icon" />
-          ) : (
-            <StartTimerIcon className="fab-icon" />
-          )}
-        </button>
-      )}
+      <button ref={fabRef} className="fab" onClick={() => navigate('/time-tracker')}>
+        {hasActiveSession ? (
+          <StopTimerIcon className="fab-icon" />
+        ) : (
+          <StartTimerIcon className="fab-icon" />
+        )}
+      </button>
     </div>
   );
 });
