@@ -1,17 +1,36 @@
 import React, { useState, useRef, useCallback, useEffect, useMemo } from 'react';
-import { doc, getDoc, updateDoc, deleteDoc, collection, deleteDoc as deleteDocFirestore, getDocs, query, where } from 'firebase/firestore';
+import {
+  doc,
+  getDoc,
+  updateDoc,
+  deleteDoc as deleteDocFirestore,
+  collection,
+  getDocs,
+  query,
+  where
+} from 'firebase/firestore';
 import { db, auth } from '../services/firebase';
-import { getStorage, ref, uploadBytesResumable, getDownloadURL, deleteObject } from 'firebase/storage';
+import {
+  getStorage,
+  ref,
+  uploadBytesResumable,
+  getDownloadURL,
+  deleteObject
+} from 'firebase/storage';
 import { useNavigate, useParams } from 'react-router-dom';
 import Header from '../components/Layout/Header';
 import '../styles/components/UpdateProjectPage.css';
 
 // Existing icons
-import { ReactComponent as EditIcon } from '../styles/components/assets/edit.svg';
 import { ReactComponent as BillableIcon } from '../styles/components/assets/billable.svg';
 // New icons for update and delete actions:
 import { ReactComponent as UpdateButtonIcon } from '../styles/components/assets/updatebutton.svg';
 import { ReactComponent as EraseIcon } from '../styles/components/assets/erase.svg';
+// NEW icon imports for your requested changes:
+import { ReactComponent as UploadFileIcon } from '../styles/components/assets/uploadfile.svg';
+import { ReactComponent as EuroIcon } from '../styles/components/assets/euro.svg';
+import { ReactComponent as DollarIcon } from '../styles/components/assets/dollar.svg';
+
 // Import TextGenerateEffect
 import { TextGenerateEffect } from '../styles/components/text-generate-effect.tsx';
 
@@ -35,58 +54,75 @@ const UpdateProjectPage = React.memo(() => {
   const projectNameInputRef = useRef(null);
   const hourRateInputRef = useRef(null);
   const [uploading, setUploading] = useState(false);
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false); // For delete confirmation
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [initialProjectName, setInitialProjectName] = useState('');
   const [initialHourRate, setInitialHourRate] = useState('');
   const [initialProjectImage, setInitialProjectImage] = useState(null);
-  const [isSaveActive, setIsSaveActive] = useState(false);
 
+  // NEW: currency toggle
+  const [currencyId, setCurrencyId] = useState('euro');
+  const [initialCurrencyId, setInitialCurrencyId] = useState('euro');
+
+  const [isSaveActive, setIsSaveActive] = useState(false);
 
   useEffect(() => {
     const fetchProject = async () => {
       try {
-        console.log("UpdateProjectPage.jsx: Fetching project with projectId:", projectId); // Debug log
-        console.log("UpdateProjectPage.jsx: Current user:", auth.currentUser); // Debug log - Check authentication
-
         if (!auth.currentUser) {
-          setError('User not authenticated. Please sign in.'); // More specific error
+          setError('User not authenticated. Please sign in.');
           return;
         }
 
-        const projectDoc = doc(db, 'projects', projectId); // ✅ Correctly using projectId here
-        const docSnap = await getDoc(projectDoc);
+        const projectDocRef = doc(db, 'projects', projectId);
+        const docSnap = await getDoc(projectDocRef);
 
         if (docSnap.exists()) {
           const projectData = docSnap.data();
-          console.log("UpdateProjectPage.jsx: Project data fetched:", projectData); // Debug log - See fetched data
           setProjectName(projectData.name);
           setHourRate(projectData.hourRate ? String(projectData.hourRate) : '');
           setProjectImage(projectData.imageUrl || null);
+
+          // currencyId from DB or default to 'euro'
+          setCurrencyId(projectData.currencyId || 'euro');
+
+          // Store initial states to detect changes
           setInitialProjectName(projectData.name);
           setInitialHourRate(projectData.hourRate ? String(projectData.hourRate) : '');
           setInitialProjectImage(projectData.imageUrl || null);
+          setInitialCurrencyId(projectData.currencyId || 'euro');
         } else {
           setError('Project not found.');
         }
       } catch (err) {
-        console.error('UpdateProjectPage.jsx: Error fetching project:', err);
+        console.error('Error fetching project:', err);
         setError('Failed to load project details.');
       }
     };
 
     fetchProject();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [projectId]);
 
+  // Check if form data has changed to enable/disable "Update" button
   useEffect(() => {
     const hasChanged =
       projectName !== initialProjectName ||
       hourRate !== initialHourRate ||
-      projectImage !== initialProjectImage; // Simple comparison, might need deeper check for file objects if needed
+      projectImage !== initialProjectImage ||
+      currencyId !== initialCurrencyId;
+
     setIsSaveActive(hasChanged);
-  }, [projectName, hourRate, projectImage, initialProjectName, initialHourRate, initialProjectImage]);
+  }, [
+    projectName,
+    hourRate,
+    projectImage,
+    currencyId,
+    initialProjectName,
+    initialHourRate,
+    initialProjectImage,
+    initialCurrencyId
+  ]);
 
-
+  // Compress image
   const compressImage = useCallback(async (file) => {
     return new Promise((resolve, reject) => {
       const img = new Image();
@@ -132,6 +168,7 @@ const UpdateProjectPage = React.memo(() => {
     });
   }, []);
 
+  // Update project
   const handleUpdateProject = useCallback(async (e) => {
     e.preventDefault();
 
@@ -141,16 +178,21 @@ const UpdateProjectPage = React.memo(() => {
     }
 
     try {
-      const projectDocRef = doc(db, 'projects', projectId); // ✅ Correctly using projectId here
+      const projectDocRef = doc(db, 'projects', projectId);
       const projectSnap = await getDoc(projectDocRef);
       let currentProjectData = projectSnap.data();
       let imageUrl = currentProjectData.imageUrl;
 
-      if (projectImage && typeof projectImage !== 'string' && projectImage !== currentProjectData.imageUrl) {
+      // If user uploaded a new file
+      if (
+        projectImage &&
+        typeof projectImage !== 'string' &&
+        projectImage !== currentProjectData.imageUrl
+      ) {
         setUploading(true);
         const storage = getStorage();
 
-        // Delete old image if it exists and is not a default image.
+        // Delete old image if it exists
         if (imageUrl && !imageUrl.startsWith('default-')) {
           const imageRef = ref(storage, imageUrl);
           try {
@@ -161,13 +203,19 @@ const UpdateProjectPage = React.memo(() => {
           }
         }
 
-        const storageRef = ref(storage, `project-images/${auth.currentUser.uid}/${projectName}-${Date.now()}`);
+        // Upload new image
+        const storageRef = ref(
+          storage,
+          `project-images/${auth.currentUser.uid}/${projectName}-${Date.now()}`
+        );
         const uploadTask = uploadBytesResumable(storageRef, projectImage);
 
         await new Promise((resolve, reject) => {
-          uploadTask.on('state_changed',
+          uploadTask.on(
+            'state_changed',
             (snapshot) => {
-              const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+              const progress =
+                (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
               console.log('Upload is ' + progress.toFixed(2) + '% done');
             },
             (error) => {
@@ -184,31 +232,35 @@ const UpdateProjectPage = React.memo(() => {
           );
         });
       } else if (typeof projectImage === 'string') {
+        // Use the existing URL
         imageUrl = projectImage;
       }
 
+      // Update Firestore
       await updateDoc(projectDocRef, {
         name: projectName.trim(),
         imageUrl: imageUrl,
         hourRate: hourRate ? parseInt(hourRate, 10) : 0,
+        currencyId // <--- store the chosen currency
       });
 
-      navigate(-1); // Navigate to the previous page
+      navigate(-1); // go back
     } catch (err) {
       setUploading(false);
       console.error('Error updating project:', err);
       setError('Failed to update the project. Please try again.');
     }
-  }, [projectId, projectName, projectImage, navigate, hourRate]);
+  }, [projectId, projectName, projectImage, navigate, hourRate, currencyId]);
 
-  const handleDeleteProject = useCallback(async () => {
+  // Delete project
+  const handleDeleteProject = useCallback(() => {
     setIsDeleteDialogOpen(true);
   }, []);
 
   const confirmDeleteProject = useCallback(async () => {
     setIsDeleteDialogOpen(false);
     try {
-      const projectDocRef = doc(db, 'projects', projectId); // ✅ Correctly using projectId here
+      const projectDocRef = doc(db, 'projects', projectId);
       const projectSnap = await getDoc(projectDocRef);
       const projectData = projectSnap.data();
       const imageUrl = projectData.imageUrl;
@@ -223,8 +275,8 @@ const UpdateProjectPage = React.memo(() => {
         }
       }
 
-      // Delete related sessions.
-      const sessionsQuery = query(collection(db, 'sessions'), where('projectId', '==', projectId)); // ✅ Correctly using projectId here for session deletion
+      // Delete related sessions
+      const sessionsQuery = query(collection(db, 'sessions'), where('projectId', '==', projectId));
       const sessionsSnapshot = await getDocs(sessionsQuery);
       const batch = db.batch();
       sessionsSnapshot.forEach((doc) => {
@@ -245,52 +297,61 @@ const UpdateProjectPage = React.memo(() => {
     setIsDeleteDialogOpen(false);
   }, []);
 
+  // Trigger file input
   const handleImageUploadClick = useCallback(() => {
     fileInputRef.current.click();
   }, []);
 
-  const handleImageChange = useCallback(async (event) => {
-    const file = event.target.files[0];
-    if (!file) return;
+  // Handle file change
+  const handleImageChange = useCallback(
+    async (event) => {
+      const file = event.target.files[0];
+      if (!file) return;
 
-    if (!ALLOWED_FILE_TYPES.includes(file.type)) {
-      alert(`Please select a valid image file type: ${ALLOWED_FILE_TYPES.join(', ')}`);
-      event.target.value = '';
-      return;
-    }
-
-    if (file.size > MAX_FILE_SIZE_BYTES) {
-      alert(`Image size should be less than ${MAX_FILE_SIZE_KB} KB.`);
-      event.target.value = '';
-      return;
-    }
-
-    const img = new Image();
-    img.onload = async () => {
-      if (img.width > MAX_IMAGE_WIDTH || img.height > MAX_IMAGE_HEIGHT) {
-        alert(`Image dimensions should not exceed ${MAX_IMAGE_WIDTH}x${MAX_IMAGE_HEIGHT} pixels.`);
-        setProjectImage(null);
+      if (!ALLOWED_FILE_TYPES.includes(file.type)) {
+        alert(
+          `Please select a valid image file type: ${ALLOWED_FILE_TYPES.join(', ')}`
+        );
         event.target.value = '';
         return;
       }
 
-      try {
-        const compressedImageFile = await compressImage(file);
-        setProjectImage(compressedImageFile);
-      } catch (compressionError) {
-        console.error('Image compression error:', compressionError);
-        alert('Failed to process image. Please try again.');
+      if (file.size > MAX_FILE_SIZE_BYTES) {
+        alert(`Image size should be less than ${MAX_FILE_SIZE_KB} KB.`);
+        event.target.value = '';
+        return;
+      }
+
+      const img = new Image();
+      img.onload = async () => {
+        if (img.width > MAX_IMAGE_WIDTH || img.height > MAX_IMAGE_HEIGHT) {
+          alert(
+            `Image dimensions should not exceed ${MAX_IMAGE_WIDTH}x${MAX_IMAGE_HEIGHT} pixels.`
+          );
+          setProjectImage(null);
+          event.target.value = '';
+          return;
+        }
+
+        try {
+          const compressedImageFile = await compressImage(file);
+          setProjectImage(compressedImageFile);
+        } catch (compressionError) {
+          console.error('Image compression error:', compressionError);
+          alert('Failed to process image. Please try again.');
+          setProjectImage(null);
+          event.target.value = '';
+        }
+      };
+      img.onerror = () => {
+        alert('Error loading image.');
         setProjectImage(null);
         event.target.value = '';
-      }
-    };
-    img.onerror = () => {
-      alert('Error loading image.');
-      setProjectImage(null);
-      event.target.value = '';
-    };
-    img.src = URL.createObjectURL(file);
-  }, [compressImage]);
+      };
+      img.src = URL.createObjectURL(file);
+    },
+    [compressImage]
+  );
 
   const getInitials = useCallback((name) => {
     return name.trim().charAt(0).toUpperCase();
@@ -298,7 +359,9 @@ const UpdateProjectPage = React.memo(() => {
 
   const memoizedProjectImage = useMemo(() => {
     if (projectImage && typeof projectImage !== 'string') {
-      return <img src={URL.createObjectURL(projectImage)} alt="Project" className="project-image" />;
+      return (
+        <img src={URL.createObjectURL(projectImage)} alt="Project" className="project-image" />
+      );
     } else if (projectImage && typeof projectImage === 'string') {
       return <img src={projectImage} alt="Project" className="project-image" />;
     } else {
@@ -313,22 +376,26 @@ const UpdateProjectPage = React.memo(() => {
     }
   }, [projectImage, projectName, getInitials]);
 
+  // Toggle currency
+  const handleCurrencyToggle = useCallback(() => {
+    setCurrencyId((prev) => (prev === 'euro' ? 'dollar' : 'euro'));
+  }, []);
+
   return (
     <div className="update-project-page">
-      <Header
-              variant="journalOverview"
-              showBackArrow={true}
-            />
+      <Header variant="journalOverview" showBackArrow={true} />
       <main className="update-project-content">
         <section className="motivational-section">
-          {/* Replace the h1 tag with TextGenerateEffect */}
           <TextGenerateEffect
             words={`Precision fuels \n progress set it\n up <span class="accent-text"> your way.</span>`}
-            element="h1" // Optionally, specify that it should render as an <h1>
+            element="h1"
           />
         </section>
+
         <section className="project-details-section">
           <h2>Project details</h2>
+
+          {/* PROJECT NAME WRAPPER */}
           <div className="project-input-wrapper">
             <div
               className="project-image-container"
@@ -354,14 +421,20 @@ const UpdateProjectPage = React.memo(() => {
               ref={fileInputRef}
               style={{ display: 'none' }}
             />
-            <div className="edit-icon-container">
-              <EditIcon className="edit-icon" />
-            </div>
+            {/* UploadFile icon button (40x40) with .icon-button class */}
+            <button
+              type="button"
+              className="icon-button"
+              onClick={handleImageUploadClick}
+            >
+              <UploadFileIcon />
+            </button>
           </div>
 
+          {/* HOUR RATE + CURRENCY WRAPPER */}
           <div className="project-input-wrapper">
             <div className="project-icon-container">
-              <BillableIcon className="project-visual" style={{ fill: '#FFFFFF' }}/>
+              <BillableIcon className="project-visual" style={{ fill: '#FFFFFF' }} />
             </div>
             <input
               type="number"
@@ -375,14 +448,20 @@ const UpdateProjectPage = React.memo(() => {
               }}
               inputMode="numeric"
             />
-            <div className="edit-icon-container">
-              <EditIcon className="edit-icon" />
-            </div>
+            {/* Currency toggle button (40x40) with .icon-button class */}
+            <button
+              type="button"
+              className="icon-button"
+              onClick={handleCurrencyToggle}
+            >
+              {currencyId === 'euro' ? <EuroIcon /> : <DollarIcon />}
+            </button>
           </div>
         </section>
 
         {error && <p className="error-message">{error}</p>}
 
+        {/* UPDATE BUTTON */}
         <button
           className={`update-project-button sticky-button-top ${!isSaveActive ? 'disabled' : ''}`}
           onClick={handleUpdateProject}
@@ -397,6 +476,8 @@ const UpdateProjectPage = React.memo(() => {
             </>
           )}
         </button>
+
+        {/* DELETE BUTTON */}
         <button
           className="delete-project-button sticky-button"
           onClick={handleDeleteProject}
@@ -410,8 +491,12 @@ const UpdateProjectPage = React.memo(() => {
           <div className="delete-confirmation-dialog">
             <p>Are you sure you want to delete this project and all its sessions?</p>
             <div className="dialog-buttons">
-              <button onClick={confirmDeleteProject} className="confirm-delete">Yes, Delete</button>
-              <button onClick={cancelDeleteProject} className="cancel-delete">Cancel</button>
+              <button onClick={confirmDeleteProject} className="confirm-delete">
+                Yes, Delete
+              </button>
+              <button onClick={cancelDeleteProject} className="cancel-delete">
+                Cancel
+              </button>
             </div>
           </div>
         )}

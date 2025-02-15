@@ -6,14 +6,13 @@
   background-color: transparent;
   color: var(--text-color);
   display: flex;
-  flex-direction: column; 
+  flex-direction: column;
 }
 
 .create-project-content {
   display: flex;
   flex-direction: column;
   gap: 16px;
-  /* You can remove any top margins here if they are present and causing issues */
   padding-bottom: 80px; /* Added padding to accommodate sticky button */
 }
 
@@ -21,7 +20,6 @@
   display: flex;
   flex-direction: column;
   gap: 16px;
-  /* Removed explicit font-family, will inherit from global styles */
 }
 
 .project-details-section h2 {
@@ -30,13 +28,13 @@
   line-height: 20px;
 }
 
-.project-input-wrapper { /* Renamed wrapper */
+.project-input-wrapper {
   display: flex;
   align-items: center;
   background-color: var(--card-background);
   border-radius: 12px;
   padding: 16px;
-  position: relative; /* Add this line */
+  position: relative;
   gap: 16px;
 }
 
@@ -62,11 +60,10 @@
   cursor: pointer;
 }
 
-.project-visual { /* Style for billable icon */
+.project-visual {
   width: 20px;
   height: 20px;
 }
-
 
 .project-image {
   width: 100%;
@@ -100,33 +97,11 @@
   color: var(--text-muted);
 }
 
-.billable-option {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background-color: var(--card-background);
-  border-radius: 12px;
-  padding: 16px;
-  cursor: pointer;
-  /* Removed explicit font-family, will inherit from global styles */
-  font-size: 16px;
-}
-
-.radio-button {
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  border: 2px solid var(--text-muted); /* Inactive state */
-  background-color: transparent;
-  /* Add styles for active state if needed */
-}
-
 .create-project-button {
   background-color: transparent;
   border: 1px solid var(--card-background);
   border-radius: 12px;
   text-align: center;
-  /* Removed explicit font-family, will inherit from global styles */
   font-size: 16px;
   color: var(--text-color);
   padding: 16px;
@@ -150,11 +125,10 @@
 }
 
 h1 {
-color: var(--text-muted);
-font-size: 32px;
-line-height: 40px;
-text-align: left;
-color: var(--text-color);
+  font-size: 32px;
+  line-height: 40px;
+  text-align: left;
+  color: var(--text-color);
 }
 
 .button-icon {
@@ -178,41 +152,47 @@ color: var(--text-color);
 
 .motivational-section {
   margin-bottom: 0px;
-  /* Removed explicit font-family, will inherit from global styles */
-  color: var(--text-muted);
   font-size: 32px;
   line-height: 40px;
   text-align: left;
   color: var(--text-color);
 }
 
-.edit-icon-container {
-  position: absolute;
-  top: 50%;
-  right: 16px;
-  transform: translateY(-50%);
-  cursor: pointer; /* If you want it to be clickable */
-}
-
-.edit-icon {
-  width: 20px;
-  height: 20px;
-  fill: var(--text-color);
-}
-
 .sticky-button {
   font-family: var(--font-commit-mono);
   position: fixed;
-  bottom: 64px; /* Adjust bottom margin as needed */
-  left: 24px; /* Fixed left margin */
-  right: 24px; /* Fixed right margin */
-  width: calc(100% - 48px); /* Calculate width to account for 24px left and right margins */
-  max-width: 600px; /* Still respect max-width */
-  margin-left: auto; /* Center horizontally if width is less than max-width */
-  margin-right: auto; /* Center horizontally if width is less than max-width */
+  bottom: 64px;
+  left: 24px;
+  right: 24px;
+  width: calc(100% - 48px);
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
   box-sizing: border-box;
   background-color: var(--page-background);
   padding-top: 16px;
   padding-bottom: 16px;
   border-radius: 12px;
+}
+
+/* The icon-button for uploadfile/euro/dollar */
+.icon-button {
+  width: 40px;
+  height: 40px;
+  background-color: transparent;
+  border: 1px solid;
+  border-color: #43404C;
+  border-radius: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+/* Ensure the SVGs inside icon-button are nicely sized */
+.icon-button svg {
+  width: 20px;
+  height: 20px;
+  fill: var(--text-color);
 }

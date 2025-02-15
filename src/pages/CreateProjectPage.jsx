@@ -5,8 +5,12 @@ import { getStorage, ref, uploadBytesResumable, getDownloadURL } from 'firebase/
 import { useNavigate } from 'react-router-dom';
 import Header from '../components/Layout/Header';
 import '../styles/components/CreateProjectPage.css';
-import { ReactComponent as EditIcon } from '../styles/components/assets/edit.svg';
+
 import { ReactComponent as BillableIcon } from '../styles/components/assets/billable.svg';
+import { ReactComponent as UploadFileIcon } from '../styles/components/assets/uploadfile.svg';
+import { ReactComponent as EuroIcon } from '../styles/components/assets/euro.svg';
+import { ReactComponent as DollarIcon } from '../styles/components/assets/dollar.svg';
+
 // Import TextGenerateEffect
 import { TextGenerateEffect } from '../styles/components/text-generate-effect.tsx';
 
@@ -22,14 +26,17 @@ const COMPRESSION_QUALITY = 0.5; // JPEG compression quality (0 to 1)
 
 const CreateProjectPage = React.memo(() => {
   const [projectName, setProjectName] = useState('');
-  const [hourRate, setHourRate] = useState(''); // New state for hour rate
+  const [hourRate, setHourRate] = useState('');
   const [error, setError] = useState('');
   const navigate = useNavigate();
   const [projectImage, setProjectImage] = useState(null);
   const fileInputRef = useRef(null);
   const projectNameInputRef = useRef(null);
-  const hourRateInputRef = useRef(null); // Ref for hour rate input
+  const hourRateInputRef = useRef(null);
   const [uploading, setUploading] = useState(false);
+
+  // NEW: Currency toggle state
+  const [currencyId, setCurrencyId] = useState('euro'); // "euro" by default
 
   // Compress the image using a canvas.
   const compressImage = useCallback(async (file) => {
@@ -78,6 +85,7 @@ const CreateProjectPage = React.memo(() => {
     });
   }, []);
 
+  // Handle the create project logic
   const handleCreateProject = useCallback(async (e) => {
     e.preventDefault();
 
@@ -127,7 +135,8 @@ const CreateProjectPage = React.memo(() => {
         userId: user.uid,
         trackedTime: 0,
         imageUrl: imageUrl,
-        hourRate: hourRate ? parseInt(hourRate, 10) : 0, // Save hourRate as number, default 0
+        hourRate: hourRate ? parseInt(hourRate, 10) : 0,
+        currencyId // Save currency ("euro" or "dollar")
       });
 
       navigate('/home');
@@ -136,12 +145,14 @@ const CreateProjectPage = React.memo(() => {
       console.error('Error creating project:', err);
       setError('Failed to create the project. Please try again.');
     }
-  }, [projectName, projectImage, navigate, hourRate]); // Added hourRate to dependencies
+  }, [projectName, projectImage, navigate, hourRate, currencyId]);
 
+  // Trigger file input for image
   const handleImageUploadClick = useCallback(() => {
     fileInputRef.current.click();
   }, []);
 
+  // Handle file change (image selection)
   const handleImageChange = useCallback(async (event) => {
     const file = event.target.files[0];
 
@@ -210,23 +221,29 @@ const CreateProjectPage = React.memo(() => {
     }
   }, [projectImage, projectName, getInitials]);
 
+  // NEW: Toggle currency from euro <-> dollar
+  const handleCurrencyToggle = useCallback(() => {
+    setCurrencyId((prev) => (prev === 'euro' ? 'dollar' : 'euro'));
+  }, []);
+
   return (
     <div className="create-project-page">
-     <Header
-             variant="journalOverview"
-             showBackArrow={true}
-           />
+      <Header
+        variant="journalOverview"
+        showBackArrow={true}
+      />
       <main className="create-project-content">
         <section className="motivational-section">
-          {/* Replace the h1 tag with TextGenerateEffect */}
           <TextGenerateEffect
             words={`Every journey \nbegins with one\n moment. Tell me \nabout your project ...`}
-            element="h1" // Optionally, specify that it should render as an <h1>
+            element="h1"
           />
         </section>
         <section className="project-details-section">
           <h2>Project details</h2>
-          <div className="project-input-wrapper"> {/* Renamed wrapper */}
+
+          {/* PROJECT NAME WRAPPER */}
+          <div className="project-input-wrapper">
             <div
               className="project-image-container"
               onClick={handleImageUploadClick}
@@ -251,11 +268,17 @@ const CreateProjectPage = React.memo(() => {
               ref={fileInputRef}
               style={{ display: 'none' }}
             />
-            <div className="edit-icon-container">
-              <EditIcon className="edit-icon" />
-            </div>
+            {/* Upload button with new .icon-button styling */}
+            <button
+              type="button"
+              className="icon-button"
+              onClick={handleImageUploadClick}
+            >
+              <UploadFileIcon />
+            </button>
           </div>
 
+          {/* HOUR RATE + CURRENCY WRAPPER */}
           <div className="project-input-wrapper">
             <div className="project-icon-container">
               <BillableIcon className="project-visual" style={{ fill: '#FFFFFF' }}/>
@@ -272,9 +295,14 @@ const CreateProjectPage = React.memo(() => {
               }}
               inputMode="numeric"
             />
-             <div className="edit-icon-container">
-              <EditIcon className="edit-icon" />
-            </div>
+            {/* Currency toggle button with new .icon-button styling */}
+            <button
+              type="button"
+              className="icon-button"
+              onClick={handleCurrencyToggle}
+            >
+              {currencyId === 'euro' ? <EuroIcon /> : <DollarIcon />}
+            </button>
           </div>
         </section>
 

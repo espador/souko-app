@@ -1,6 +1,17 @@
 import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { doc, getDoc, collection, query, where, orderBy, getDocs, onSnapshot, startAfter, limit } from 'firebase/firestore';
+import {
+  doc,
+  getDoc,
+  collection,
+  query,
+  where,
+  orderBy,
+  getDocs,
+  onSnapshot,
+  startAfter,
+  limit
+} from 'firebase/firestore';
 import { db, auth } from '../services/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import { formatTime } from '../utils/formatTime';
@@ -43,7 +54,7 @@ const convertToDate = (session) => {
   if (session.startTime && typeof session.startTime === 'string') {
     let parsed = new Date(session.startTime);
     if (isNaN(parsed.getTime())) {
-      parsed = new Date(session.startTime.replace(" at ", " "));
+      parsed = new Date(session.startTime.replace(' at ', ' '));
     }
     if (!isNaN(parsed.getTime())) return parsed;
   }
@@ -60,7 +71,7 @@ const loadCachedProjectDetail = (uid, projectId) => {
         return cached;
       }
     } catch (e) {
-      console.error("Error parsing cached project detail data", e);
+      console.error('Error parsing cached project detail data', e);
     }
   }
   return null;
@@ -129,59 +140,62 @@ const ProjectDetailPage = React.memo(() => {
     [lastSessionDoc]
   );
 
-  const fetchProjectDetails = useCallback(async (projectId, uid, forceRefresh = false) => {
-    if (!uid || !projectId) return;
-    const cacheKey = `projectDetailData_${uid}_${projectId}`;
-    if (!forceRefresh) {
-      const cached = loadCachedProjectDetail(uid, projectId);
-      if (cached) {
-        setProject(cached.project || null);
-        setSessions(cached.sessions || []);
-        setHasMoreSessions((cached.sessions || []).length >= SESSIONS_LIMIT);
-        setLoading(false);
-        return;
+  const fetchProjectDetails = useCallback(
+    async (projectId, uid, forceRefresh = false) => {
+      if (!uid || !projectId) return;
+      const cacheKey = `projectDetailData_${uid}_${projectId}`;
+      if (!forceRefresh) {
+        const cached = loadCachedProjectDetail(uid, projectId);
+        if (cached) {
+          setProject(cached.project || null);
+          setSessions(cached.sessions || []);
+          setHasMoreSessions((cached.sessions || []).length >= SESSIONS_LIMIT);
+          setLoading(false);
+          return;
+        }
       }
-    }
-    setLoading(true);
-    setProject(null);
-    setSessions([]);
-    try {
-      const projectRef = doc(db, 'projects', projectId);
-      const projectSnapshot = await getDoc(projectRef);
-      if (!projectSnapshot.exists()) {
-        console.error('Project not found in Firestore.');
-        setProject(null);
-      } else if (projectSnapshot.data().userId !== uid) {
-        console.error('Project belongs to a different user.');
-        setProject(null);
-      } else {
-        const projectData = projectSnapshot.data();
-        setProject({ id: projectSnapshot.id, ...projectData });
-        setLastSessionDoc(null);
-        setHasMoreSessions(true);
-        const initialSessions = await fetchSessions(projectId, uid, true);
-        setSessions(initialSessions);
-        const dataToCache = {
-          project: { id: projectSnapshot.id, ...projectData },
-          sessions: initialSessions,
-          timestamp: Date.now(),
-        };
-        localStorage.setItem(cacheKey, JSON.stringify(dataToCache));
-      }
-    } catch (error) {
-      console.error('Error fetching project or sessions:', error);
+      setLoading(true);
       setProject(null);
-    } finally {
-      setLoading(false);
-    }
-  }, [fetchSessions]);
+      setSessions([]);
+      try {
+        const projectRef = doc(db, 'projects', projectId);
+        const projectSnapshot = await getDoc(projectRef);
+        if (!projectSnapshot.exists()) {
+          console.error('Project not found in Firestore.');
+          setProject(null);
+        } else if (projectSnapshot.data().userId !== uid) {
+          console.error('Project belongs to a different user.');
+          setProject(null);
+        } else {
+          const projectData = projectSnapshot.data();
+          setProject({ id: projectSnapshot.id, ...projectData });
+          setLastSessionDoc(null);
+          setHasMoreSessions(true);
+          const initialSessions = await fetchSessions(projectId, uid, true);
+          setSessions(initialSessions);
+          const dataToCache = {
+            project: { id: projectSnapshot.id, ...projectData },
+            sessions: initialSessions,
+            timestamp: Date.now(),
+          };
+          localStorage.setItem(cacheKey, JSON.stringify(dataToCache));
+        }
+      } catch (error) {
+        console.error('Error fetching project or sessions:', error);
+        setProject(null);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [fetchSessions]
+  );
 
   const handleLoadMore = useCallback(async () => {
     if (!currentUser || !routeProjectId || !hasMoreSessions) return;
     setLoading(true);
     try {
       const moreSessions = await fetchSessions(routeProjectId, currentUser.uid, false);
-      setSessions(prev => [...prev, ...moreSessions]);
+      setSessions((prev) => [...prev, ...moreSessions]);
     } catch (error) {
       console.error('Error loading more sessions:', error);
     } finally {
@@ -247,7 +261,7 @@ const ProjectDetailPage = React.memo(() => {
 
   const handleDisplayModeChange = useCallback((mode) => {
     setDisplayMode(mode);
-    setEffectTrigger(prev => prev + 1);
+    setEffectTrigger((prev) => prev + 1);
   }, []);
 
   const getSessionsForTimeRange = useCallback((sessions, timeRange) => {
@@ -300,6 +314,22 @@ const ProjectDetailPage = React.memo(() => {
     return 0;
   }, [displayMode, project?.hourRate, billableTime]);
 
+  // NEW: Format the earned amount based on currencyId
+  const formatEarnedAmount = useCallback(
+    (amount) => {
+      if (!project) return '';
+      // Default to euro if currencyId isn't set
+      const isDollar = project.currencyId === 'dollar';
+      const symbol = isDollar ? '$' : '€';
+      const locale = isDollar ? 'en-US' : 'en-DE'; 
+      return `${symbol}${amount.toLocaleString(locale, {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      })}`;
+    },
+    [project]
+  );
+
   const sessionsByDate = useMemo(() => {
     return filteredSessions.reduce((acc, session) => {
       let dateStr = 'Invalid Date';
@@ -348,13 +378,6 @@ const ProjectDetailPage = React.memo(() => {
     }
     return 'N/A';
   }, []);
-
-  const formatEarnedAmount = (amount) => {
-    return `€${amount.toLocaleString('en-DE', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    })}`;
-  };
 
   // Listen for active session for FAB
   useEffect(() => {
@@ -413,10 +436,13 @@ const ProjectDetailPage = React.memo(() => {
   return (
     <div className="project-container">
       <Header variant="journalOverview" showBackArrow={true} />
-      <div className="project-dropdown-container top-tile" onClick={() => {
-          console.log("Navigating to update project with projectId:", project.id);
+      <div
+        className="project-dropdown-container top-tile"
+        onClick={() => {
+          console.log('Navigating to update project with projectId:', project.id);
           navigate(`/projects/${project.id}/update`);
-        }}>
+        }}
+      >
         {project?.imageUrl ? (
           <img src={project.imageUrl} alt={project.name} className="dropdown-project-image" />
         ) : project?.name ? (
@@ -430,7 +456,11 @@ const ProjectDetailPage = React.memo(() => {
 
       <div className="filters-container">
         <div className="time-range-dropdown">
-          <select className="time-range-select" value={selectedTimeRange} onChange={handleTimeRangeChange}>
+          <select
+            className="time-range-select"
+            value={selectedTimeRange}
+            onChange={handleTimeRangeChange}
+          >
             <option value="total">Total</option>
             <option value="week">This week</option>
             <option value="month">This month</option>
@@ -456,10 +486,16 @@ const ProjectDetailPage = React.memo(() => {
 
       <div className="project-header-container" ref={projectHeaderRef}>
         <h1 className="timer project-time">
-          { displayMode === 'time' ? (
-            <TextGenerateEffect key={`time-value-${effectTrigger}`} words={formatTime(totalTime)} />
+          {displayMode === 'time' ? (
+            <TextGenerateEffect
+              key={`time-value-${effectTrigger}`}
+              words={formatTime(totalTime)}
+            />
           ) : (
-            <TextGenerateEffect key={`earned-value-${effectTrigger}`} words={formatEarnedAmount(totalEarned)} />
+            <TextGenerateEffect
+              key={`earned-value-${effectTrigger}`}
+              words={formatEarnedAmount(totalEarned)}
+            />
           )}
         </h1>
       </div>
@@ -481,9 +517,7 @@ const ProjectDetailPage = React.memo(() => {
                 {sessionsByDate[date].map((session) => (
                   <Link key={session.id} to={`/session/${session.id}`} className="session-link">
                     <li className="session-item input-tile">
-                      <span className="session-start-time">
-                        {formatStartTime(session)}
-                      </span>
+                      <span className="session-start-time">{formatStartTime(session)}</span>
                       <span
                         className="session-time"
                         style={{

@@ -119,8 +119,6 @@
 }
 
 .update-project-button.disabled {
-  font-family: var(--font-commit-mono);
-  font-weight: 400;
   background-color: transparent;
   color: var(--text-muted);
   cursor: not-allowed;
@@ -129,7 +127,6 @@
 .update-project-button.disabled .button-icon {
   fill: var(--text-muted);
 }
-
 
 .button-icon {
   color: var(--accent-color);
@@ -145,11 +142,10 @@
 
 h1 {
   text-align: left;
-  color: var(--text-muted);
   font-size: 32px;
   line-height: 40px;
   color: var(--text-color);
-  }
+}
 
 .spinner {
   border: 3px solid rgba(0, 0, 0, 0.1);
@@ -180,20 +176,6 @@ h1 {
   font-size: 32px;
   line-height: 40px;
   color: var(--text-color);
-}
-
-.edit-icon-container {
-  position: absolute;
-  top: 50%;
-  right: 16px;
-  transform: translateY(-50%);
-  cursor: pointer;
-}
-
-.edit-icon {
-  width: 20px;
-  height: 20px;
-  fill: var(--text-color);
 }
 
 /* Delete Confirmation Dialog Styles */
@@ -243,13 +225,13 @@ h1 {
 
 .sticky-button-top {
   position: fixed;
-  bottom: 132px; /* Adjust bottom margin as needed */
-  left: 24px; /* Fixed left margin */
-  right: 24px; /* Fixed right margin */
-  width: calc(100% - 48px); /* Calculate width to account for 24px left and right margins */
-  max-width: 600px; /* Still respect max-width */
-  margin-left: auto; /* Center horizontally if width is less than max-width */
-  margin-right: auto; /* Center horizontally if width is less than max-width */
+  bottom: 132px;
+  left: 24px;
+  right: 24px;
+  width: calc(100% - 48px);
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
   box-sizing: border-box;
   background-color: var(--page-background);
   padding-top: 16px;
@@ -260,16 +242,38 @@ h1 {
 
 .sticky-button {
   position: fixed;
-  bottom: 64px; /* Adjust bottom margin as needed */
-  left: 24px; /* Fixed left margin */
-  right: 24px; /* Fixed right margin */
-  width: calc(100% - 48px); /* Calculate width to account for 24px left and right margins */
-  max-width: 600px; /* Still respect max-width */
-  margin-left: auto; /* Center horizontally if width is less than max-width */
-  margin-right: auto; /* Center horizontally if width is less than max-width */
+  bottom: 64px;
+  left: 24px;
+  right: 24px;
+  width: calc(100% - 48px);
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
   box-sizing: border-box;
   background-color: var(--page-background);
   padding-top: 16px;
   padding-bottom: 16px;
   border-radius: 12px;
+}
+
+/* The icon-button for uploadfile/euro/dollar */
+.icon-button {
+  width: 40px;
+  height: 40px;
+  background-color: transparent;
+  border: 1px solid;
+  border-color: #43404C;
+  border-radius: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+/* Ensure the SVGs inside icon-button are nicely sized */
+.icon-button svg {
+  width: 20px;
+  height: 20px;
+  fill: var(--text-color);
 }
