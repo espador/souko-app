@@ -1,6 +1,6 @@
 // SessionDetailPage.jsx
 import React, { useEffect, useState, useCallback } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import {
   doc,
   getDoc,
@@ -10,11 +10,9 @@ import {
   query,
   where,
   getDocs,
-  Timestamp,
 } from 'firebase/firestore';
 import { db, auth } from '../services/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
-import { formatTime } from '../utils/formatTime';
 import Header from '../components/Layout/Header';
 import '../styles/global.css';
 import '../styles/components/SessionDetailPage.css';
@@ -38,7 +36,8 @@ const SessionDetailPage = () => {
   const [isBillable, setIsBillable] = useState(true);
   const [loading, setLoading] = useState(true);
   const [isSaveActive, setIsSaveActive] = useState(false);
-  const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false); // For delete confirmation
+  const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
+  const [hasFetchedSession, setHasFetchedSession] = useState(false); // Flag to fetch session details only once
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -74,9 +73,11 @@ const SessionDetailPage = () => {
         setSession(sessionData);
         setSessionNotes(sessionData.sessionNotes || '');
         setIsBillable(sessionData.isBillable);
-        // Find and set the selected project object
-        const project = projects.find(p => p.name === sessionData.project);
-        setSelectedProject(project);
+        // Only set selectedProject if it hasn't been changed by the user already
+        if (!selectedProject) {
+          const project = projects.find(p => p.name === sessionData.project);
+          setSelectedProject(project);
+        }
       } else {
         console.error("Session not found");
       }
@@ -86,7 +87,7 @@ const SessionDetailPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [sessionId, user, projects]);
+  }, [sessionId, user, projects, selectedProject]);
 
   useEffect(() => {
     if (user) {
@@ -94,9 +95,13 @@ const SessionDetailPage = () => {
     }
   }, [user, fetchProjects]);
 
+  // Fetch session details only once after projects have loaded
   useEffect(() => {
-    fetchSessionDetails();
-  }, [fetchSessionDetails]);
+    if (user && projects.length > 0 && !hasFetchedSession) {
+      fetchSessionDetails();
+      setHasFetchedSession(true);
+    }
+  }, [user, projects, hasFetchedSession, fetchSessionDetails]);
 
   useEffect(() => {
     if (session) {
@@ -128,17 +133,18 @@ const SessionDetailPage = () => {
       const sessionRef = doc(db, 'sessions', sessionId);
       await updateDoc(sessionRef, {
         project: selectedProject.name,
+        projectId: selectedProject.id, // <-- Update the projectId as well
         isBillable: isBillable,
         sessionNotes: sessionNotes,
       });
       setIsSaveActive(false);
-      // After successful save, navigate to the home page.
       navigate('/home');
     } catch (error) {
       console.error("Error updating session:", error);
-      // Optionally show an error message
+      // Optionally, add error feedback here
     }
   };
+  
 
   const handleDeleteSession = () => {
     setShowDeleteConfirmModal(true);
@@ -148,10 +154,9 @@ const SessionDetailPage = () => {
     setShowDeleteConfirmModal(false);
     try {
       await deleteDoc(doc(db, 'sessions', sessionId));
-      navigate('/home'); // Navigate to the homepage after deletion
+      navigate('/home');
     } catch (error) {
       console.error("Error deleting session:", error);
-      // Optionally show an error message
     }
   };
 
@@ -240,7 +245,6 @@ const SessionDetailPage = () => {
         Erase your moment
       </button>
 
-      {/* Confirmation Modal for Deleting Session */}
       <ConfirmModal
         show={showDeleteConfirmModal}
         onHide={cancelDeleteSession}

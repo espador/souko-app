@@ -196,3 +196,16 @@ h1 {
   height: 20px;
   fill: var(--text-color);
 }
+
+.project-image-container,
+.project-icon-container,
+.icon-button {
+  flex-shrink: 0;       /* Prevents shrinking in a flex container */
+  width: 40px;
+  height: 40px;
+  min-width: 40px;      /* Optional, ensures it never goes below 40px */
+  min-height: 40px;
+  max-width: 40px;      /* Optional, ensures it never exceeds 40px */
+  max-height: 40px;
+}
+

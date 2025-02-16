@@ -169,88 +169,92 @@ const UpdateProjectPage = React.memo(() => {
   }, []);
 
   // Update project
-  const handleUpdateProject = useCallback(async (e) => {
-    e.preventDefault();
+const handleUpdateProject = useCallback(async (e) => {
+  e.preventDefault();
 
-    if (!projectName.trim()) {
-      setError('Project name is required.');
-      return;
-    }
+  if (!projectName.trim()) {
+    setError('Project name is required.');
+    return;
+  }
 
-    try {
-      const projectDocRef = doc(db, 'projects', projectId);
-      const projectSnap = await getDoc(projectDocRef);
-      let currentProjectData = projectSnap.data();
-      let imageUrl = currentProjectData.imageUrl;
+  try {
+    const projectDocRef = doc(db, 'projects', projectId);
+    const projectSnap = await getDoc(projectDocRef);
+    let currentProjectData = projectSnap.data();
+    let imageUrl = currentProjectData.imageUrl;
 
-      // If user uploaded a new file
-      if (
-        projectImage &&
-        typeof projectImage !== 'string' &&
-        projectImage !== currentProjectData.imageUrl
-      ) {
-        setUploading(true);
-        const storage = getStorage();
+    // If user uploaded a new file
+    if (
+      projectImage &&
+      typeof projectImage !== 'string' &&
+      projectImage !== currentProjectData.imageUrl
+    ) {
+      setUploading(true);
+      const storage = getStorage();
 
-        // Delete old image if it exists
-        if (imageUrl && !imageUrl.startsWith('default-')) {
-          const imageRef = ref(storage, imageUrl);
-          try {
-            await deleteObject(imageRef);
-            console.log('Old image deleted');
-          } catch (deleteError) {
-            console.error('Error deleting old image:', deleteError);
-          }
+      // Delete old image if it exists
+      if (imageUrl && !imageUrl.startsWith('default-')) {
+        const imageRef = ref(storage, imageUrl);
+        try {
+          await deleteObject(imageRef);
+          console.log('Old image deleted');
+        } catch (deleteError) {
+          console.error('Error deleting old image:', deleteError);
         }
-
-        // Upload new image
-        const storageRef = ref(
-          storage,
-          `project-images/${auth.currentUser.uid}/${projectName}-${Date.now()}`
-        );
-        const uploadTask = uploadBytesResumable(storageRef, projectImage);
-
-        await new Promise((resolve, reject) => {
-          uploadTask.on(
-            'state_changed',
-            (snapshot) => {
-              const progress =
-                (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-              console.log('Upload is ' + progress.toFixed(2) + '% done');
-            },
-            (error) => {
-              setUploading(false);
-              setError('Failed to upload new image.');
-              console.error('Image upload error:', error);
-              reject(error);
-            },
-            async () => {
-              imageUrl = await getDownloadURL(uploadTask.snapshot.ref);
-              setUploading(false);
-              resolve();
-            }
-          );
-        });
-      } else if (typeof projectImage === 'string') {
-        // Use the existing URL
-        imageUrl = projectImage;
       }
 
-      // Update Firestore
-      await updateDoc(projectDocRef, {
-        name: projectName.trim(),
-        imageUrl: imageUrl,
-        hourRate: hourRate ? parseInt(hourRate, 10) : 0,
-        currencyId // <--- store the chosen currency
-      });
+      // Upload new image
+      const storageRef = ref(
+        storage,
+        `project-images/${auth.currentUser.uid}/${projectName}-${Date.now()}`
+      );
+      const uploadTask = uploadBytesResumable(storageRef, projectImage);
 
-      navigate(-1); // go back
-    } catch (err) {
-      setUploading(false);
-      console.error('Error updating project:', err);
-      setError('Failed to update the project. Please try again.');
+      await new Promise((resolve, reject) => {
+        uploadTask.on(
+          'state_changed',
+          (snapshot) => {
+            const progress =
+              (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+            console.log('Upload is ' + progress.toFixed(2) + '% done');
+          },
+          (error) => {
+            setUploading(false);
+            setError('Failed to upload new image.');
+            console.error('Image upload error:', error);
+            reject(error);
+          },
+          async () => {
+            imageUrl = await getDownloadURL(uploadTask.snapshot.ref);
+            setUploading(false);
+            resolve();
+          }
+        );
+      });
+    } else if (typeof projectImage === 'string') {
+      // Use the existing URL
+      imageUrl = projectImage;
     }
-  }, [projectId, projectName, projectImage, navigate, hourRate, currencyId]);
+
+    // Update Firestore
+    await updateDoc(projectDocRef, {
+      name: projectName.trim(),
+      imageUrl: imageUrl,
+      hourRate: hourRate ? parseInt(hourRate, 10) : 0,
+      currencyId // <-- store the chosen currency
+    });
+
+    // Clear cached project details so the Project Detail page fetches fresh data
+    localStorage.removeItem(`projectDetailData_${auth.currentUser.uid}_${projectId}`);
+
+    navigate(-1); // go back
+  } catch (err) {
+    setUploading(false);
+    console.error('Error updating project:', err);
+    setError('Failed to update the project. Please try again.');
+  }
+}, [projectId, projectName, projectImage, navigate, hourRate, currencyId]);
+
 
   // Delete project
   const handleDeleteProject = useCallback(() => {
