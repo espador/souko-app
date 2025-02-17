@@ -1,28 +1,31 @@
-// Header.jsx
+// src/components/Layout/Header.jsx
 import React, { useState, useEffect, memo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../../styles/components/Header.css';
 import { ReactComponent as ReturnIcon } from '../../styles/components/assets/return.svg';
 import { ReactComponent as SoukoLogoHeader } from '../../styles/components/assets/Souko-logo-header.svg';
 
+// MUI stepper
+import MobileStepper from '@mui/material/MobileStepper';
+
 const Header = memo(({
-  variant = "home", // "home" (default) or "projectOverview"
+  variant = "home", // "home" | "projectOverview" | "onboarding"
   title,
   showBackArrow,
-  onBack, // Keep the onBack prop for potential custom back actions
+  onBack,
   hideProfile,
   children,
   showLiveTime = false,
   onProfileClick,
-  onActionClick = () => {}  // default no-op if not provided
+  onActionClick = () => {},
+  currentStep = 0,
 }) => {
   const navigate = useNavigate();
   const [currentTime, setCurrentTime] = useState('');
-  const [isSpinning, setIsSpinning] = useState(true);
+  // Removed setIsSpinning since we never call it
+  const [isSpinning] = useState(true);
 
   useEffect(() => {
-    // ... (your useEffect for live time - remains the same) ...
-    let intervalId;
     if (showLiveTime) {
       const tick = () => {
         const now = new Date();
@@ -34,13 +37,42 @@ const Header = memo(({
         setCurrentTime(`${hours}:${minutes}:${seconds}.${day}.${month}`);
       };
       tick();
-      intervalId = setInterval(tick, 1000);
+      const intervalId = setInterval(tick, 1000);
+      return () => clearInterval(intervalId);
     }
-    return () => clearInterval(intervalId);
   }, [showLiveTime]);
 
-  // Determine what to render on the right side of the header.
-  // ... (right section logic - remains the same) ...
+  const handleBackNavigation = () => {
+    if (onBack) {
+      onBack();
+    } else {
+      navigate('/home');
+    }
+  };
+
+  if (variant === "onboarding") {
+    return (
+      <div className="header header-onboarding">
+        {showBackArrow && (
+          <button className="back-button" onClick={handleBackNavigation}>
+            <ReturnIcon style={{ width: '40px', height: '40px' }} />
+          </button>
+        )}
+
+        <MobileStepper
+          className="onboarding-stepper"
+          variant="progress"
+          steps={5}
+          activeStep={currentStep}
+          position="static"
+          nextButton={<div />} // Hide default next button
+          backButton={<div />} // Hide default back button
+        />
+      </div>
+    );
+  }
+
+  // Otherwise, handle "home", "projectOverview", etc.
   let rightSection = null;
   if (variant === "projectOverview") {
     rightSection = (
@@ -62,15 +94,6 @@ const Header = memo(({
     }
   }
 
-  const handleBackNavigation = () => {
-    if (onBack) {
-      onBack(); // Call the custom onBack function if provided
-    } else {
-      navigate('/home'); // Navigate to homepage if onBack is not provided
-    }
-  };
-
-
   return (
     <div className="header">
       <div className="header-left-section">
@@ -90,5 +113,4 @@ const Header = memo(({
 });
 
 Header.displayName = 'Header';
-
 export default Header;

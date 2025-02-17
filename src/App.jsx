@@ -1,8 +1,21 @@
 // App.jsx
 import React, { useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
-import { setPersistence, browserLocalPersistence, onAuthStateChanged } from 'firebase/auth';
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  useNavigate,
+  useLocation
+} from 'react-router-dom';
+import {
+  setPersistence,
+  browserLocalPersistence,
+  onAuthStateChanged
+} from 'firebase/auth';
 import { auth } from './services/firebase';
+
+// Import the OnboardingProvider
+import { OnboardingProvider } from './contexts/OnboardingContext';
 
 import LoginPage from './pages/LoginPage';
 import HomePage from './pages/HomePage';
@@ -18,6 +31,11 @@ import JournalForm from './components/Journal/JournalForm';
 import JournalConfirmation from './components/Journal/JournalConfirmation';
 import UpdateProjectPage from './pages/UpdateProjectPage';
 
+import OnboardingStep1 from './components/Onboarding/OnboardingStep1';
+import OnboardingStep2 from './components/Onboarding/OnboardingStep2';
+import OnboardingStep3 from './components/Onboarding/OnboardingStep3';
+import OnboardingStep4 from './components/Onboarding/OnboardingStep4';
+
 const AppRoutes = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -27,11 +45,12 @@ const AppRoutes = () => {
     setPersistence(auth, browserLocalPersistence)
       .then(() => {
         const unsubscribe = onAuthStateChanged(auth, (user) => {
-          if (user && location.pathname === "/") {
-            // If user is logged in and currently on the login page, redirect to home
+          // If user is logged in and on the login page, go to home
+          if (user && location.pathname === '/') {
             navigate('/home', { replace: true });
-          } else if (!user && location.pathname !== "/") {
-            // If user is not logged in and trying to access a protected route, redirect to login
+          }
+          // If user is not logged in and not on the login page, go to login
+          else if (!user && location.pathname !== '/') {
             navigate('/', { replace: true });
           }
         });
@@ -57,6 +76,10 @@ const AppRoutes = () => {
       <Route path="/journal-form" element={<JournalForm />} />
       <Route path="/journal-confirmation" element={<JournalConfirmation />} />
       <Route path="/projects/:projectId/update" element={<UpdateProjectPage />} />
+      <Route path="/onboarding/step1" element={<OnboardingStep1 />} />
+      <Route path="/onboarding/step2" element={<OnboardingStep2 />} />
+      <Route path="/onboarding/step3" element={<OnboardingStep3 />} />
+      <Route path="/onboarding/step4" element={<OnboardingStep4 />} />
     </Routes>
   );
 };
@@ -64,7 +87,10 @@ const AppRoutes = () => {
 const App = () => {
   return (
     <Router>
-      <AppRoutes />
+      {/* Wrap all routes with the OnboardingProvider */}
+      <OnboardingProvider>
+        <AppRoutes />
+      </OnboardingProvider>
     </Router>
   );
 };

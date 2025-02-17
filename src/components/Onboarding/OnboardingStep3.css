@@ -1,0 +1,86 @@
+/* src/components/Onboarding/OnboardingStep3.css */
+
+.onboarding-step3 {
+  margin: 0 auto;
+  max-width: 600px;
+  background-color: transparent;
+  color: var(--text-color);
+  display: flex;
+  flex-direction: column;
+}
+
+.onboarding-step3-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  /* No need for extra bottom padding because of sticky buttons */
+}
+
+.motivational-section {
+  margin-bottom: 16px;
+  font-size: 32px;
+  line-height: 40px;
+  text-align: left;
+  color: var(--text-color);
+}
+
+.motivational-section h1 {
+  white-space: pre-line; /* So \n breaks become new lines */
+}
+
+/* Color words in accent color */
+.accent-text {
+color: var(--accent-color);
+}
+
+
+.mood-container {
+  margin-top: 24px;
+  margin-bottom: 16px; /* Reduced bottom margin */
+}
+
+.mood-label {
+  font-family: var(--font-commit-mono);
+  font-size: 16px;
+  margin-bottom: 8px;
+  color: var(--text-muted);
+}
+
+.mood-value {
+  color: var(--text-color);
+  text-transform: capitalize;
+}
+
+.log-mood-button.sticky-button {
+  position: fixed;
+  bottom: 64px;
+  left: 24px;
+  right: 24px;
+  width: calc(100% - 48px);
+  max-width: 600px;
+  margin: 0 auto;
+  box-sizing: border-box;
+  background-color: transparent;
+  border: 1px solid var(--card-background);
+  border-radius: 12px;
+  padding: 16px;
+  font-size: 16px;
+  text-align: center;
+  color: var(--text-color);
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+}
+
+.log-mood-button.sticky-button:hover {
+  opacity: 0.85; /* Hover effect */
+}
+
+
+.button-icon {
+  fill: var(--text-color);
+  width: 20px;
+  height: 20px;
+}

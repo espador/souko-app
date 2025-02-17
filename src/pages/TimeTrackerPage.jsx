@@ -42,7 +42,19 @@ import '@fontsource/shippori-mincho';
 import ConfirmModal from '../components/ConfirmModal';
 import { ReactComponent as SoukoLogoHeader } from '../styles/components/assets/Souko-logo-header.svg';
 
-// --- Helper: Persist Instance ID ---
+// Helper: Monday-based week start
+function getMondayOfCurrentWeek() {
+  const now = new Date();
+  // Set time to midnight for a clean comparison
+  now.setHours(0, 0, 0, 0);
+
+  // day=0 is Sunday in JS, so shift for Monday-based weeks:
+  const day = (now.getDay() + 6) % 7; 
+  now.setDate(now.getDate() - day);
+  return now.getTime(); // returns ms
+}
+
+// Helper: Persist Instance ID
 const getInstanceId = () => {
   let id = localStorage.getItem('timeTrackerInstanceId');
   if (!id) {
@@ -111,7 +123,7 @@ const TimeTrackerPage = React.memo(() => {
   }, [sessionId, navigate]);
   // --- End Sign Out Handler ---
 
-  // Fetch projects and active session.
+  // Fetch projects and active session
   const fetchData = useCallback(async (uid) => {
     try {
       const projectsRef = collection(db, 'projects');
@@ -143,6 +155,7 @@ const TimeTrackerPage = React.memo(() => {
           (proj) => proj.name === sessionData.project
         );
         if (matchingProject) setSelectedProject(matchingProject);
+
         if (!notesLoaded) {
           setSessionNotes(sessionData.sessionNotes || '');
           setNotesLoaded(true);
@@ -179,6 +192,7 @@ const TimeTrackerPage = React.memo(() => {
     return () => unsubscribeAuth();
   }, [navigate, fetchData]);
 
+  // Local ticking timer
   useEffect(() => {
     let interval;
     if (sessionClientStartTime) {
@@ -194,6 +208,7 @@ const TimeTrackerPage = React.memo(() => {
     };
   }, [sessionClientStartTime, baseElapsedTime]);
 
+  // Listen for real-time changes to the session doc
   useEffect(() => {
     let unsubscribe;
     if (sessionId) {
@@ -201,6 +216,7 @@ const TimeTrackerPage = React.memo(() => {
       unsubscribe = onSnapshot(sessionRef, (sessionSnap) => {
         if (sessionSnap.exists()) {
           const sessionData = sessionSnap.data();
+
           // --- Instance Locking ---
           if (sessionData.activeInstanceId && sessionData.activeInstanceId !== instanceId) {
             setActiveInstanceId(sessionData.activeInstanceId);
@@ -217,7 +233,7 @@ const TimeTrackerPage = React.memo(() => {
           if (sessionData.pauseEvents) {
             setPauseEvents(sessionData.pauseEvents);
           }
-          // **New:** Update local pause/run state from Firestore
+          // Update local pause/run state from Firestore
           setIsPaused(!!sessionData.paused);
           setIsRunning(sessionData.status === 'running' || sessionData.status === 'paused');
 
@@ -240,6 +256,7 @@ const TimeTrackerPage = React.memo(() => {
     };
   }, [sessionId, instanceId]);
 
+  // Start a session
   const handleStart = useCallback(async () => {
     if (!selectedProject) {
       alert('Please select a project to start the timer.');
@@ -275,6 +292,7 @@ const TimeTrackerPage = React.memo(() => {
     setIsPaused(false);
   }, [selectedProject, sessionId, user, sessionNotes, isBillable, instanceId]);
 
+  // Pause
   const handlePause = useCallback(async () => {
     setIsPaused(true);
     if (sessionId) {
@@ -293,6 +311,7 @@ const TimeTrackerPage = React.memo(() => {
     }
   }, [sessionId, timer]);
 
+  // Resume
   const handleResume = useCallback(async () => {
     setIsPaused(false);
     if (sessionId) {
@@ -314,10 +333,12 @@ const TimeTrackerPage = React.memo(() => {
     setIsRunning(true);
   }, [sessionId]);
 
+  // Stop flow
   const handleStop = useCallback(() => {
     setShowStopConfirmModal(true);
   }, []);
 
+  // CONFIRM STOP => finalize session & update weeklyTrackedTime
   const confirmStopSession = useCallback(async () => {
     setShowStopConfirmModal(false);
     setIsRunning(false);
@@ -325,18 +346,25 @@ const TimeTrackerPage = React.memo(() => {
     if (sessionId && selectedProject) {
       try {
         const sessionRef = doc(db, 'sessions', sessionId);
+
+        // 1) Calculate total paused time
         let totalPausedTimeMs = 0;
         let lastPauseTime = null;
-        const sortedPauseEvents = [...pauseEvents].sort((a, b) => a.timestamp.seconds - b.timestamp.seconds);
+        const sortedPauseEvents = [...pauseEvents].sort(
+          (a, b) => a.timestamp.seconds - b.timestamp.seconds
+        );
         for (const event of sortedPauseEvents) {
           if (event.type === 'pause') {
             lastPauseTime = event.timestamp;
           } else if (event.type === 'resume' && lastPauseTime) {
-            totalPausedTimeMs += event.timestamp.seconds * 1000 - lastPauseTime.seconds * 1000;
+            totalPausedTimeMs +=
+              event.timestamp.seconds * 1000 - lastPauseTime.seconds * 1000;
             lastPauseTime = null;
           }
         }
         const totalPausedTimeSeconds = Math.round(totalPausedTimeMs / 1000);
+
+        // 2) Mark session as ended in Firestore
         await updateDoc(sessionRef, {
           elapsedTime: timer,
           endTime: serverTimestamp(),
@@ -347,22 +375,49 @@ const TimeTrackerPage = React.memo(() => {
           pauseEvents: pauseEvents,
           totalPausedTime: totalPausedTimeSeconds,
         });
+
+        // 3) Update project's lastTrackedTime if this session is the latest
         await runTransaction(db, async (transaction) => {
           const projectRef = doc(db, 'projects', selectedProject.id);
           const projectDoc = await transaction.get(projectRef);
           const currentLastTracked = projectDoc.data().lastTrackedTime;
           const newEndTime = Date.now();
-          if (!currentLastTracked || newEndTime > currentLastTracked.seconds * 1000) {
+          // If no lastTrackedTime or newEndTime is more recent, update
+          if (!currentLastTracked || newEndTime > currentLastTracked.toMillis?.()) {
             transaction.update(projectRef, { lastTrackedTime: serverTimestamp() });
           }
         });
+
+        // 4) Update weeklyTrackedTime in the user's profile doc
         await runTransaction(db, async (transaction) => {
           const profileRef = doc(db, 'profiles', user.uid);
-          const profileDoc = await transaction.get(profileRef);
-          let currentWeeklyTime = profileDoc.data().weeklyTrackedTime || 0;
-          const sessionDuration = timer;
-          const newWeeklyTime = currentWeeklyTime + sessionDuration;
-          transaction.update(profileRef, { weeklyTrackedTime: newWeeklyTime });
+          const profileSnap = await transaction.get(profileRef);
+          if (!profileSnap.exists()) {
+            // If no profile doc, skip or create it
+            // (But ideally userProfile was created in OnboardingStep4)
+            return;
+          }
+
+          const profileData = profileSnap.data();
+          let currentWeeklyTime = profileData.weeklyTrackedTime || 0;
+          let storedWeekStart = profileData.weekStart || 0;
+
+          // Check if we need to reset because it's a new Monday
+          const thisMonday = getMondayOfCurrentWeek(); // e.g. 1697424000000
+          if (storedWeekStart < thisMonday) {
+            // If the storedWeekStart is from an older week, reset
+            currentWeeklyTime = 0;
+            storedWeekStart = thisMonday;
+          }
+
+          // Add the new session's time (timer is in seconds)
+          const newWeeklyTime = currentWeeklyTime + timer;
+
+          transaction.update(profileRef, {
+            weeklyTrackedTime: newWeeklyTime,
+            weekStart: storedWeekStart,
+            lastUpdated: serverTimestamp(),
+          });
         });
       } catch (error) {
         console.error('Error stopping session:', error);
@@ -370,10 +425,14 @@ const TimeTrackerPage = React.memo(() => {
     } else {
       console.warn('Session ID or selected project not available during stop.');
     }
+
+    // 5) Navigate to session overview
     localStorage.setItem('lastProjectId', selectedProject?.id || '');
     navigate('/session-overview', {
       state: { totalTime: timer, projectId: selectedProject?.id },
     });
+
+    // 6) Reset local states
     setTimer(0);
     setSelectedProject(null);
     setSessionNotes('');
@@ -382,6 +441,7 @@ const TimeTrackerPage = React.memo(() => {
     setPauseEvents([]);
   }, [navigate, sessionId, selectedProject, timer, sessionNotes, pauseEvents, user]);
 
+  // Reset Timer
   const handleReset = useCallback(() => {
     if (isRunning || timer > 0) {
       setShowResetConfirmModal(true);
@@ -413,6 +473,7 @@ const TimeTrackerPage = React.memo(() => {
     }
   }, [sessionId]);
 
+  // Toggle Billable
   const handleBillableToggle = useCallback(() => {
     const newIsBillable = !isBillable;
     setIsBillable(newIsBillable);
@@ -426,6 +487,7 @@ const TimeTrackerPage = React.memo(() => {
     }
   }, [isBillable, sessionId]);
 
+  // Change Project
   const handleProjectChange = useCallback(
     (e) => {
       const projectName = e.target.value;
@@ -435,6 +497,7 @@ const TimeTrackerPage = React.memo(() => {
     [projects]
   );
 
+  // Autosave notes
   useEffect(() => {
     if (sessionId && activeInstanceId === instanceId) {
       if (noteSaveTimeout.current) clearTimeout(noteSaveTimeout.current);
@@ -456,12 +519,13 @@ const TimeTrackerPage = React.memo(() => {
     setSessionNotes(e.target.value.slice(0, 140));
   }, []);
 
+  // Take Over Session
   const handleTakeOver = async () => {
     if (sessionId) {
       const sessionRef = doc(db, 'sessions', sessionId);
       try {
         await updateDoc(sessionRef, { activeInstanceId: instanceId });
-        // **New:** Immediately fetch the current session data to sync local state
+        // Immediately fetch the current session data to sync local state
         const sessionSnap = await getDoc(sessionRef);
         if (sessionSnap.exists()) {
           const sessionData = sessionSnap.data();
@@ -487,6 +551,7 @@ const TimeTrackerPage = React.memo(() => {
     }
   };
 
+  // Close session on conflict
   const handleCloseSession = () => {
     navigate('/home');
   };
@@ -517,9 +582,9 @@ const TimeTrackerPage = React.memo(() => {
           disabled={!(isRunning || timer > 0)}
         >
           {(isRunning || timer > 0) ? (
-            <ResetActiveIcon style={{ width: '32px', height: '32px', fill: 'var(--text-color)' }} />
+            <ResetActiveIcon style={{ width: '32px', height: '32px' }} />
           ) : (
-            <ResetMuteIcon style={{ width: '32px', height: '32px', fill: 'var(--text-muted)' }} />
+            <ResetMuteIcon style={{ width: '32px', height: '32px' }} />
           )}
         </button>
         <button
@@ -537,11 +602,11 @@ const TimeTrackerPage = React.memo(() => {
           onClick={isRunning && !isPaused ? handlePause : isPaused ? handleResume : undefined}
         >
           {isRunning && !isPaused ? (
-            <PauseIcon style={{ width: '32px', height: '32px', fill: 'var(--text-muted)' }} />
+            <PauseIcon style={{ width: '32px', height: '32px' }} />
           ) : timer === 0 ? (
-            <PauseIcon style={{ width: '32px', height: '32px', fill: 'var(--text-muted)' }} />
+            <PauseIcon style={{ width: '32px', height: '32px', opacity: 0.5 }} />
           ) : (
-            <PlayIcon style={{ width: '32px', height: '32px', fill: 'var(--text-color)' }} />
+            <PlayIcon style={{ width: '32px', height: '32px' }} />
           )}
         </button>
       </div>
@@ -571,7 +636,11 @@ const TimeTrackerPage = React.memo(() => {
         </select>
         <DropdownIcon className="dropdown-arrow" />
       </div>
-      <div className="input-tile billable-tile" onClick={handleBillableToggle} style={{ cursor: 'pointer' }}>
+      <div
+        className="input-tile billable-tile"
+        onClick={handleBillableToggle}
+        style={{ cursor: 'pointer' }}
+      >
         <span className="input-label billable-label">
           {isBillable ? 'Billable' : 'Non-billable'}
         </span>
@@ -591,7 +660,10 @@ const TimeTrackerPage = React.memo(() => {
             timerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
           }}
         />
-        <EditIcon className="notes-edit-icon" style={{ position: 'absolute', top: '16px', right: '16px' }} />
+        <EditIcon
+          className="notes-edit-icon"
+          style={{ position: 'absolute', top: '16px', right: '16px' }}
+        />
       </div>
       <ConfirmModal
         show={showStopConfirmModal}

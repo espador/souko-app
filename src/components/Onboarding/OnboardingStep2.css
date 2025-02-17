@@ -1,6 +1,6 @@
-/* CreateProjectPage.css */
+/* src/components/Onboarding/OnboardingStep2.css */
 
-.create-project-page {
+.onboarding-step2 {
   margin: 0 auto;
   max-width: 600px;
   background-color: transparent;
@@ -9,12 +9,25 @@
   flex-direction: column;
 }
 
-.create-project-content {
+.onboarding-step2-content {
+  flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  padding-bottom: 80px; /* Added padding to accommodate sticky button */
+  /* No need for extra bottom padding if using sticky-button approach */
 }
+
+.motivational-section {
+  margin-bottom: 16px;
+  font-size: 32px;
+  line-height: 40px;
+  text-align: left;
+  color: var(--text-color);
+}
+
+.motivational-section h1 {
+  white-space: pre-line; /* So \n breaks become new lines */
+}
+
 
 .project-details-section {
   display: flex;
@@ -63,6 +76,7 @@
 .project-visual {
   width: 20px;
   height: 20px;
+  height: 20px;
 }
 
 .project-image {
@@ -83,8 +97,8 @@
 }
 
 .project-name-input {
-  flex: 1 1 auto; 
-  min-width: 0;  
+  flex: 1 1 auto;
+  min-width: 0;
   background-color: transparent;
   border: none;
   color: var(--text-color);
@@ -98,31 +112,11 @@
   color: var(--text-muted);
 }
 
-.create-project-button {
-  background-color: transparent;
-  border: 1px solid var(--card-background);
-  border-radius: 12px;
-  text-align: center;
-  font-size: 16px;
-  color: var(--text-color);
-  padding: 16px;
-  cursor: pointer;
-  width: 100%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 8px;
-}
-
-.create-project-button span {
-  color: var(--accent-color);
-  font-size: 20px;
-}
 
 .error-message {
   color: red;
   font-size: 14px;
-  margin-top: -8px;
+  margin-top: 16px;
 }
 
 h1 {
@@ -134,6 +128,7 @@ h1 {
 
 .button-icon {
   color: var(--accent-color);
+  font-size: 20px; /* Make sure the icon size is good in button */
 }
 
 .spinner {
@@ -151,30 +146,33 @@ h1 {
   }
 }
 
-.motivational-section {
-  margin-bottom: 0px;
-  font-size: 32px;
-  line-height: 40px;
-  text-align: left;
-  color: var(--text-color);
-}
-
 .sticky-button {
-  font-family: var(--font-commit-mono);
   position: fixed;
   bottom: 64px;
   left: 24px;
   right: 24px;
   width: calc(100% - 48px);
   max-width: 600px;
-  margin-left: auto;
-  margin-right: auto;
+  margin: 0 auto;
   box-sizing: border-box;
-  background-color: var(--page-background);
-  padding-top: 16px;
-  padding-bottom: 16px;
+  background-color: transparent;
+  border: 1px solid var(--card-background);
   border-radius: 12px;
+  padding: 16px;
+  font-size: 16px;
+  text-align: center;
+  color: var(--text-color);
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
 }
+
+.sticky-button:hover {
+  opacity: 0.85; /* Add hover effect for better UX */
+}
+
 
 /* The icon-button for uploadfile/euro/dollar */
 .icon-button {
@@ -182,13 +180,14 @@ h1 {
   height: 40px;
   background-color: transparent;
   border: 1px solid;
-  border-color: #43404C;
+  border-color: #43404C; /* Match the border color from CreateProjectPage */
   border-radius: 12px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 0;
+  flex-shrink: 0; /* Prevent shrinking in flex container */
 }
 
 /* Ensure the SVGs inside icon-button are nicely sized */
@@ -199,8 +198,7 @@ h1 {
 }
 
 .project-image-container,
-.project-icon-container,
-.icon-button {
+.project-icon-container {
   flex-shrink: 0;       /* Prevents shrinking in a flex container */
   width: 40px;
   height: 40px;
@@ -209,4 +207,3 @@ h1 {
   max-width: 40px;      /* Optional, ensures it never exceeds 40px */
   max-height: 40px;
 }
-
