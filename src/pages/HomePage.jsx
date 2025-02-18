@@ -18,6 +18,8 @@ import '../styles/global.css';
 import '../styles/components/HomePage.css';
 import { ReactComponent as StartTimerIcon } from '../styles/components/assets/start-timer.svg';
 import { ReactComponent as StopTimerIcon } from '../styles/components/assets/stop-timer.svg';
+// Import the spinner component (same as used in ProjectOverviewPage)
+import { ReactComponent as SoukoLogoHeader } from '../styles/components/assets/Souko-logo-header.svg';
 import '@fontsource/shippori-mincho';
 import Sidebar from '../components/Layout/Sidebar';
 import '../styles/components/Sidebar.css';
@@ -37,8 +39,6 @@ const HomePage = React.memo(() => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [userProfile, setUserProfile] = useState(null);
   const [hasTrackedEver, setHasTrackedEver] = useState(false);
-
-  // Active session state (optimized query returns only the active session)
   const [activeSession, setActiveSession] = useState(null);
 
   const navigate = useNavigate();
@@ -48,7 +48,7 @@ const HomePage = React.memo(() => {
 
   const hasActiveSession = Boolean(activeSession);
 
-  // Fetch data from Firestore
+  // Function to fetch data for the homepage (projects, sessions, etc.)
   const fetchData = useCallback(async (uid) => {
     setLoading(true);
     try {
@@ -62,7 +62,7 @@ const HomePage = React.memo(() => {
       }));
       setProjects(userProjects);
 
-      // 2) Sessions (just for local usage, e.g. hasTrackedEver, etc.)
+      // 2) Sessions (for general stats)
       const sessionSnapshot = await getDocs(
         query(collection(db, 'sessions'), where('userId', '==', uid))
       );
@@ -92,7 +92,6 @@ const HomePage = React.memo(() => {
       if (profileSnap.exists()) {
         setUserProfile(profileSnap.data());
       } else {
-        // brand new user
         setUserProfile(null);
       }
     } catch (error) {
@@ -102,20 +101,37 @@ const HomePage = React.memo(() => {
     }
   }, []);
 
-  // Listen for auth changes
+  // Listen for auth changes and check for an active/paused session first
   useEffect(() => {
+    const skipAutoRedirect = location.state?.skipAutoRedirect;
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       if (!currentUser) {
         navigate('/');
       } else {
         setUser(currentUser);
+
+        // Only check for an active session if skipAutoRedirect flag is not set
+        if (!skipAutoRedirect) {
+          const activeSessionQuery = query(
+            collection(db, 'sessions'),
+            where('userId', '==', currentUser.uid),
+            where('endTime', '==', null)
+          );
+          const activeSessionSnapshot = await getDocs(activeSessionQuery);
+          if (!activeSessionSnapshot.empty) {
+            navigate('/time-tracker');
+            return; // Exit early to avoid fetching extra data.
+          }
+        }
+
+        // Otherwise, fetch the rest of the homepage data.
         fetchData(currentUser.uid);
       }
     });
     return () => unsubscribe();
-  }, [navigate, fetchData]);
+  }, [navigate, fetchData, location.state]);
 
-  // Listen for an active session (where endTime == null)
+  // Listen for an active session (for FAB display, etc.)
   useEffect(() => {
     if (user) {
       const activeSessionQuery = query(
@@ -154,7 +170,6 @@ const HomePage = React.memo(() => {
     if (!loading && userProfile !== undefined) {
       const isOnboardingRoute = location.pathname.startsWith('/onboarding');
       if (!isOnboardingRoute) {
-        // If there's no doc OR doc exists but onboardingComplete != true => step1
         if (!userProfile || userProfile.onboardingComplete !== true) {
           navigate('/onboarding/step1');
         }
@@ -162,11 +177,11 @@ const HomePage = React.memo(() => {
     }
   }, [loading, userProfile, location, navigate]);
 
-  // Summaries
+  // Limit projects to the 3 most recent ones
   const projectsToRender = useMemo(() => {
-    return [...projects].sort(
-      (a, b) => (b.lastTrackedTime || 0) - (a.lastTrackedTime || 0)
-    );
+    return [...projects]
+      .sort((a, b) => (b.lastTrackedTime || 0) - (a.lastTrackedTime || 0))
+      .slice(0, 3);
   }, [projects]);
 
   const totalSessionTime = useMemo(() => {
@@ -177,7 +192,7 @@ const HomePage = React.memo(() => {
     }, {});
   }, [sessions]);
 
-  // Read from profile doc's weeklyTrackedTime
+  // Weekly tracked time from the user profile
   const weeklyTrackedTime = userProfile?.weeklyTrackedTime || 0;
 
   const handleLogout = useCallback(async () => {
@@ -192,8 +207,13 @@ const HomePage = React.memo(() => {
   const openSidebar = useCallback(() => setIsSidebarOpen(true), []);
   const closeSidebar = useCallback(() => setIsSidebarOpen(false), []);
 
+  // Updated loading state to use the spinner component
   if (loading) {
-    return <div>Loading...</div>;
+    return (
+      <div className="homepage-loading">
+        <SoukoLogoHeader className="profile-pic souko-logo-header spinning-logo" />
+      </div>
+    );
   }
 
   return (

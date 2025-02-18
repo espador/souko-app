@@ -1,6 +1,6 @@
 console.log('Service worker registered!');
 
-const CACHE_VERSION = 'v19'; // Increment this version with each deployment
+const CACHE_VERSION = 'v20'; // Increment this version with each deployment
 const CACHE_NAME = `my-pwa-cache-${CACHE_VERSION}`;
 const urlsToCache = [
   '/', // Cache the root (index.html)

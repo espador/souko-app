@@ -45,13 +45,10 @@ import { ReactComponent as SoukoLogoHeader } from '../styles/components/assets/S
 // Helper: Monday-based week start
 function getMondayOfCurrentWeek() {
   const now = new Date();
-  // Set time to midnight for a clean comparison
   now.setHours(0, 0, 0, 0);
-
-  // day=0 is Sunday in JS, so shift for Monday-based weeks:
-  const day = (now.getDay() + 6) % 7; 
+  const day = (now.getDay() + 6) % 7;
   now.setDate(now.getDate() - day);
-  return now.getTime(); // returns ms
+  return now.getTime();
 }
 
 // Helper: Persist Instance ID
@@ -382,7 +379,6 @@ const TimeTrackerPage = React.memo(() => {
           const projectDoc = await transaction.get(projectRef);
           const currentLastTracked = projectDoc.data().lastTrackedTime;
           const newEndTime = Date.now();
-          // If no lastTrackedTime or newEndTime is more recent, update
           if (!currentLastTracked || newEndTime > currentLastTracked.toMillis?.()) {
             transaction.update(projectRef, { lastTrackedTime: serverTimestamp() });
           }
@@ -392,27 +388,17 @@ const TimeTrackerPage = React.memo(() => {
         await runTransaction(db, async (transaction) => {
           const profileRef = doc(db, 'profiles', user.uid);
           const profileSnap = await transaction.get(profileRef);
-          if (!profileSnap.exists()) {
-            // If no profile doc, skip or create it
-            // (But ideally userProfile was created in OnboardingStep4)
-            return;
-          }
+          if (!profileSnap.exists()) return;
 
           const profileData = profileSnap.data();
           let currentWeeklyTime = profileData.weeklyTrackedTime || 0;
           let storedWeekStart = profileData.weekStart || 0;
-
-          // Check if we need to reset because it's a new Monday
-          const thisMonday = getMondayOfCurrentWeek(); // e.g. 1697424000000
+          const thisMonday = getMondayOfCurrentWeek();
           if (storedWeekStart < thisMonday) {
-            // If the storedWeekStart is from an older week, reset
             currentWeeklyTime = 0;
             storedWeekStart = thisMonday;
           }
-
-          // Add the new session's time (timer is in seconds)
           const newWeeklyTime = currentWeeklyTime + timer;
-
           transaction.update(profileRef, {
             weeklyTrackedTime: newWeeklyTime,
             weekStart: storedWeekStart,
@@ -525,7 +511,6 @@ const TimeTrackerPage = React.memo(() => {
       const sessionRef = doc(db, 'sessions', sessionId);
       try {
         await updateDoc(sessionRef, { activeInstanceId: instanceId });
-        // Immediately fetch the current session data to sync local state
         const sessionSnap = await getDoc(sessionRef);
         if (sessionSnap.exists()) {
           const sessionData = sessionSnap.data();
@@ -569,6 +554,7 @@ const TimeTrackerPage = React.memo(() => {
       <Header
         variant="journalOverview"
         showBackArrow={true}
+        onBack={() => navigate('/home', { state: { skipAutoRedirect: true } })}
         onProfileClick={() => setIsSidebarOpen(true)}
       />
       <div className="timer-quote">{timerQuote}</div>
