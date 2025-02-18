@@ -18,7 +18,7 @@ import '../styles/global.css';
 import '../styles/components/HomePage.css';
 import { ReactComponent as StartTimerIcon } from '../styles/components/assets/start-timer.svg';
 import { ReactComponent as StopTimerIcon } from '../styles/components/assets/stop-timer.svg';
-// Import the spinner component (same as used in ProjectOverviewPage)
+// Import spinner component (same as used in ProjectOverviewPage)
 import { ReactComponent as SoukoLogoHeader } from '../styles/components/assets/Souko-logo-header.svg';
 import '@fontsource/shippori-mincho';
 import Sidebar from '../components/Layout/Sidebar';
@@ -101,17 +101,18 @@ const HomePage = React.memo(() => {
     }
   }, []);
 
-  // Listen for auth changes and check for an active/paused session first
+  // Listen for auth changes and perform auto-redirect only once per app session
   useEffect(() => {
     const skipAutoRedirect = location.state?.skipAutoRedirect;
+    const autoRedirectDone = sessionStorage.getItem('autoRedirectDone');
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       if (!currentUser) {
         navigate('/');
       } else {
         setUser(currentUser);
 
-        // Only check for an active session if skipAutoRedirect flag is not set
-        if (!skipAutoRedirect) {
+        // If we haven't skipped auto-redirect and haven't auto-redirected yet...
+        if (!skipAutoRedirect && !autoRedirectDone) {
           const activeSessionQuery = query(
             collection(db, 'sessions'),
             where('userId', '==', currentUser.uid),
@@ -119,6 +120,8 @@ const HomePage = React.memo(() => {
           );
           const activeSessionSnapshot = await getDocs(activeSessionQuery);
           if (!activeSessionSnapshot.empty) {
+            // Mark that we've already auto-redirected for this app session.
+            sessionStorage.setItem('autoRedirectDone', 'true');
             navigate('/time-tracker');
             return; // Exit early to avoid fetching extra data.
           }
