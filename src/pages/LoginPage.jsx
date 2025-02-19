@@ -1,6 +1,11 @@
 // LoginPage.jsx
 import React, { useEffect, useCallback } from 'react';
-import { signInWithPopup, signInWithRedirect, getRedirectResult } from 'firebase/auth';
+import {
+  signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
+  onAuthStateChanged
+} from 'firebase/auth';
 import { auth, googleProvider, db } from '../services/firebase';
 import { useNavigate, Link } from 'react-router-dom';
 import '../styles/global.css';
@@ -19,19 +24,22 @@ const LoginPage = () => {
 
   // Process login result: create profile if necessary then navigate to home
   const processLoginResult = useCallback(async (result) => {
+    if (!result || !result.user) return; // Safety check in case result is null
+
     const user = result.user;
+    console.log('Firebase user:', user);
+
     // Check if profile exists in 'profiles' collection
     const profileRef = doc(db, 'profiles', user.uid);
     const profileSnap = await getDoc(profileRef);
 
     if (!profileSnap.exists()) {
-      // Create a new profile document if it doesn't exist
       await setDoc(profileRef, {
         uid: user.uid,
         email: user.email,
         displayName: user.displayName,
         profileImageUrl: user.photoURL,
-        featureAccessLevel: 'free', // Default access level
+        featureAccessLevel: 'free',
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
       });
@@ -40,17 +48,26 @@ const LoginPage = () => {
       console.log('Profile already exists for user:', user.uid);
     }
 
-    console.log('User Info:', user);
+    // Navigate to home
     navigate('/home');
   }, [navigate]);
 
   useEffect(() => {
     document.body.classList.add('no-scroll');
 
-    // Check for pending redirect results (necessary for iOS standalone mode)
+    // 1. Listen for existing auth state (user may already be signed in)
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        console.log('User already signed in:', user);
+        navigate('/home');
+      }
+    });
+
+    // 2. Check for redirect results (especially for iOS standalone)
     const checkRedirect = async () => {
       try {
         const result = await getRedirectResult(auth);
+        console.log('getRedirectResult =>', result);
         if (result) {
           await processLoginResult(result);
         }
@@ -64,8 +81,9 @@ const LoginPage = () => {
 
     return () => {
       document.body.classList.remove('no-scroll');
+      unsubscribe();
     };
-  }, [processLoginResult]);
+  }, [processLoginResult, navigate]);
 
   const handleLogin = async () => {
     try {
