@@ -24,7 +24,12 @@ const LoginPage = () => {
 
   // Process login result: create profile if necessary then navigate to home
   const processLoginResult = useCallback(async (result) => {
-    if (!result || !result.user) return; // Safety check in case result is null
+    console.log('processLoginResult called with:', result); // LOG: Check if this function is called and with what
+
+    if (!result || !result.user) {
+      console.log('processLoginResult: No result or user found, returning'); // LOG: Check if result or user is missing
+      return; // Safety check in case result is null
+    }
 
     const user = result.user;
     console.log('Firebase user:', user);
@@ -48,7 +53,7 @@ const LoginPage = () => {
       console.log('Profile already exists for user:', user.uid);
     }
 
-    // Navigate to home
+    console.log('Navigating to /home from processLoginResult'); // LOG: Check if navigation is attempted
     navigate('/home');
   }, [navigate]);
 
@@ -57,8 +62,9 @@ const LoginPage = () => {
 
     // 1. Listen for existing auth state (user may already be signed in)
     const unsubscribe = onAuthStateChanged(auth, (user) => {
+      console.log('onAuthStateChanged in LoginPage triggered:', user); // LOG: Check if onAuthStateChanged is triggered and user state
       if (user) {
-        console.log('User already signed in:', user);
+        console.log('User already signed in (onAuthStateChanged):', user);
         navigate('/home');
       }
     });
@@ -66,10 +72,14 @@ const LoginPage = () => {
     // 2. Check for redirect results (especially for iOS standalone)
     const checkRedirect = async () => {
       try {
+        console.log('Checking for redirect result...'); // LOG: Check if checkRedirect is called
         const result = await getRedirectResult(auth);
-        console.log('getRedirectResult =>', result);
+        console.log('getRedirectResult =>', result); // LOG: Inspect the redirect result
         if (result) {
+          console.log('Redirect result found, processing...'); // LOG: Check if redirect result is processed
           await processLoginResult(result);
+        } else {
+          console.log('No redirect result found.'); // LOG: Check if no redirect result
         }
       } catch (error) {
         console.error('Redirect login error:', error);
@@ -87,10 +97,13 @@ const LoginPage = () => {
 
   const handleLogin = async () => {
     try {
+      console.log('Login button clicked'); // LOG: Check if login button is clicked
       if (isIOS() && isInStandaloneMode()) {
+        console.log('Using signInWithRedirect for iOS PWA'); // LOG: Check if redirect flow is used for iOS
         // Use redirect method for iOS PWAs to avoid popup issues.
         await signInWithRedirect(auth, googleProvider);
       } else {
+        console.log('Using signInWithPopup for non-iOS PWA'); // LOG: Check if popup flow is used for non-iOS
         const result = await signInWithPopup(auth, googleProvider);
         await processLoginResult(result);
       }
@@ -120,7 +133,7 @@ const LoginPage = () => {
       <div className="sticky-login-container">
         <h2 className="login-terms">
           By continuing, you agree to our <Link to="/terms" className="login-link">Terms</Link>
-          &nbsp;and&nbsp;
+           and 
           <Link to="/privacy" className="login-link">Privacy Policy</Link>.
         </h2>
       </div>

@@ -45,14 +45,14 @@ const AppRoutes = () => {
     setPersistence(auth, browserLocalPersistence)
       .then(() => {
         const unsubscribe = onAuthStateChanged(auth, (user) => {
-          // If user is logged in and on the login page, go to home
+          console.log('onAuthStateChanged in AppRoutes triggered:', user, location.pathname); // LOG: Check AppRoutes auth state changes
+          // If user is logged in AND on the login page, navigate to home.
+          // This check is now more specific to prevent potential loops.
           if (user && location.pathname === '/') {
+            console.log('AppRoutes: User logged in and on login page, navigating to /home');
             navigate('/home', { replace: true });
           }
-          // If user is not logged in and not on the login page, go to login
-          else if (!user && location.pathname !== '/') {
-            navigate('/', { replace: true });
-          }
+          // No need to redirect to login page if user is not logged in. LoginPage handles this.
         });
         return unsubscribe;
       })
