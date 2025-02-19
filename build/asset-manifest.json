@@ -1,7 +1,7 @@
 {
   "files": {
     "main.css": "/static/css/main.d88c3b01.css",
-    "main.js": "/static/js/main.5f20c544.js",
+    "main.js": "/static/js/main.667f041a.js",
     "static/media/CommitMono-700-Regular.ttf": "/static/media/CommitMono-700-Regular.abaf71e816dc70e8de48.ttf",
     "static/media/CommitMono-400-Regular.ttf": "/static/media/CommitMono-400-Regular.7acda3e77ae620cd8a41.ttf",
     "static/media/shippori-mincho-5-400-normal.woff": "/static/media/shippori-mincho-5-400-normal.21d9a20d3996449ccd3a.woff",
@@ -279,6 +279,6 @@
   },
   "entrypoints": [
     "static/css/main.d88c3b01.css",
-    "static/js/main.5f20c544.js"
+    "static/js/main.667f041a.js"
   ]
 }

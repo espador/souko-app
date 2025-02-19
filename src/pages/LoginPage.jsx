@@ -1,7 +1,7 @@
 // LoginPage.jsx
 import React, { useEffect, useCallback } from 'react';
 import {
-  signInWithPopup,
+  signInWithPopup, // Keep this import for potential future use or fallback
   signInWithRedirect,
   getRedirectResult,
   onAuthStateChanged
@@ -17,10 +17,6 @@ import Header from '../components/Layout/Header';
 
 const LoginPage = () => {
   const navigate = useNavigate();
-
-  // Helper functions to detect iOS and standalone mode
-  const isIOS = () => /iphone|ipad|ipod/.test(window.navigator.userAgent.toLowerCase());
-  const isInStandaloneMode = () => ('standalone' in window.navigator) && window.navigator.standalone;
 
   // Process login result: create profile if necessary then navigate to home
   const processLoginResult = useCallback(async (result) => {
@@ -69,7 +65,7 @@ const LoginPage = () => {
       }
     });
 
-    // 2. Check for redirect results (especially for iOS standalone)
+    // 2. Check for redirect results (Crucial for PWAs)
     const checkRedirect = async () => {
       try {
         console.log('Checking for redirect result...'); // LOG: Check if checkRedirect is called
@@ -79,7 +75,7 @@ const LoginPage = () => {
           console.log('Redirect result found, processing...'); // LOG: Check if redirect result is processed
           await processLoginResult(result);
         } else {
-          console.log('No redirect result found.'); // LOG: Check if no redirect result
+          console.log('No redirect result found (initial load or popup flow).'); // LOG: Indicate no redirect result (normal for popup or initial load)
         }
       } catch (error) {
         console.error('Redirect login error:', error);
@@ -87,7 +83,7 @@ const LoginPage = () => {
       }
     };
 
-    checkRedirect();
+    checkRedirect(); // Check for redirect result on component mount
 
     return () => {
       document.body.classList.remove('no-scroll');
@@ -98,15 +94,8 @@ const LoginPage = () => {
   const handleLogin = async () => {
     try {
       console.log('Login button clicked'); // LOG: Check if login button is clicked
-      if (isIOS() && isInStandaloneMode()) {
-        console.log('Using signInWithRedirect for iOS PWA'); // LOG: Check if redirect flow is used for iOS
-        // Use redirect method for iOS PWAs to avoid popup issues.
-        await signInWithRedirect(auth, googleProvider);
-      } else {
-        console.log('Using signInWithPopup for non-iOS PWA'); // LOG: Check if popup flow is used for non-iOS
-        const result = await signInWithPopup(auth, googleProvider);
-        await processLoginResult(result);
-      }
+      console.log('Using signInWithRedirect for PWA (always)'); // LOG: Force redirect for PWA context
+      await signInWithRedirect(auth, googleProvider); // **FORCE signInWithRedirect for PWAs**
     } catch (error) {
       console.error('Login Error:', error);
       alert('Authentication failed. Please try again.');
