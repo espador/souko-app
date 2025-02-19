@@ -13,7 +13,7 @@ root.render(
 );
 
 // Register the service worker
-serviceWorkerRegistration.register();
+//serviceWorkerRegistration.register();
 
 // If you want to unregister the service worker (for development or specific reasons), you can use:
 // serviceWorkerRegistration.unregister();
