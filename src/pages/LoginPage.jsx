@@ -1,6 +1,5 @@
-// LoginPage.jsx
-import React, { useEffect, useCallback } from 'react';
-import { signInWithPopup, signInWithRedirect, getRedirectResult } from 'firebase/auth';
+import React, { useEffect, useCallback, useState } from 'react';
+import { signInWithPopup, signInWithRedirect, getRedirectResult, onAuthStateChanged } from 'firebase/auth';
 import { auth, googleProvider, db } from '../services/firebase';
 import { useNavigate, Link } from 'react-router-dom';
 import '../styles/global.css';
@@ -12,6 +11,7 @@ import Header from '../components/Layout/Header';
 
 const LoginPage = () => {
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
 
   // Helper functions to detect iOS and standalone mode
   const isIOS = () => /iphone|ipad|ipod/.test(window.navigator.userAgent.toLowerCase());
@@ -19,19 +19,18 @@ const LoginPage = () => {
 
   // Process login result: create profile if necessary then navigate to home
   const processLoginResult = useCallback(async (result) => {
+    setLoading(true);
     const user = result.user;
-    // Check if profile exists in 'profiles' collection
     const profileRef = doc(db, 'profiles', user.uid);
     const profileSnap = await getDoc(profileRef);
 
     if (!profileSnap.exists()) {
-      // Create a new profile document if it doesn't exist
       await setDoc(profileRef, {
         uid: user.uid,
         email: user.email,
         displayName: user.displayName,
         profileImageUrl: user.photoURL,
-        featureAccessLevel: 'free', // Default access level
+        featureAccessLevel: 'free',
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
       });
@@ -42,13 +41,15 @@ const LoginPage = () => {
 
     console.log('User Info:', user);
     navigate('/home');
+    setLoading(false);
   }, [navigate]);
 
   useEffect(() => {
     document.body.classList.add('no-scroll');
 
-    // Check for pending redirect results (necessary for iOS standalone mode)
+    // Check for pending redirect results (especially for iOS standalone PWAs)
     const checkRedirect = async () => {
+      setLoading(true);
       try {
         const result = await getRedirectResult(auth);
         if (result) {
@@ -57,20 +58,31 @@ const LoginPage = () => {
       } catch (error) {
         console.error('Redirect login error:', error);
         alert('Authentication failed. Please try again.');
+      } finally {
+        setLoading(false);
       }
     };
 
     checkRedirect();
 
+    // Listen for auth state changes - helps if redirect doesn't immediately return a result
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        navigate('/home');
+      }
+    });
+
     return () => {
       document.body.classList.remove('no-scroll');
+      unsubscribe();
     };
-  }, [processLoginResult]);
+  }, [processLoginResult, navigate]);
 
   const handleLogin = async () => {
+    setLoading(true);
     try {
       if (isIOS() && isInStandaloneMode()) {
-        // Use redirect method for iOS PWAs to avoid popup issues.
+        // Use redirect method for iOS PWAs to avoid pop-up issues.
         await signInWithRedirect(auth, googleProvider);
       } else {
         const result = await signInWithPopup(auth, googleProvider);
@@ -79,6 +91,8 @@ const LoginPage = () => {
     } catch (error) {
       console.error('Login Error:', error);
       alert('Authentication failed. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -86,6 +100,7 @@ const LoginPage = () => {
     <div className="login-page">
       <Header showLiveTime={true} />
       <main className="login-content">
+        {loading && <div className="loading-indicator">Loading...</div>}
         <section className="motivational-section">
           <TextGenerateEffect words="The song of your roots is the song of now" />
           <h4>
@@ -93,7 +108,7 @@ const LoginPage = () => {
           </h4>
         </section>
         <div className="login-actions">
-          <button className="login-button" onClick={handleLogin}>
+          <button className="login-button" onClick={handleLogin} disabled={loading}>
             <img src={googleIcon} alt="Google Icon" className="google-icon" />
             Continue with Google
           </button>
