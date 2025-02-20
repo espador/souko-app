@@ -19,47 +19,63 @@ const LoginPage = () => {
 
   // Process login result: create profile if necessary then navigate to home
   const processLoginResult = useCallback(async (result) => {
+    console.log('processLoginResult - START'); // LOG
     setLoading(true);
-    const user = result.user;
-    const profileRef = doc(db, 'profiles', user.uid);
-    const profileSnap = await getDoc(profileRef);
+    try {
+      const user = result.user;
+      console.log('processLoginResult - User object:', user); // LOG
+      const profileRef = doc(db, 'profiles', user.uid);
+      const profileSnap = await getDoc(profileRef);
 
-    if (!profileSnap.exists()) {
-      await setDoc(profileRef, {
-        uid: user.uid,
-        email: user.email,
-        displayName: user.displayName,
-        profileImageUrl: user.photoURL,
-        featureAccessLevel: 'free',
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
-      });
-      console.log('New profile created for user:', user.uid);
-    } else {
-      console.log('Profile already exists for user:', user.uid);
+      if (!profileSnap.exists()) {
+        await setDoc(profileRef, {
+          uid: user.uid,
+          email: user.email,
+          displayName: user.displayName,
+          profileImageUrl: user.photoURL,
+          featureAccessLevel: 'free',
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
+        });
+        console.log('processLoginResult - New profile created for user:', user.uid); // LOG
+      } else {
+        console.log('processLoginResult - Profile already exists for user:', user.uid); // LOG
+      }
+
+      console.log('processLoginResult - User Info:', user); // LOG
+      navigate('/home');
+      console.log('processLoginResult - Navigated to /home'); // LOG
+    } catch (error) {
+      console.error('processLoginResult - Error:', error); // LOG
+      alert('Authentication failed during profile processing. Please try again.');
+    } finally {
+      setLoading(false);
+      console.log('processLoginResult - FINISH'); // LOG
     }
-
-    console.log('User Info:', user);
-    navigate('/home');
-    setLoading(false);
   }, [navigate]);
 
   useEffect(() => {
+    console.log('LoginPage useEffect - START'); // LOG
     document.body.classList.add('no-scroll');
 
     // Check for pending redirect results (especially for iOS standalone PWAs)
     const checkRedirect = async () => {
+      console.log('checkRedirect - START'); // LOG
       setLoading(true);
       try {
         const result = await getRedirectResult(auth);
+        console.log('checkRedirect - getRedirectResult:', result); // LOG
         if (result) {
           await processLoginResult(result);
+        } else {
+          console.log('checkRedirect - No redirect result found'); // LOG
         }
       } catch (error) {
-        console.error('Redirect login error:', error);
-        alert('Authentication failed. Please try again.');
+        console.error('checkRedirect - Redirect login error:', error); // LOG
+        alert('Authentication failed during redirect. Please try again.');
       } finally {
         setLoading(false);
+        console.log('checkRedirect - FINISH'); // LOG
       }
     };
 
@@ -67,7 +83,9 @@ const LoginPage = () => {
 
     // Listen for auth state changes - helps if redirect doesn't immediately return a result
     const unsubscribe = onAuthStateChanged(auth, (user) => {
+      console.log('onAuthStateChanged - Auth state changed:', user); // LOG
       if (user) {
+        console.log('onAuthStateChanged - User logged in, navigating to /home'); // LOG
         navigate('/home');
       }
     });
@@ -75,24 +93,30 @@ const LoginPage = () => {
     return () => {
       document.body.classList.remove('no-scroll');
       unsubscribe();
+      console.log('LoginPage useEffect - CLEANUP'); // LOG
     };
   }, [processLoginResult, navigate]);
 
   const handleLogin = async () => {
+    console.log('handleLogin - START'); // LOG
     setLoading(true);
     try {
+      console.log('handleLogin - isIOS() && isInStandaloneMode():', isIOS() && isInStandaloneMode()); // LOG
       if (isIOS() && isInStandaloneMode()) {
-        // Use redirect method for iOS PWAs to avoid pop-up issues.
+        console.log('handleLogin - Using signInWithRedirect'); // LOG
         await signInWithRedirect(auth, googleProvider);
       } else {
+        console.log('handleLogin - Using signInWithPopup'); // LOG
         const result = await signInWithPopup(auth, googleProvider);
+        console.log('handleLogin - signInWithPopup result:', result); // LOG
         await processLoginResult(result);
       }
     } catch (error) {
-      console.error('Login Error:', error);
-      alert('Authentication failed. Please try again.');
+      console.error('handleLogin - Login Error:', error); // LOG
+      alert('Authentication failed during login. Please try again.');
     } finally {
       setLoading(false);
+      console.log('handleLogin - FINISH'); // LOG
     }
   };
 
@@ -117,7 +141,7 @@ const LoginPage = () => {
       <div className="sticky-login-container">
         <h2 className="login-terms">
           By continuing, you agree to our <Link to="/terms" className="login-link">Terms</Link>
-          &nbsp;and&nbsp;
+           and 
           <Link to="/privacy" className="login-link">Privacy Policy</Link>.
         </h2>
       </div>
