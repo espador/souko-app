@@ -2,8 +2,6 @@
 import { initializeApp } from 'firebase/app';
 import { getFirestore, collection, query, where, getDocs, addDoc, doc, updateDoc, deleteDoc, getDoc, serverTimestamp, orderBy } from 'firebase/firestore'; // Import necessary Firestore functions
 import { getAuth, GoogleAuthProvider } from 'firebase/auth';
-// REMOVED INCORRECT IMPORT! - Ensure this line is REMOVED
-// import logEvent from './utils/logEvent';
 
 // Firebase configuration
 const firebaseConfig = {
@@ -13,6 +11,7 @@ const firebaseConfig = {
   storageBucket: "souko-app.firebasestorage.app",
   messagingSenderId: "713268951136",
   appId: "1:713268951136:web:a0f028d39557da4082ab05",
+  measurementId: "G-6BBCWYJ3PD"
 };
 
 // Initialize Firebase

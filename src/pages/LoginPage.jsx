@@ -101,16 +101,16 @@ const LoginPage = () => {
     console.log('handleLogin - START'); // LOG
     setLoading(true);
     try {
-      console.log('handleLogin - isIOS() && isInStandaloneMode():', isIOS() && isInStandaloneMode()); // LOG
-      if (isIOS() && isInStandaloneMode()) {
-        console.log('handleLogin - Using signInWithRedirect'); // LOG
-        await signInWithRedirect(auth, googleProvider);
-      } else {
+      // Comment out or remove the signInWithRedirect block:
+      // if (isIOS() && isInStandaloneMode()) {
+      //   console.log('handleLogin - Using signInWithRedirect'); // LOG
+      //   await signInWithRedirect(auth, googleProvider);
+      // } else {
         console.log('handleLogin - Using signInWithPopup'); // LOG
         const result = await signInWithPopup(auth, googleProvider);
         console.log('handleLogin - signInWithPopup result:', result); // LOG
         await processLoginResult(result);
-      }
+      // } // End of commented out block
     } catch (error) {
       console.error('handleLogin - Login Error:', error); // LOG
       alert('Authentication failed during login. Please try again.');
