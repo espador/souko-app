@@ -55,7 +55,7 @@
   justify-content: center;
   align-items: center;
   gap: 8px;
-  margin-bottom: 24px;
+  margin-bottom: 0px;
 }
 
 .login-button:hover {
@@ -72,6 +72,16 @@
 .login-terms {
   font-family: var(--font-commit-mono);
   color: var(--text-muted);
+  font-size: 14px; /* Slightly smaller for terms text */
+  line-height: 20px;
+  text-align: center; /* Keep text-align: center; for the text itself */
+  margin-bottom: 40px;
+  /* Removed display: flex; again - ensure it's just a block element */
+}
+
+.login-pwa {
+  font-family: var(--font-commit-mono);
+  color: var(--accent-pink);
   font-size: 14px; /* Slightly smaller for terms text */
   line-height: 20px;
   text-align: center; /* Keep text-align: center; for the text itself */
