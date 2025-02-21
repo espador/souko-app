@@ -109,8 +109,8 @@ const ProjectOverviewPage = () => {
           } catch (e) {
             console.error("Error parsing cached data:", e);
           }
-          const newCache = { 
-            ...cachedData, 
+          const newCache = {
+            ...cachedData,
             projects: userProjects,
             timestamp: Date.now()
           };
@@ -128,8 +128,8 @@ const ProjectOverviewPage = () => {
           } catch (e) {
             console.error("Error parsing cached data:", e);
           }
-          const newCache = { 
-            ...cachedData, 
+          const newCache = {
+            ...cachedData,
             sessions: userSessions,
             timestamp: Date.now()
           };
@@ -182,12 +182,16 @@ const ProjectOverviewPage = () => {
   const hasActiveSession = Boolean(activeSession);
 
   const totalSessionTime = useMemo(() => {
-    return sessions.reduce((acc, session) => {
-      const project = session.project || 'Unknown Project';
-      acc[project] = (acc[project] || 0) + (session.elapsedTime || 0);
-      return acc;
-    }, {});
-  }, [sessions]);
+    const projectTimes = {};
+    projects.forEach(project => {
+      const projectSessions = sessions.filter(session => session.projectId === project.id); // Use projectId here
+      const totalTimeForProject = projectSessions.reduce((acc, session) => {
+        return acc + (session.elapsedTime || 0);
+      }, 0);
+      projectTimes[project.id] = totalTimeForProject; // Use project.id as key
+    });
+    return projectTimes;
+  }, [sessions, projects]); // Recalculate when sessions or projects change
 
   const totalTrackedTimeAcrossProjects = useMemo(() => {
     return sessions.reduce((sum, session) => sum + (session.elapsedTime || 0), 0);
@@ -227,7 +231,7 @@ const ProjectOverviewPage = () => {
     return projects
       .map(project => {
         const projectSessions = sessions.filter(
-          session => session.project === project.name && session.startTime
+          session => session.projectId === project.id && session.startTime // Use projectId here
         );
         const latestSessionTime =
           projectSessions.length > 0
@@ -246,17 +250,17 @@ const ProjectOverviewPage = () => {
   const sortedProjects = useMemo(() => {
     if (sortMode === "tracked") {
       return [...projects].sort((a, b) => {
-        const aTime = totalSessionTime[a.name] || 0;
-        const bTime = totalSessionTime[b.name] || 0;
+        const aTime = totalSessionTime[a.id] || 0; // Use a.id here
+        const bTime = totalSessionTime[b.id] || 0; // Use b.id here
         return bTime - aTime;
       });
     } else {
       return [...projects].sort((a, b) => {
         const aSessions = sessions.filter(
-          session => session.project === a.name && session.startTime
+          session => session.projectId === a.id && session.startTime // Use a.id here
         );
         const bSessions = sessions.filter(
-          session => session.project === b.name && session.startTime
+          session => session.projectId === b.id && session.startTime // Use b.id here
         );
         const aLatest = aSessions.length > 0
           ? Math.max(...aSessions.map(session => {
@@ -299,8 +303,8 @@ const ProjectOverviewPage = () => {
               <div className="project-image-container">{renderProjectImage(project)}</div>
               <div className="project-name">{project.name}</div>
               <div className="project-total-time">
-                {totalSessionTime && totalSessionTime[project.name] !== undefined
-                  ? formatTime(totalSessionTime[project.name])
+                {totalSessionTime && totalSessionTime[project.id] !== undefined // Use project.id here
+                  ? formatTime(totalSessionTime[project.id])
                   : formatTime(0)}
               </div>
             </li>

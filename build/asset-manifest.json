@@ -1,7 +1,7 @@
 {
   "files": {
     "main.css": "/static/css/main.3a0b8c87.css",
-    "main.js": "/static/js/main.bf274cc4.js",
+    "main.js": "/static/js/main.072f2450.js",
     "static/media/CommitMono-700-Regular.ttf": "/static/media/CommitMono-700-Regular.abaf71e816dc70e8de48.ttf",
     "static/media/CommitMono-400-Regular.ttf": "/static/media/CommitMono-400-Regular.7acda3e77ae620cd8a41.ttf",
     "static/media/shippori-mincho-5-400-normal.woff": "/static/media/shippori-mincho-5-400-normal.21d9a20d3996449ccd3a.woff",
@@ -258,8 +258,8 @@
     "static/media/shippori-mincho-58-400-normal.woff2": "/static/media/shippori-mincho-58-400-normal.41eb6dbaf3f9c34f7704.woff2",
     "static/media/euro.svg": "/static/media/euro.900b95ca6c1989c4ecaf03ab02bae784.svg",
     "static/media/shippori-mincho-55-400-normal.woff2": "/static/media/shippori-mincho-55-400-normal.ea7ba4861a2d644315b6.woff2",
-    "static/media/return.svg": "/static/media/return.dcc6ae7fba91eceee2de31dfbd843e8f.svg",
     "index.html": "/index.html",
+    "static/media/return.svg": "/static/media/return.dcc6ae7fba91eceee2de31dfbd843e8f.svg",
     "static/media/Souko-logo-header.svg": "/static/media/Souko-logo-header.d31024ffe206099b65e30c3861478478.svg",
     "static/media/edit.svg": "/static/media/edit.f17a19aa934da39bad77b391bc6c9227.svg",
     "static/media/save.svg": "/static/media/save.5ca7cb7e47226c51a3fbad84646ae9b4.svg",
@@ -279,6 +279,6 @@
   },
   "entrypoints": [
     "static/css/main.3a0b8c87.css",
-    "static/js/main.bf274cc4.js"
+    "static/js/main.072f2450.js"
   ]
 }

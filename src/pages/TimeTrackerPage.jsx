@@ -475,12 +475,24 @@ const TimeTrackerPage = React.memo(() => {
 
   // Change Project
   const handleProjectChange = useCallback(
-    (e) => {
+    async (e) => {
       const projectName = e.target.value;
       const selectedProj = projects.find((proj) => proj.name === projectName);
       setSelectedProject(selectedProj);
+
+      if (isRunning && sessionId && selectedProj) {
+        try {
+          const sessionRef = doc(db, 'sessions', sessionId);
+          await updateDoc(sessionRef, {
+            project: selectedProj.name,
+            projectId: selectedProj.id,
+          });
+        } catch (error) {
+          console.error('Error updating project in session:', error);
+        }
+      }
     },
-    [projects]
+    [projects, isRunning, sessionId]
   );
 
   // Autosave notes
@@ -613,6 +625,7 @@ const TimeTrackerPage = React.memo(() => {
           className="project-dropdown"
           value={selectedProject?.name || ''}
           onChange={handleProjectChange}
+          // **REMOVED: disabled={isRunning} ** // Project dropdown is now enabled when timer is running
         >
           {projects.map((project) => (
             <option key={project.id} value={project.name}>
