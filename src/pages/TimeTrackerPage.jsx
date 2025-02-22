@@ -335,7 +335,7 @@ const TimeTrackerPage = React.memo(() => {
     setShowStopConfirmModal(true);
   }, []);
 
-  // CONFIRM STOP => finalize session & update weeklyTrackedTime
+  // CONFIRM STOP => finalize session & update weeklyTrackedTime and totalTrackedTime
   const confirmStopSession = useCallback(async () => {
     setShowStopConfirmModal(false);
     setIsRunning(false);
@@ -343,6 +343,8 @@ const TimeTrackerPage = React.memo(() => {
     if (sessionId && selectedProject) {
       try {
         const sessionRef = doc(db, 'sessions', sessionId);
+        const sessionDurationSeconds = timer; // Timer is in seconds
+        const sessionDurationMinutes = Math.round(sessionDurationSeconds / 60); // Convert seconds to minutes and round
 
         // 1) Calculate total paused time
         let totalPausedTimeMs = 0;
@@ -384,7 +386,7 @@ const TimeTrackerPage = React.memo(() => {
           }
         });
 
-        // 4) Update weeklyTrackedTime in the user's profile doc
+        // 4) Update weeklyTrackedTime and totalTrackedTime in the user's profile doc
         await runTransaction(db, async (transaction) => {
           const profileRef = doc(db, 'profiles', user.uid);
           const profileSnap = await transaction.get(profileRef);
@@ -399,9 +401,13 @@ const TimeTrackerPage = React.memo(() => {
             storedWeekStart = thisMonday;
           }
           const newWeeklyTime = currentWeeklyTime + timer;
+          let currentTotalTrackedTime = profileData.totalTrackedTime || 0;
+          const newTotalTrackedTime = currentTotalTrackedTime + sessionDurationMinutes; // Add session duration in minutes
+
           transaction.update(profileRef, {
             weeklyTrackedTime: newWeeklyTime,
             weekStart: storedWeekStart,
+            totalTrackedTime: newTotalTrackedTime, // Update totalTrackedTime
             lastUpdated: serverTimestamp(),
           });
         });

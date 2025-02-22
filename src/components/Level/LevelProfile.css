@@ -1,0 +1,73 @@
+/* src/components/Level/LevelProfile.css */
+.level-profile-container {
+  background-color: transparent;
+  color: #fff; /* White text */
+  padding: 0px;
+  border-radius: 12px;
+  margin-bottom: 16px;
+}
+
+.level-header {
+  display: flex;
+  /* justify-content: space-between;  REMOVED justify-content: space-between */
+  align-items: flex-start;
+  margin-bottom: 12px;
+  gap: 8px; /* ADDED gap for spacing between label and badge */
+}
+
+.project-label {
+  font-family: var(--font-commit-mono);
+  font-size: 24px;
+  font-weight: 400;
+}
+
+.level-badge {
+  background-color: #FE2F00; /* Red badge color */
+  color: #000;
+  border-radius: 25%;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-family: var(--font-commit-mono);
+  font-size: 10px;
+  font-weight: 700;
+  margin-left: 4px; /* Optional: Add a little space between label and badge if needed */
+}
+
+.level-stats {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 8px;
+}
+
+.total-lvl-time {
+  font-family: var(--font-commit-mono);
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--text-color);
+}
+
+.time-to-level-up {
+  font-family: var(--font-commit-mono);
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--text-muted);
+}
+
+.progress-bar {
+  background-color: #27272a; /* Darker background for the progress bar */
+  height: 4px;
+  border-radius: 2px;
+  overflow: hidden; /* Ensure fill stays within rounded corners */
+}
+
+.progress-bar-fill {
+  background-image: linear-gradient(to right, #533FF5, #18A2FD, #E682FF ); /* Gradient fill */
+  height: 100%;
+  width: 0%; /* Width will be set dynamically by percentage */
+  border-radius: 2px;
+  transition: width 0.3s ease-in-out; /* Smooth width transition */
+}
