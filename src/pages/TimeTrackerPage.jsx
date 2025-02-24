@@ -1,3 +1,4 @@
+import { v4 as uuidv4 } from 'uuid'; // Import UUID generator
 import React, {
   useEffect,
   useState,
@@ -60,6 +61,8 @@ const getInstanceId = () => {
 };
 
 const TimeTrackerPage = React.memo(({ navigate }) => { // <-- Receive navigate as prop
+  console.log("TimeTrackerPage component rendered"); // *** ADDED: Component Render Log ***
+
   // Component state
   const [user, setUser] = useState(null);
   const [projects, setProjects] = useState([]);
@@ -145,6 +148,7 @@ const TimeTrackerPage = React.memo(({ navigate }) => { // <-- Receive navigate a
         const activeSessionDoc = activeSessionSnapshot.docs[0];
         const sessionData = activeSessionDoc.data();
         setSessionId(activeSessionDoc.id);
+        console.log("SessionId set in fetchData:", activeSessionDoc.id); // *** ADDED: SessionId log in fetchData ***
         const matchingProject = userProjects.find(
           (proj) => proj.name === sessionData.project
         );
@@ -166,6 +170,29 @@ const TimeTrackerPage = React.memo(({ navigate }) => { // <-- Receive navigate a
           setIsPaused(false);
         }
         if (sessionData.pauseEvents) setPauseEvents(sessionData.pauseEvents);
+
+        // --- Token Check on App Load ---
+        const localSessionToken = localStorage.getItem('sessionToken');
+        const firestoreSessionToken = sessionData.activeToken;
+
+        if (firestoreSessionToken) {
+          if (!localSessionToken) {
+            // No local token, set it from Firestore (first time on this device after session started elsewhere)
+            localStorage.setItem('sessionToken', firestoreSessionToken);
+          } else if (localSessionToken !== firestoreSessionToken) {
+            // Tokens don't match, session takeover scenario, show conflict modal
+            setConflictModalVisible(true);
+          }
+        } else if (localSessionToken) {
+          // Firestore token is missing but local token exists - handle potential edge case, maybe clear local token or investigate
+          console.warn("Firestore session token missing but local token exists. Consider clearing local storage.");
+          localStorage.removeItem('sessionToken'); // Example: Clear local token to avoid future mismatches. Adapt as needed.
+        }
+        // --- End Token Check on App Load ---
+
+      } else {
+        setSessionId(null); // *** ADDED: Reset SessionId if no active session found ***
+        console.log("SessionId set to null in fetchData (no active session)"); // *** ADDED: SessionId log when set to null ***
       }
     } catch (error) {
       console.error('Error fetching data:', error);
@@ -208,21 +235,33 @@ const TimeTrackerPage = React.memo(({ navigate }) => { // <-- Receive navigate a
     if (sessionId) {
       const sessionRef = doc(db, 'sessions', sessionId);
       unsubscribe = onSnapshot(sessionRef, (sessionSnap) => {
+        console.log("Firestore session snapshot received:", sessionId, sessionSnap.exists(), sessionSnap.data()); // *** MODIFIED LOG: Added sessionId ***
         if (sessionSnap.exists()) {
           const sessionData = sessionSnap.data();
 
-          // --- Instance Locking ---
-          if (sessionData.activeInstanceId && sessionData.activeInstanceId !== instanceId) {
-            setActiveInstanceId(sessionData.activeInstanceId);
+          // --- Token Check in onSnapshot ---
+          const localSessionToken = localStorage.getItem('sessionToken');
+          const firestoreSessionToken = sessionData.activeToken;
+
+          if (firestoreSessionToken && localSessionToken && firestoreSessionToken !== localSessionToken) {
+            // Token mismatch detected in real-time, session taken over by another device
             setConflictModalVisible(true);
-          } else {
-            if (!sessionData.activeInstanceId) {
-              updateDoc(sessionRef, { activeInstanceId: instanceId }).catch(console.error);
-            }
-            setActiveInstanceId(instanceId);
-            setConflictModalVisible(false);
           }
+          // --- End Token Check in onSnapshot ---
+
+          // --- Instance Locking ---  COMMENTED OUT for debugging
+          // if (sessionData.activeInstanceId && sessionData.activeInstanceId !== instanceId) {
+          //   setActiveInstanceId(sessionData.activeInstanceId);
+          //   // setConflictModalVisible(true); // Conflict modal is already shown by token check, no need to repeat here if you want only token check to trigger it. If instanceId locking is also important, keep it.
+          // } else {
+          //   if (!sessionData.activeInstanceId) {
+          //     updateDoc(sessionRef, { activeInstanceId: instanceId }).catch(console.error);
+          //   }
+          //   setActiveInstanceId(instanceId);
+          //   // setConflictModalVisible(false); // No need to set to false here, conflictModalVisible is managed by token check.
+          // }
           // --- End Instance Locking ---
+
 
           if (sessionData.pauseEvents) {
             setPauseEvents(sessionData.pauseEvents);
@@ -242,13 +281,28 @@ const TimeTrackerPage = React.memo(({ navigate }) => { // <-- Receive navigate a
             setSessionClientStartTime(null);
             setTimer(sessionData.elapsedTime || 0);
           }
+        } else {
+          console.log("Session document not found in snapshot:", sessionId); // *** MODIFIED LOG: Added sessionId ***
         }
       });
+    } else {
+      if(unsubscribe) {
+        console.log("Unsubscribing onSnapshot because sessionId became null or empty:", sessionId); // *** ADDED: Unsubscribe log ***
+        unsubscribe(); // Explicitly unsubscribe if sessionId becomes null or empty
+      }
     }
     return () => {
-      if (unsubscribe) unsubscribe();
+      if (unsubscribe) {
+        console.log("Unmounting and unsubscribing onSnapshot:", sessionId); // *** ADDED: Unmount unsubscribe log ***
+        unsubscribe();
+      }
     };
   }, [sessionId, instanceId]);
+
+  // Log sessionId changes
+  useEffect(() => {
+    console.log("SessionId changed:", sessionId); // *** ADDED: SessionId change log ***
+  }, [sessionId]);
 
   // Start a session
   const handleStart = useCallback(async () => {
@@ -259,6 +313,8 @@ const TimeTrackerPage = React.memo(({ navigate }) => { // <-- Receive navigate a
     if (!sessionId) {
       try {
         const sessionRef = doc(collection(db, 'sessions'));
+        const sessionToken = uuidv4(); // Generate UUID token
+        localStorage.setItem('sessionToken', sessionToken); // Store token locally
         await setDoc(sessionRef, {
           userId: user.uid,
           project: selectedProject.name,
@@ -273,9 +329,11 @@ const TimeTrackerPage = React.memo(({ navigate }) => { // <-- Receive navigate a
           paused: false,
           status: 'running',
           pauseEvents: [],
+          activeToken: sessionToken, // Store token in Firestore
           activeInstanceId: instanceId,
         });
         setSessionId(sessionRef.id);
+        console.log("SessionId set in handleStart:", sessionRef.id); // *** ADDED: SessionId log in handleStart ***
         await getDoc(sessionRef);
       } catch (error) {
         console.error('Error starting session:', error);
@@ -520,41 +578,43 @@ const TimeTrackerPage = React.memo(({ navigate }) => { // <-- Receive navigate a
     setSessionNotes(e.target.value.slice(0, 140));
   }, []);
 
-  // Take Over Session
-  const handleTakeOver = async () => {
-    if (sessionId) {
-      const sessionRef = doc(db, 'sessions', sessionId);
-      try {
-        await updateDoc(sessionRef, { activeInstanceId: instanceId });
-        const sessionSnap = await getDoc(sessionRef);
-        if (sessionSnap.exists()) {
-          const sessionData = sessionSnap.data();
-          setIsPaused(!!sessionData.paused);
-          setIsRunning(sessionData.status === 'running' || sessionData.status === 'paused');
-          if (!sessionData.paused) {
-            const clientStart =
-              sessionData.clientStartTime ||
-              sessionData.startTimeMs ||
-              (sessionData.startTime ? sessionData.startTime.toDate().getTime() : Date.now());
-            setSessionClientStartTime(clientStart);
-            setBaseElapsedTime(sessionData.elapsedTime || 0);
-          } else {
-            setSessionClientStartTime(null);
-            setTimer(sessionData.elapsedTime || 0);
+    // Take Over Session
+    const handleTakeOver = async () => {
+      if (sessionId) {
+        const sessionRef = doc(db, 'sessions', sessionId);
+        try {
+          await updateDoc(sessionRef, { activeToken: localStorage.getItem('sessionToken') }); // Update Firestore token to current device's token
+          await updateDoc(sessionRef, { activeInstanceId: instanceId }); // Also take over instance id for other functionalities relying on it.
+          const sessionSnap = await getDoc(sessionRef);
+          if (sessionSnap.exists()) {
+            const sessionData = sessionSnap.data();
+            setIsPaused(!!sessionData.paused);
+            setIsRunning(sessionData.status === 'running' || sessionData.status === 'paused');
+            if (!sessionData.paused) {
+              const clientStart =
+                sessionData.clientStartTime ||
+                sessionData.startTimeMs ||
+                (sessionData.startTime ? sessionData.startTime.toDate().getTime() : Date.now());
+              setSessionClientStartTime(clientStart);
+              setBaseElapsedTime(sessionData.elapsedTime || 0);
+            } else {
+              setSessionClientStartTime(null);
+              setTimer(sessionData.elapsedTime || 0);
+            }
           }
+          setConflictModalVisible(false);
+          setActiveInstanceId(instanceId);
+        } catch (error) {
+          console.error('Error taking over session:', error);
         }
-        setConflictModalVisible(false);
-        setActiveInstanceId(instanceId);
-      } catch (error) {
-        console.error('Error taking over session:', error);
       }
-    }
-  };
+    };
 
-  // Close session on conflict
-  const handleCloseSession = () => {
-    navigate('home'); // <-- Updated navigate call, page name as string
-  };
+    // Close session on conflict
+    const handleCloseSession = () => {
+      navigate('home'); // <-- Updated navigate call, page name as string
+    };
+
 
   if (loading) {
     return (
