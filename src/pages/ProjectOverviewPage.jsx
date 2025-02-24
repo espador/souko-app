@@ -2,7 +2,6 @@ import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react'
 import { auth, db } from '../services/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
-import { useNavigate } from 'react-router-dom';
 import { formatTime } from '../utils/formatTime';
 import Header from '../components/Layout/Header';
 import '@fontsource/shippori-mincho';
@@ -63,7 +62,17 @@ const loadCachedData = (uid, setProjects, setSessions) => {
   return false;
 };
 
-const ProjectOverviewPage = () => {
+const cacheData = (uid, projects, sessions) => {
+  const cache = {
+    projects: projects,
+    sessions: sessions,
+    timestamp: Date.now()
+  };
+  localStorage.setItem(`projectOverviewData_${uid}`, JSON.stringify(cache));
+};
+
+
+const ProjectOverviewPage = ({ navigate }) => { // <-- Receive navigate prop
   const [user, setUser] = useState(null);
   const [projects, setProjects] = useState([]);
   const [sessions, setSessions] = useState([]);
@@ -71,7 +80,8 @@ const ProjectOverviewPage = () => {
   const [activeSession, setActiveSession] = useState(null);
   const [loading, setLoading] = useState(true);
   const [sortMode, setSortMode] = useState("tracked");
-  const navigate = useNavigate();
+  const [dataLoadCounter, setDataLoadCounter] = useState(0); // Counter to track data loads
+
 
   // Refs for FAB scroll effect
   const fabRef = useRef(null);
@@ -80,10 +90,12 @@ const ProjectOverviewPage = () => {
   useEffect(() => {
     const unsubscribeAuth = onAuthStateChanged(auth, (currentUser) => {
       if (!currentUser) {
-        navigate('/');
+        navigate('login'); // <-- Use navigate prop, page name as string
       } else {
         setUser(currentUser);
-        loadCachedData(currentUser.uid, setProjects, setSessions);
+        if (loadCachedData(currentUser.uid, setProjects, setSessions)) {
+          setLoading(false); // If loaded from cache, no need to wait for firebase
+        }
 
         const projectsQuery = query(
           collection(db, 'projects'),
@@ -95,56 +107,54 @@ const ProjectOverviewPage = () => {
           where('status', '==', 'stopped')
         );
 
-        const unsubProjects = onSnapshot(projectsQuery, (snapshot) => {
+        let unsubProjects, unsubSessions; // Declare outside to be accessible in return
+
+        const handleProjectsSnapshot = (snapshot) => {
           const userProjects = snapshot.docs.map((doc) => ({
             id: doc.id,
             name: doc.data().name,
             imageUrl: doc.data().imageUrl,
           }));
           setProjects(userProjects);
-          const cachedStr = localStorage.getItem(`projectOverviewData_${currentUser.uid}`);
-          let cachedData = {};
-          try {
-            cachedData = cachedStr ? JSON.parse(cachedStr) : {};
-          } catch (e) {
-            console.error("Error parsing cached data:", e);
-          }
-          const newCache = {
-            ...cachedData,
-            projects: userProjects,
-            timestamp: Date.now()
-          };
-          localStorage.setItem(`projectOverviewData_${currentUser.uid}`, JSON.stringify(newCache));
-          setLoading(false);
-        });
+          setDataLoadCounter(prevCounter => prevCounter + 1); // Increment counter when projects loaded
+        };
 
-        const unsubSessions = onSnapshot(sessionsQuery, (snapshot) => {
+        const handleSessionsSnapshot = (snapshot) => {
           const userSessions = snapshot.docs.map((doc) => doc.data());
           setSessions(userSessions);
-          const cachedStr = localStorage.getItem(`projectOverviewData_${currentUser.uid}`);
-          let cachedData = {};
-          try {
-            cachedData = cachedStr ? JSON.parse(cachedStr) : {};
-          } catch (e) {
-            console.error("Error parsing cached data:", e);
-          }
-          const newCache = {
-            ...cachedData,
-            sessions: userSessions,
-            timestamp: Date.now()
-          };
-          localStorage.setItem(`projectOverviewData_${currentUser.uid}`, JSON.stringify(newCache));
-          setLoading(false);
+          setDataLoadCounter(prevCounter => prevCounter + 1); // Increment counter when sessions loaded
+        };
+
+
+        unsubProjects = onSnapshot(projectsQuery, handleProjectsSnapshot, (error) => {
+          console.error("Projects onSnapshot Error:", error);
+          setDataLoadCounter(prevCounter => prevCounter + 1); // Ensure counter is incremented even on error
         });
 
+        unsubSessions = onSnapshot(sessionsQuery, handleSessionsSnapshot, (error) => {
+          console.error("Sessions onSnapshot Error:", error);
+          setDataLoadCounter(prevCounter => prevCounter + 1); // Ensure counter is incremented even on error
+        });
+
+
         return () => {
-          unsubProjects();
-          unsubSessions();
+          if (unsubProjects) unsubProjects();
+          if (unsubSessions) unsubSessions();
         };
       }
     });
     return () => unsubscribeAuth();
   }, [navigate]);
+
+  // Cache data and set loading to false after both datasets are loaded
+  useEffect(() => {
+    if (dataLoadCounter >= 2 && user) {
+      cacheData(user.uid, projects, sessions);
+      setLoading(false);
+      setDataLoadCounter(0); // Reset counter for potential future re-fetches if needed (currently not triggered in this component, but good practice)
+    }
+  }, [dataLoadCounter, user, projects, sessions]);
+
 
   // Optimized active session query for FAB.
   useEffect(() => {
@@ -231,7 +241,7 @@ const ProjectOverviewPage = () => {
     return projects
       .map(project => {
         const projectSessions = sessions.filter(
-          session => session.projectId === project.id && session.startTime // Use projectId here
+          session => session.projectId === project.id && session.startTime
         );
         const latestSessionTime =
           projectSessions.length > 0
@@ -250,17 +260,17 @@ const ProjectOverviewPage = () => {
   const sortedProjects = useMemo(() => {
     if (sortMode === "tracked") {
       return [...projects].sort((a, b) => {
-        const aTime = totalSessionTime[a.id] || 0; // Use a.id here
-        const bTime = totalSessionTime[b.id] || 0; // Use b.id here
+        const aTime = totalSessionTime[a.id] || 0;
+        const bTime = totalSessionTime[b.id] || 0;
         return bTime - aTime;
       });
     } else {
       return [...projects].sort((a, b) => {
         const aSessions = sessions.filter(
-          session => session.projectId === a.id && session.startTime // Use a.id here
+          session => session.projectId === a.id && session.startTime
         );
         const bSessions = sessions.filter(
-          session => session.projectId === b.id && session.startTime // Use b.id here
+          session => session.projectId === b.id && session.startTime
         );
         const aLatest = aSessions.length > 0
           ? Math.max(...aSessions.map(session => {
@@ -295,15 +305,16 @@ const ProjectOverviewPage = () => {
       return (
         <ul className="projects-list">
           {projectsToRender.map((project) => (
+            // ✅ Replace <Link> with button and navigate to 'project-detail' with params
             <li
               key={project.id}
               className="project-item"
-              onClick={() => navigate(`/project/${project.id}`)}
+              onClick={() => navigate('project-detail', { projectId: project.id })}
             >
               <div className="project-image-container">{renderProjectImage(project)}</div>
               <div className="project-name">{project.name}</div>
               <div className="project-total-time">
-                {totalSessionTime && totalSessionTime[project.id] !== undefined // Use project.id here
+                {totalSessionTime && totalSessionTime[project.id] !== undefined
                   ? formatTime(totalSessionTime[project.id])
                   : formatTime(0)}
               </div>
@@ -329,8 +340,9 @@ const ProjectOverviewPage = () => {
       <Header
         variant="projectOverview"
         showBackArrow={true}
-        onBack={() => navigate('/home')}
-        onActionClick={() => navigate('/create-project')}
+        onBack={() => navigate('home')} // <-- Use navigate prop, page name as string
+        navigate={navigate} // <-- Pass navigate prop to Header
+        onActionClick={() => navigate('create-project')} // <-- Use navigate prop, page name as string
       />
       <section className="motivational-section">
         <TextGenerateEffect
@@ -350,7 +362,7 @@ const ProjectOverviewPage = () => {
           {renderProjects}
         </section>
       </main>
-      <button ref={fabRef} className="fab" onClick={() => navigate('/time-tracker')}>
+      <button ref={fabRef} className="fab" onClick={() => navigate('time-tracker')}> {/* ✅ navigate to 'time-tracker' */}
         {hasActiveSession ? (
           <StopTimerIcon className="fab-icon" />
         ) : (

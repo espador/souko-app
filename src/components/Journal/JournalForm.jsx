@@ -1,9 +1,7 @@
-// src/components/Journal/JournalForm.jsx
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import './JournalForm.css';
 import Header from '../Layout/Header';
 import '../../styles/global.css';
-import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import {
     addJournalEntry,
     auth,
@@ -14,20 +12,15 @@ import {
 } from '../../services/firebase';
 import logEvent from '../../utils/logEvent';
 import ConfirmModal from '../ConfirmModal';
-
 import Slider from '@mui/material/Slider';
-
 import { ReactComponent as MoodFrustrated } from '../../styles/components/assets/mood-frustrated.svg';
 import { ReactComponent as MoodUnmotivated } from '../../styles/components/assets/mood-unmotivated.svg';
 import { ReactComponent as MoodNeutral } from '../../styles/components/assets/mood-neutral.svg';
 import { ReactComponent as MoodFocused } from '../../styles/components/assets/mood-focused.svg';
 import { ReactComponent as MoodInspired } from '../../styles/components/assets/mood-inspired.svg';
-
 import { ReactComponent as SaveIcon } from '../../styles/components/assets/save.svg';
 import { ReactComponent as EraseIcon } from '../../styles/components/assets/erase.svg';
 import { ReactComponent as EditIcon } from '../../styles/components/assets/edit.svg';
-
-// Import TextGenerateEffect
 import { TextGenerateEffect } from '../../styles/components/text-generate-effect.tsx';
 
 
@@ -53,70 +46,65 @@ const moodScale = (value) => {
     return moodIndex;
 };
 
+
 const reverseMoodScale = (index) => {
     return moodPoints[index] || 0;
 };
 
 
-const JournalForm = () => {
+const JournalForm = React.memo(({ navigate, selectedDate: propSelectedDate }) => { // <-- Receive navigate and selectedDate props
     const [mood, setMood] = useState('focused');
     const [textField1, setTextField1] = useState('');
     const [textField2, setTextField2] = useState('');
-    const navigate = useNavigate();
-    const location = useLocation();
-    const [searchParams] = useSearchParams();
-    const selectedDate = searchParams.get('date');
+    const selectedDate = propSelectedDate;
     const [journalEntryId, setJournalEntryId] = useState(null);
     const [showEraseConfirmModal, setShowEraseConfirmModal] = useState(false);
+    const [loadingEntry, setLoadingEntry] = useState(false); // Loading state for entry fetch
+
+
+    // Fetch journal entry - useCallback for memoization
+    const fetchJournalEntry = useCallback(async (uid, date) => {
+        setLoadingEntry(true); // Start loading
+        try {
+            return await getJournalEntryByDate(uid, date);
+        } catch (error) {
+            console.error("Error fetching journal entry:", error);
+            return null;
+        } finally {
+            setLoadingEntry(false); // End loading
+        }
+    }, []);
 
 
     useEffect(() => {
-        console.log("JournalForm useEffect - location.state:", location.state);
-        console.log("JournalForm useEffect - searchParams:", searchParams.toString());
-        console.log("JournalForm useEffect - selectedDate (from query param):", selectedDate);
-
-        if (selectedDate) {
-            const fetchJournalEntry = async () => {
-                try {
-                    const user = auth.currentUser;
-                    if (!user) {
-                        console.log("JournalForm useEffect - No user logged in, exiting fetch."); // Added log
-                        return;
-                    }
-
-                    console.log("JournalForm useEffect - selectedDate received:", selectedDate);
-                    console.log("JournalForm useEffect - Fetching entry for date:", selectedDate);
-
-                    const entryData = await getJournalEntryByDate(user.uid, selectedDate);
-
-                    console.log("JournalForm useEffect - Data fetched from getJournalEntryByDate:", entryData); // Keep this log
-
+        const loadEntry = async () => {
+            if (selectedDate) {
+                const user = auth.currentUser;
+                if (user) {
+                    const entryData = await fetchJournalEntry(user.uid, selectedDate); // Use memoized fetchJournalEntry
                     if (entryData) {
-                        console.log("JournalForm useEffect - Entry data found:", entryData); // Added log to confirm entryData is truthy
                         setMood(entryData.mood);
                         setTextField1(entryData.reflection);
                         setTextField2(entryData.futureStep);
                         setJournalEntryId(entryData.id);
-                        console.log("JournalForm useEffect - State updated with fetched data:", { mood: entryData.mood, reflection: entryData.reflection, futureStep: entryData.futureStep, journalEntryId: entryData.id }); // Added log to show state update
                     } else {
-                        console.log(`JournalForm useEffect - No journal entry found for ${selectedDate}, creating new.`);
-                        // State is already at default for new entry, no need to reset again here unless you want to explicitly reset journalEntryId to null again.
+                        console.log(`No journal entry found for ${selectedDate}, creating new.`);
+                        setJournalEntryId(null); // Ensure journalEntryId is null for new entries on same date
                     }
-                } catch (error) {
-                    console.error("JournalForm useEffect - Error fetching journal entry:", error);
                 }
-            };
-            fetchJournalEntry();
-        } else {
-            setMood('focused');
-            setTextField1('');
-            setTextField2('');
-            setJournalEntryId(null);
-            console.log("JournalForm useEffect - No selectedDate, resetting form for new entry.");
-        }
-    }, [selectedDate]);
+            } else {
+                setMood('focused');
+                setTextField1('');
+                setTextField2('');
+                setJournalEntryId(null);
+                console.log("No selectedDate, resetting form for new entry.");
+            }
+        };
+        loadEntry();
+    }, [selectedDate, fetchJournalEntry]); // Include memoized fetchJournalEntry in dependencies
 
 
+    // Slider change handler - useCallback for memoization
     const handleSliderChange = useCallback((event, newValue) => {
         let moodIndex = moodScale(newValue);
         if (moodIndex >= 0 && moodIndex < moodOptions.length) {
@@ -125,97 +113,120 @@ const JournalForm = () => {
     }, []);
 
 
+    // Textarea change handlers - useCallback for memoization
     const handleText1Change = useCallback((e) => {
         setTextField1(e.target.value);
     }, []);
+
 
     const handleText2Change = useCallback((e) => {
         setTextField2(e.target.value);
     }, []);
 
+
+    // Submit handler - useCallback for memoization
     const handleSubmit = useCallback(async () => {
         try {
             const user = auth.currentUser;
-            console.log("Current User UID:", user?.uid); //  <----- ADD THIS LINE
             if (!user) {
                 console.error("User not logged in.");
                 return;
             }
 
+
             const reflectionText = textField1;
             const futureStepText = textField2;
+
 
             if (journalEntryId) {
                 await updateJournalEntry(journalEntryId, mood, reflectionText, futureStepText);
                 console.log('Journal entry updated in Firestore:', { mood, textField1, textField2, journalEntryId });
                 logEvent('journal_updated_firestore', { mood: mood, textField1Length: textField1.length, textField2Length: textField2.length, journalEntryId: journalEntryId });
 
+
             } else {
                 await addJournalEntry(user.uid, mood, reflectionText, futureStepText);
                 console.log('Journal entry saved to Firestore:', { mood, textField1, textField2 });
                 logEvent('journal_saved_firestore', { mood: mood, textField1Length: textField1.length, textField2Length: textField2.length });
             }
-            navigate('/journal-confirmation');
+            navigate('journal-confirmation'); // <-- Updated navigate call, page name as string
+
 
         } catch (error) {
             console.error("Error saving/updating journal entry to Firestore:", error);
             logEvent('journal_save_failed', { mood: mood, error: error.message });
         }
-    }, [mood, textField1, textField2, navigate, journalEntryId]);
+    }, [mood, textField1, textField2, navigate, journalEntryId]); // Dependencies for useCallback
 
+
+    // Erase handler - useCallback for memoization
     const handleErase = useCallback(() => {
         setShowEraseConfirmModal(true);
     }, []);
 
-    const confirmEraseAction = useCallback(async () => {
-      setShowEraseConfirmModal(false);
-      if (journalEntryId) {
-          try {
-              await deleteJournalEntry(journalEntryId);
-              console.log('Journal entry deleted from Firestore:', journalEntryId);
-              logEvent('journal_deleted_firestore', { journalEntryId: journalEntryId });
-              navigate('/home');
-          } catch (error) {
-              console.error("Error deleting journal entry:", error);
-              logEvent('journal_delete_failed', { journalEntryId: journalEntryId, error: error.message });
-              alert('Failed to delete journal entry.');
-          }
-      } else {
-          console.log('No journal entry ID to delete.');
-          navigate('/home');
-      }
-  }, [journalEntryId, navigate]);
 
+    // Confirm erase action handler - useCallback for memoization
+    const confirmEraseAction = useCallback(async () => {
+        setShowEraseConfirmModal(false);
+        if (journalEntryId) {
+            try {
+                await deleteJournalEntry(journalEntryId);
+                console.log('Journal entry deleted from Firestore:', journalEntryId);
+                logEvent('journal_deleted_firestore', { journalEntryId: journalEntryId });
+                navigate('home'); // <-- Updated navigate call, page name as string
+            } catch (error) {
+                console.error("Error deleting journal entry:", error);
+                logEvent('journal_delete_failed', { journalEntryId: journalEntryId, error: error.message });
+                alert('Failed to delete journal entry.');
+            }
+        } else {
+            console.log('No journal entry ID to delete.');
+            navigate('home'); // <-- Updated navigate call, page name as string
+        }
+    }, [journalEntryId, navigate]); // Dependencies for useCallback
+
+
+    // Cancel erase action handler - useCallback for memoization
     const cancelEraseAction = useCallback(() => {
         setShowEraseConfirmModal(false);
     }, []);
 
 
-    const valuetext = (value) => {
+    // Memoized valuetext function
+    const valuetext = useCallback((value) => {
         let moodIndex = moodScale(value);
         const moodOption = moodOptions[moodIndex];
         return moodOption ? moodOption.label : '';
-    };
+    }, []); // useCallback for memoization
 
-    const valueLabelFormat = (value) => {
+
+    // Memoized valueLabelFormat function
+    const valueLabelFormat = useCallback((value) => {
         let moodIndex = moodScale(value);
         const moodOption = moodOptions[moodIndex];
         return moodOption ? moodOption.label : '';
-    };
+    }, []); // useCallback for memoization
 
 
-    const currentMoodLabel = moodOptions.find(option => option.value === mood)?.label || 'Focused';
+    // Memoized currentMoodLabel
+    const currentMoodLabel = useMemo(() => {
+        return moodOptions.find(option => option.value === mood)?.label || 'Focused';
+    }, [mood]); // useMemo for memoization
 
-    const marks = moodOptions.map((option, index) => ({
+
+    // Memoized marks array
+    const marks = useMemo(() => moodOptions.map((option, index) => ({
         value: reverseMoodScale(index),
         label: '',
-    }));
+    })), []); // useMemo for memoization
 
-      return (
-    <div className="journal-form-page">
-      <Header
-              variant="journalOverview"
-              showBackArrow={true}
+
+    return (
+        <div className="journal-form-page">
+            <Header
+                variant="journalOverview"
+                showBackArrow={true}
+                navigate={navigate} // <-- Pass navigate prop to Header
             />
             <main className="journal-form-content journal-form-single-page">
                 {/* Replace the p tag with TextGenerateEffect */}
@@ -223,6 +234,7 @@ const JournalForm = () => {
                     words={"In stillness, \n progress takes \nits form."}
                     className="journal-form-title" // Keep the same class for styling
                 />
+
 
                 <div className="journal-form-section journal-form-section-mood">
                     <div className="mood-header">Mood: {currentMoodLabel}</div>
@@ -273,6 +285,7 @@ const JournalForm = () => {
                     </div>
                 </div>
 
+
                 <div className="journal-form-section journal-form-section-text1">
                     <label htmlFor="textField1" className="journal-form-label">Which moment made you feel {`<${currentMoodLabel.toLowerCase()}>`}?</label>
                     <div className="journal-input-tile">
@@ -288,10 +301,12 @@ const JournalForm = () => {
                     </div>
                 </div>
 
+
                 <div className="journal-form-section journal-form-section-text2">
                     <label htmlFor="textField2" className="journal-form-label">What's one step for tomorrow?</label>
                     <div className="journal-input-tile">
                         <textarea
+                            type="text"
                             id="textField2"
                             placeholder="One small action to shape your path."
                             value={textField2}
@@ -302,12 +317,13 @@ const JournalForm = () => {
                     </div>
                 </div>
 
+
                 <div className="form-navigation form-navigation-single-page">
-                    <button className="save-button" onClick={handleSubmit}>
+                    <button className="save-button" onClick={handleSubmit} disabled={loadingEntry}> {/* Disable save button while loading entry */}
                         <SaveIcon className="button-icon" />
                         Save this note
                     </button>
-                    <button className="erase-button" onClick={handleErase}>
+                    <button className="erase-button" onClick={handleErase} disabled={loadingEntry}> {/* Disable erase button while loading entry */}
                         <EraseIcon className="button-icon" />
                         Erase your thought
                     </button>
@@ -319,11 +335,12 @@ const JournalForm = () => {
                 title="Erase Journal Entry?"
                 body="Are you sure you want to erase this journal entry? This action cannot be undone."
                 onConfirm={confirmEraseAction}
-                confirmText="Yes, Erase"
                 cancelText="Cancel"
             />
         </div>
     );
-};
+});
 
+
+JournalForm.displayName = 'JournalForm'; // displayName for React.memo
 export default JournalForm;

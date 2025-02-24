@@ -1,22 +1,22 @@
 // src/components/Onboarding/OnboardingStep1.jsx
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+// REMOVED: import { useNavigate } from 'react-router-dom'; // <-- REMOVE useNavigate import
 import Header from '../Layout/Header';
 import './OnboardingStep1.css';
 import { TextGenerateEffect } from '../../styles/components/text-generate-effect.tsx';
 import { ReactComponent as SaveIcon } from '../../styles/components/assets/save.svg';
 
-function OnboardingStep1() {
-  const navigate = useNavigate();
+function OnboardingStep1({ navigate }) { // <-- Receive navigate as prop
+  // REMOVED: const navigate = useNavigate(); // <-- REMOVE useNavigate hook
 
   const handleGetStarted = () => {
     // Proceed to next onboarding step
-    navigate('/onboarding/step2');
+    navigate('onboarding-step2'); // <-- Updated navigate call, page name as string
   };
 
   return (
     <div className="onboarding-step1">
-      <Header variant="onboarding" currentStep={1} />
+      <Header variant="onboarding" currentStep={1} navigate={navigate} /> {/* ✅ Pass navigate prop to Header */}
       <main className="onboarding-step1-content">
         <section className="motivational-section">
           <TextGenerateEffect
@@ -34,9 +34,9 @@ function OnboardingStep1() {
       </button>
 
       <button className="get-started-button sticky-button" onClick={handleGetStarted}>
-        <SaveIcon 
-          className="button-icon" 
-          style={{ fill: 'var(--text-color)' }} 
+        <SaveIcon
+          className="button-icon"
+          style={{ fill: 'var(--text-color)' }}
         />
         Get started
       </button>

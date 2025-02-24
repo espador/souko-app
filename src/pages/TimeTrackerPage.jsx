@@ -1,4 +1,3 @@
-// TimeTrackerPage.jsx
 import React, {
   useEffect,
   useState,
@@ -6,7 +5,6 @@ import React, {
   useRef,
   useMemo,
 } from 'react';
-import { useNavigate } from 'react-router-dom';
 import {
   collection,
   query,
@@ -61,7 +59,7 @@ const getInstanceId = () => {
   return id;
 };
 
-const TimeTrackerPage = React.memo(() => {
+const TimeTrackerPage = React.memo(({ navigate }) => { // <-- Receive navigate as prop
   // Component state
   const [user, setUser] = useState(null);
   const [projects, setProjects] = useState([]);
@@ -88,7 +86,6 @@ const TimeTrackerPage = React.memo(() => {
   // Sidebar state
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
-  const navigate = useNavigate();
   const timerRef = useRef(null);
   const noteSaveTimeout = useRef(null);
   const [showStopConfirmModal, setShowStopConfirmModal] = useState(false);
@@ -113,7 +110,7 @@ const TimeTrackerPage = React.memo(() => {
         });
       }
       await signOut(auth);
-      navigate('/');
+      navigate('login'); // <-- Updated navigate call, page name as string
     } catch (error) {
       console.error('Error during sign out:', error);
     }
@@ -180,7 +177,7 @@ const TimeTrackerPage = React.memo(() => {
   useEffect(() => {
     const unsubscribeAuth = onAuthStateChanged(auth, async (currentUser) => {
       if (!currentUser) {
-        navigate('/');
+        navigate('login'); // <-- Updated navigate call, page name as string
       } else {
         setUser(currentUser);
         await fetchData(currentUser.uid);
@@ -420,8 +417,8 @@ const TimeTrackerPage = React.memo(() => {
 
     // 5) Navigate to session overview
     localStorage.setItem('lastProjectId', selectedProject?.id || '');
-    navigate('/session-overview', {
-      state: { totalTime: timer, projectId: selectedProject?.id },
+    navigate('session-overview', { // <-- Updated navigate call, page name as string, pass params
+      totalTime: timer, projectId: selectedProject?.id,
     });
 
     // 6) Reset local states
@@ -556,7 +553,7 @@ const TimeTrackerPage = React.memo(() => {
 
   // Close session on conflict
   const handleCloseSession = () => {
-    navigate('/home');
+    navigate('home'); // <-- Updated navigate call, page name as string
   };
 
   if (loading) {
@@ -572,7 +569,8 @@ const TimeTrackerPage = React.memo(() => {
       <Header
         variant="journalOverview"
         showBackArrow={true}
-        onBack={() => navigate('/home', { state: { skipAutoRedirect: true } })}
+        onBack={() => navigate('home', { skipAutoRedirect: true })} // <-- Updated navigate call, page name as string, pass params
+        navigate={navigate} // <-- Pass navigate prop to Header
         onProfileClick={() => setIsSidebarOpen(true)}
       />
       <div className="timer-quote">{timerQuote}</div>

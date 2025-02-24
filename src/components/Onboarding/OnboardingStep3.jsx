@@ -1,6 +1,6 @@
 // src/components/Onboarding/OnboardingStep3.jsx
 import React, { useState, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+// REMOVED: import { useNavigate } from 'react-router-dom'; // <-- REMOVE useNavigate import
 import Header from '../Layout/Header';
 import './OnboardingStep3.css';
 import { TextGenerateEffect } from '../../styles/components/text-generate-effect.tsx';
@@ -40,9 +40,9 @@ const moodMarks = moodOptions.map((_, index) => ({
   label: '',
 }));
 
-function OnboardingStep3() {
-  const navigate = useNavigate();
-  
+function OnboardingStep3({ navigate }) { // <-- Receive navigate prop
+  // REMOVED: const navigate = useNavigate(); // <-- REMOVE useNavigate hook
+
   // Use the mood from context
   const { mood, setMood } = useOnboardingContext();
 
@@ -59,14 +59,14 @@ function OnboardingStep3() {
 
   const handleLogMood = () => {
     // We already set mood in context via slider
-    navigate('/onboarding/step4'); 
+    navigate('onboarding-step4'); // <-- Updated navigate call, page name as string
   };
 
   const currentMoodLabel = moodOptions.find(option => option.value === mood)?.label || 'Focused';
 
   return (
     <div className="onboarding-step3">
-      <Header variant="onboarding" currentStep={3} />
+      <Header variant="onboarding" currentStep={3} navigate={navigate} /> {/* ✅ Pass navigate prop to Header */}
       <main className="onboarding-step3-content">
         <section className="motivational-section">
           <TextGenerateEffect

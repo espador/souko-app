@@ -1,6 +1,6 @@
 // src/components/Onboarding/OnboardingStep4.jsx
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React from 'react';
+// REMOVED: import { useNavigate } from 'react-router-dom'; // <-- REMOVE useNavigate import
 import Header from '../Layout/Header';
 import './OnboardingStep4.css';
 import { TextGenerateEffect } from '../../styles/components/text-generate-effect.tsx';
@@ -25,8 +25,8 @@ import {
 // Import context
 import { useOnboardingContext } from '../../contexts/OnboardingContext';
 
-function OnboardingStep4() {
-  const navigate = useNavigate();
+function OnboardingStep4({ navigate }) { // <-- Receive navigate prop
+  // REMOVED: const navigate = useNavigate(); // <-- REMOVE useNavigate hook
   const [error, setError] = useState('');
 
   // Pull any onboarding data from context
@@ -103,7 +103,7 @@ function OnboardingStep4() {
       });
 
       // Finally, navigate to the time tracker
-      navigate('/time-tracker');
+      navigate('time-tracker'); // <-- Updated navigate call, page name as string
 
     } catch (err) {
       console.error('Error finalizing onboarding:', err);
@@ -113,7 +113,7 @@ function OnboardingStep4() {
 
   return (
     <div className="onboarding-step4">
-      <Header variant="onboarding" currentStep={4} />
+      <Header variant="onboarding" currentStep={4} navigate={navigate} /> {/* ✅ Pass navigate prop to Header */}
       <main className="onboarding-step4-content">
         <section className="motivational-section">
           <TextGenerateEffect

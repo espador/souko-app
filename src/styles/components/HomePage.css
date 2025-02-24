@@ -229,8 +229,12 @@ body.allow-scroll {
 }
 
 .projects-all-link {
-  margin-right: 0px; /* Add some spacing between "All" and "+" if needed */
-  /* Inherits styles from existing .projects-all-link */
+  font-size: 16px;
+  color: var(--accent-pink);
+  font-family: var(--font-commit-mono);
+  cursor: pointer;
+  background-color: transparent;
+  border: 0px;
 }
 
 .projects-add-link {

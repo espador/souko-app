@@ -1,7 +1,7 @@
+// src/pages/LoginPage.jsx
 import React, { useEffect, useCallback, useState } from 'react';
-import { signInWithPopup, getRedirectResult, onAuthStateChanged } from 'firebase/auth';
+import { signInWithPopup } from 'firebase/auth';
 import { auth, googleProvider, db } from '../services/firebase';
-import { useNavigate, Link } from 'react-router-dom';
 import '../styles/global.css';
 import '../styles/components/LoginPage.css';
 import googleIcon from '../styles/components/assets/google-icon.svg';
@@ -9,8 +9,7 @@ import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { TextGenerateEffect } from '../styles/components/text-generate-effect.tsx';
 import Header from '../components/Layout/Header';
 
-const LoginPage = () => {
-  const navigate = useNavigate();
+const LoginPage = ({ navigate }) => {
   const [loading, setLoading] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [showInstallButton, setShowInstallButton] = useState(false);
@@ -45,7 +44,7 @@ const LoginPage = () => {
       }
 
       console.log('processLoginResult - User Info:', user);
-      navigate('/home');
+      navigate('home');
       console.log('processLoginResult - Navigated to /home');
     } catch (error) {
       console.error('processLoginResult - Error:', error);
@@ -60,37 +59,8 @@ const LoginPage = () => {
     console.log('LoginPage useEffect - START');
     document.body.classList.add('no-scroll');
 
-    // Check for pending redirect results (helpful if a redirect was previously used)
-    const checkRedirect = async () => {
-      console.log('checkRedirect - START');
-      setLoading(true);
-      try {
-        const result = await getRedirectResult(auth);
-        console.log('checkRedirect - getRedirectResult:', result);
-        if (result) {
-          await processLoginResult(result);
-        } else {
-          console.log('checkRedirect - No redirect result found');
-        }
-      } catch (error) {
-        console.error('checkRedirect - Redirect login error:', error);
-        alert('Authentication failed during redirect. Please try again.');
-      } finally {
-        setLoading(false);
-        console.log('checkRedirect - FINISH');
-      }
-    };
-
-    checkRedirect();
-
-    // Listen for auth state changes - navigate to home if the user is already logged in
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      console.log('onAuthStateChanged - Auth state changed:', user);
-      if (user) {
-        console.log('onAuthStateChanged - User logged in, navigating to /home');
-        navigate('/home');
-      }
-    });
+    // No more automatic redirect, LoginPage always renders on app open.
+    // Removed checkRedirect and onAuthStateChanged listener
 
     // Listen for the beforeinstallprompt event (for Android)
     const handleBeforeInstallPrompt = (e) => {
@@ -103,11 +73,10 @@ const LoginPage = () => {
 
     return () => {
       document.body.classList.remove('no-scroll');
-      unsubscribe();
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
       console.log('LoginPage useEffect - CLEANUP');
     };
-  }, [processLoginResult, navigate]);
+  }, []); // Removed processLoginResult from dependency array as it should be stable
 
   const handleLogin = async () => {
     console.log('handleLogin - START');
@@ -145,7 +114,6 @@ const LoginPage = () => {
     <div className="login-page">
       <Header showLiveTime={true} />
       <main className="login-content">
-        {loading && <div className="loading-indicator">Loading...</div>}
         <section className="motivational-section">
           <TextGenerateEffect words="The song of your roots is the song of now" />
           <h4>
@@ -158,7 +126,7 @@ const LoginPage = () => {
             Continue with Google
           </button>
         </div>
-        {/* Add to Home Screen Button/Instructions for mobile */}
+        
         {(showInstallButton || (isIOS() && !isInStandaloneMode())) && (
           <div className="install-pwa">
             {isIOS() && !isInStandaloneMode() ? (
@@ -175,7 +143,7 @@ const LoginPage = () => {
       </main>
       <div className="sticky-login-container">
         <h2 className="login-terms">
-          (Beta) By continuing, you agree to our <Link to="/terms" className="login-link">Terms</Link> and <Link to="/privacy" className="login-link">Privacy Policy</Link>.
+          (Beta) By continuing, you agree to our <a href="/terms" className="login-link">Terms</a> and <a href="/privacy" className="login-link">Privacy Policy</a>.
         </h2>
       </div>
     </div>

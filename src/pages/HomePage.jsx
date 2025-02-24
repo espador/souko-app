@@ -1,7 +1,6 @@
-// src/pages/HomePage.jsx
 import React, { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import { auth, db } from '../services/firebase';
-import { onAuthStateChanged, signOut } from 'firebase/auth';
+import { signOut } from 'firebase/auth';
 import {
     collection,
     getDocs,
@@ -11,7 +10,6 @@ import {
     getDoc,
     onSnapshot,
 } from 'firebase/firestore';
-import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { formatTime } from '../utils/formatTime';
 import Header from '../components/Layout/Header';
 import '../styles/global.css';
@@ -31,7 +29,44 @@ import LevelProfile from '../components/Level/LevelProfile'; // Import LevelProf
 
 export const cn = (...inputs) => twMerge(clsx(inputs));
 
-const HomePage = React.memo(() => {
+const CACHE_DURATION_MS = 30000; // 30 seconds - adjust as needed
+
+const loadCachedHomePageData = (uid, setDataFunctions) => {
+    const cachedStr = localStorage.getItem(`homePageData_${uid}`);
+    if (cachedStr) {
+        try {
+            const cached = JSON.parse(cachedStr);
+            if (Date.now() - cached.timestamp < CACHE_DURATION_MS) {
+                setDataFunctions.setProjects(cached.projects || []);
+                setDataFunctions.setSessions(cached.sessions || []);
+                setDataFunctions.setJournalEntries(cached.journalEntries || []);
+                setDataFunctions.setUserProfile(cached.userProfile || null);
+                setDataFunctions.setLevelConfig(cached.levelConfig || null);
+                setDataFunctions.setHasTrackedEver(cached.hasTrackedEver || false);
+                return true;
+            }
+        } catch (e) {
+            console.error("Error parsing cached home page data", e);
+        }
+    }
+    return false;
+};
+
+const cacheHomePageData = (uid, projects, sessions, journalEntries, userProfile, levelConfig, hasTrackedEver) => {
+    const cache = {
+        projects,
+        sessions,
+        journalEntries,
+        userProfile,
+        levelConfig,
+        hasTrackedEver,
+        timestamp: Date.now()
+    };
+    localStorage.setItem(`homePageData_${uid}`, JSON.stringify(cache));
+};
+
+
+const HomePage = React.memo(({ navigate, skipAutoRedirect, currentPage }) => { // <-- Get navigate, skipAutoRedirect, currentPage props
     const [user, setUser] = useState(null);
     const [projects, setProjects] = useState([]);
     const [sessions, setSessions] = useState([]);
@@ -43,114 +78,143 @@ const HomePage = React.memo(() => {
     const [activeSession, setActiveSession] = useState(null);
     const [totalTrackedTimeMinutes, setTotalTrackedTimeMinutes] = useState(0);
     const [levelConfig, setLevelConfig] = useState(null); // New state for level config
+    const [dataLoadCounter, setDataLoadCounter] = useState(0);
 
-    const navigate = useNavigate();
-    const location = useLocation();
+
     const fabRef = useRef(null);
     const scrollTimeout = useRef(null);
 
     const hasActiveSession = Boolean(activeSession);
 
-    // Function to fetch data for the homepage (projects, sessions, etc.)
+    const setDataFunctions = useMemo(() => ({
+        setProjects,
+        setSessions,
+        setJournalEntries,
+        setUserProfile,
+        setLevelConfig,
+        setHasTrackedEver
+    }), [setProjects, setSessions, setJournalEntries, setUserProfile, setLevelConfig, setHasTrackedEver]);
+
+
     const fetchData = useCallback(async (uid) => {
-        setLoading(true);
+        if (loadCachedHomePageData(uid, setDataFunctions)) {
+            setLoading(false); // If loaded from cache, no need to wait for firebase
+        } else {
+            setLoading(true); // Only set loading to true if not loaded from cache, or before refetching from Firebase
+        }
+
         try {
             // 1) Projects
-            const projectSnapshot = await getDocs(
-                query(collection(db, 'projects'), where('userId', '==', uid))
+            const projectsQuery = query(collection(db, 'projects'), where('userId', '==', uid));
+            const sessionsQuery = query(collection(db, 'sessions'), where('userId', '==', uid));
+            const journalQuery = query(
+                collection(db, 'journalEntries'),
+                where('userId', '==', uid),
+                where('createdAt', '>=', (() => {
+                    const sevenDaysAgo = new Date();
+                    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+                    return sevenDaysAgo;
+                })())
             );
-            const userProjects = projectSnapshot.docs.map((doc) => ({
-                id: doc.id,
-                ...doc.data(),
-            }));
-            setProjects(userProjects);
-
-            // 2) Sessions (for general stats)
-            const sessionSnapshot = await getDocs(
-                query(collection(db, 'sessions'), where('userId', '==', uid))
-            );
-            const userSessions = sessionSnapshot.docs.map((doc) => doc.data());
-            setSessions(userSessions);
-            setHasTrackedEver(userSessions.length > 0);
-
-            // 3) Journal entries (last 7 days)
-            const sevenDaysAgo = new Date();
-            sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-            const journalSnapshot = await getDocs(
-                query(
-                    collection(db, 'journalEntries'),
-                    where('userId', '==', uid),
-                    where('createdAt', '>=', sevenDaysAgo)
-                )
-            );
-            const userJournalEntries = journalSnapshot.docs.map((doc) => ({
-                id: doc.id,
-                ...doc.data(),
-            }));
-            setJournalEntries(userJournalEntries);
-
-            // 4) User profile
             const profileRef = doc(db, 'profiles', uid);
-            const profileSnap = await getDoc(profileRef);
-            if (profileSnap.exists()) {
-                setUserProfile(profileSnap.data());
-                setTotalTrackedTimeMinutes(profileSnap.data().totalTrackedTime || 0); // Initialize totalTrackedTimeMinutes
-            } else {
-                setUserProfile(null);
-            }
-
-            // 5) Level Configuration - FETCHING LEVEL CONFIGURATION HERE
             const levelConfigRef = doc(db, 'config', 'level_config');
-            const levelConfigSnap = await getDoc(levelConfigRef);
-            if (levelConfigSnap.exists()) {
-                setLevelConfig(levelConfigSnap.data());
-            } else {
-                console.error("Level config document not found!");
-                setLevelConfig({}); // Set to empty object to avoid errors in LevelProfile, or handle error differently
-            }
+
+
+            let unsubProjects, unsubSessions, unsubJournal, unsubProfile, unsubLevelConfig;
+
+
+            const handleProjectsSnapshot = (snapshot) => {
+                const userProjects = snapshot.docs.map((doc) => ({
+                    id: doc.id,
+                    ...doc.data(),
+                }));
+                setProjects(userProjects);
+                setDataLoadCounter(prevCounter => prevCounter + 1);
+            };
+
+            const handleSessionsSnapshot = (snapshot) => {
+                const userSessions = snapshot.docs.map((doc) => doc.data());
+                setSessions(userSessions);
+                setHasTrackedEver(userSessions.length > 0);
+                setDataLoadCounter(prevCounter => prevCounter + 1);
+            };
+            const handleJournalSnapshot = (snapshot) => {
+                const userJournalEntries = snapshot.docs.map((doc) => ({
+                    id: doc.id,
+                    ...doc.data(),
+                }));
+                setJournalEntries(userJournalEntries);
+                setDataLoadCounter(prevCounter => prevCounter + 1);
+            };
+
+            const handleProfileSnapshot = (docSnap) => {
+                if (docSnap.exists()) {
+                    setUserProfile(docSnap.data());
+                    setTotalTrackedTimeMinutes(docSnap.data().totalTrackedTime || 0);
+                } else {
+                    setUserProfile(null);
+                }
+                setDataLoadCounter(prevCounter => prevCounter + 1);
+            };
+            const handleLevelConfigSnapshot = (levelConfigSnap) => {
+                if (levelConfigSnap.exists()) {
+                    setLevelConfig(levelConfigSnap.data());
+                } else {
+                    console.error("Level config document not found!");
+                    setLevelConfig({});
+                }
+                setDataLoadCounter(prevCounter => prevCounter + 1);
+            };
+
+
+            // Using onSnapshot for real-time updates
+            unsubProjects = onSnapshot(projectsQuery, handleProjectsSnapshot, error => console.error("Projects onSnapshot error:", error));
+            unsubSessions = onSnapshot(sessionsQuery, handleSessionsSnapshot, error => console.error("Sessions onSnapshot error:", error));
+            unsubJournal = onSnapshot(journalQuery, handleJournalSnapshot, error => console.error("Journal onSnapshot error:", error));
+            unsubProfile = onSnapshot(profileRef, handleProfileSnapshot, error => console.error("Profile onSnapshot error:", error));
+            unsubLevelConfig = onSnapshot(levelConfigRef, handleLevelConfigSnapshot, error => console.error("LevelConfig onSnapshot error:", error));
+
+
+            return () => {
+                if (unsubProjects) unsubProjects();
+                if (unsubSessions) unsubSessions();
+                if (unsubJournal) unsubJournal();
+                if (unsubProfile) unsubProfile();
+                if (unsubLevelConfig) unsubLevelConfig();
+            };
 
 
         } catch (error) {
             console.error('Error fetching data:', error.message);
-        } finally {
-            setLoading(false);
+            setLoading(false); // Ensure loading is set to false even on error
         }
-    }, []);
+    }, [setDataFunctions]);
 
-    // Listen for auth changes and perform auto-redirect only once per app session
+
     useEffect(() => {
-        const skipAutoRedirect = location.state?.skipAutoRedirect;
-        const autoRedirectDone = sessionStorage.getItem('autoRedirectDone');
-        const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-            if (!currentUser) {
-                navigate('/');
-            } else {
+        const unsubscribeAuth = auth.onAuthStateChanged(async (currentUser) => {
+            if (currentUser) {
                 setUser(currentUser);
-
-                // If we haven't skipped auto-redirect and haven't auto-redirected yet...
-                if (!skipAutoRedirect && !autoRedirectDone) {
-                    const activeSessionQuery = query(
-                        collection(db, 'sessions'),
-                        where('userId', '==', currentUser.uid),
-                        where('endTime', '==', null)
-                    );
-                    const activeSessionSnapshot = await getDocs(activeSessionQuery);
-                    if (!activeSessionSnapshot.empty) {
-                        // Mark that we've already auto-redirected for this app session.
-                        sessionStorage.setItem('autoRedirectDone', 'true');
-                        navigate('/time-tracker');
-                        return; // Exit early to avoid fetching extra data.
-                    }
-                }
-
-                // Otherwise, fetch the rest of the homepage data.
                 fetchData(currentUser.uid);
+            } else {
+                navigate('login');
             }
         });
-        return () => unsubscribe();
-    }, [navigate, fetchData, location.state]);
+        return unsubscribeAuth;
+    }, [navigate, fetchData]);
 
-    // Listen for an active session and total tracked time updates
+
+    useEffect(() => {
+        if (dataLoadCounter >= 5 && user) { // Wait for 5 data sets: projects, sessions, journal, profile, levelConfig
+            cacheHomePageData(user.uid, projects, sessions, journalEntries, userProfile, levelConfig, hasTrackedEver);
+            setLoading(false);
+            setDataLoadCounter(0); // Reset counter
+
+        }
+    }, [dataLoadCounter, user, projects, sessions, journalEntries, userProfile, levelConfig, hasTrackedEver]);
+
+
+    // Listen for an active session and total tracked time updates (KEEP THIS LOGIC)
     useEffect(() => {
         if (user) {
             const profileRef = doc(db, 'profiles', user.uid);
@@ -169,24 +233,18 @@ const HomePage = React.memo(() => {
                 }
             });
 
-            // 2. Total Tracked Time Listener
-            const unsubscribeProfile = onSnapshot(profileRef, (docSnap) => {
-                if (docSnap.exists()) {
-                    setUserProfile(docSnap.data());
-                    setTotalTrackedTimeMinutes(docSnap.data().totalTrackedTime || 0);
-                }
-            });
+            // 2. Total Tracked Time Listener - Already handled in main data fetch to avoid duplication and potential conflicts
 
 
             return () => {
                 unsubscribeActiveSession();
-                unsubscribeProfile();
+                // unsubscribeProfile; // No need to unsubscribe profile listener here as it's managed in fetchData
             };
         }
     }, [user]);
 
 
-    // Show/hide FAB while scrolling
+    // Show/hide FAB while scrolling (KEEP THIS LOGIC)
     useEffect(() => {
         const handleScroll = () => {
             if (fabRef.current) {
@@ -201,19 +259,20 @@ const HomePage = React.memo(() => {
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
 
-    // Onboarding logic
+    // Onboarding logic (KEEP THIS LOGIC - but adjusted for currentPage prop)
     useEffect(() => {
         if (!loading && userProfile !== undefined) {
-            const isOnboardingRoute = location.pathname.startsWith('/onboarding');
+            // REMOVED: const isOnboardingRoute = location.pathname.startsWith('/onboarding'); // <-- No longer using location.pathname
+            const isOnboardingRoute = currentPage.startsWith('onboarding'); // Check currentPage prop directly
             if (!isOnboardingRoute) {
                 if (!userProfile || userProfile.onboardingComplete !== true) {
-                    navigate('/onboarding/step1');
+                    navigate('onboarding-step1'); // <-- Use navigate prop, page name as string
                 }
             }
         }
-    }, [loading, userProfile, location, navigate]);
+    }, [loading, userProfile, navigate, currentPage]); // <-- Depend on currentPage prop
 
-    // Limit projects to the 3 most recent ones
+    // Limit projects to the 3 most recent ones (KEEP THIS LOGIC)
     const projectsToRender = useMemo(() => {
         return [...projects]
             .sort((a, b) => (b.lastTrackedTime || 0) - (a.lastTrackedTime || 0))
@@ -228,13 +287,13 @@ const HomePage = React.memo(() => {
         }, {});
     }, [sessions]);
 
-    // Weekly tracked time from the user profile
+    // Weekly tracked time from the user profile (KEEP THIS LOGIC)
     const weeklyTrackedTime = userProfile?.weeklyTrackedTime || 0;
 
     const handleLogout = useCallback(async () => {
         try {
             await signOut(auth);
-            navigate('/');
+            navigate('login'); // <-- Use navigate prop, page name as string
         } catch (error) {
             console.error('Logout Error:', error.message);
         }
@@ -243,7 +302,7 @@ const HomePage = React.memo(() => {
     const openSidebar = useCallback(() => setIsSidebarOpen(true), []);
     const closeSidebar = useCallback(() => setIsSidebarOpen(false), []);
 
-    // Updated loading state to use the spinner component
+    // Updated loading state to use the spinner component (KEEP THIS LOGIC)
     if (loading) {
         return (
             <div className="homepage-loading">
@@ -254,7 +313,7 @@ const HomePage = React.memo(() => {
 
     return (
         <div className="homepage">
-            <Header user={userProfile} showLiveTime={true} onProfileClick={openSidebar} />
+            <Header navigate={navigate} user={userProfile} showLiveTime={true} onProfileClick={openSidebar} /> {/* ✅ navigate prop passed to Header */}
             <main className="homepage-content">
                 <LevelProfile
                     projectName="Souko"
@@ -276,15 +335,16 @@ const HomePage = React.memo(() => {
                     />
                 </section>
 
-                <JournalSection journalEntries={journalEntries} loading={false} />
+                <JournalSection navigate={navigate} journalEntries={journalEntries} loading={false} /> {/* ✅ navigate prop passed to JournalSection */}
 
                 <section className="projects-section">
                     <div className="projects-header">
                         <h2 className="projects-label">Your projects</h2>
                         <div className="projects-actions">
-                            <Link to="/projects" className="projects-all-link">
+                            {/* ✅ Replace <Link> with button and navigate */}
+                            <button onClick={() => navigate('projects')} className="projects-all-link">
                                 All
-                            </Link>
+                            </button>
                         </div>
                     </div>
                     {projectsToRender.length > 0 ? (
@@ -293,7 +353,7 @@ const HomePage = React.memo(() => {
                                 <li
                                     key={project.id}
                                     className="project-item"
-                                    onClick={() => navigate(`/project/${project.id}`)}
+                                    onClick={() => navigate('project-detail', { projectId: project.id })} // ✅ navigate to 'project-detail' with params
                                 >
                                     <div className="project-image-container">
                                         {project.imageUrl ? (
@@ -333,7 +393,7 @@ const HomePage = React.memo(() => {
             />
             {isSidebarOpen && <div className="sidebar-overlay" onClick={closeSidebar}></div>}
 
-            <button ref={fabRef} className="fab" onClick={() => navigate('/time-tracker')}>
+            <button ref={fabRef} className="fab" onClick={() => navigate('time-tracker')}> {/* ✅ navigate to 'time-tracker' */}
                 {hasActiveSession ? (
                     <StopTimerIcon className="fab-icon" />
                 ) : (

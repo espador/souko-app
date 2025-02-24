@@ -1,6 +1,5 @@
 // src/components/Layout/Header.jsx
 import React, { useState, useEffect, memo } from 'react';
-import { useNavigate } from 'react-router-dom';
 import '../../styles/components/Header.css';
 import { ReactComponent as ReturnIcon } from '../../styles/components/assets/return.svg';
 import { ReactComponent as SoukoLogoHeader } from '../../styles/components/assets/Souko-logo-header.svg';
@@ -19,8 +18,8 @@ const Header = memo(({
   onProfileClick,
   onActionClick = () => {},
   currentStep = 0,
+  navigate // <-- ADD 'navigate' prop here
 }) => {
-  const navigate = useNavigate();
   const [currentTime, setCurrentTime] = useState('');
   // Removed setIsSpinning since we never call it
   const [isSpinning] = useState(true);
@@ -46,7 +45,7 @@ const Header = memo(({
     if (onBack) {
       onBack();
     } else {
-      navigate('/home');
+      navigate('home'); // <-- Use navigate prop to go to 'home' (state-based)
     }
   };
 

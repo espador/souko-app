@@ -1,6 +1,6 @@
 // src/components/Onboarding/OnboardingStep2.jsx
 import React, { useState, useRef, useCallback, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+// REMOVED: import { useNavigate } from 'react-router-dom'; // <-- REMOVE useNavigate import
 import Header from '../Layout/Header';
 import './OnboardingStep2.css';
 
@@ -27,8 +27,8 @@ const TARGET_IMAGE_WIDTH = 164;
 const TARGET_IMAGE_HEIGHT = 164;
 const COMPRESSION_QUALITY = 0.5;
 
-function OnboardingStep2() {
-  const navigate = useNavigate();
+function OnboardingStep2({ navigate }) { // <-- Receive navigate prop
+  // REMOVED: const navigate = useNavigate(); // <-- REMOVE useNavigate hook
 
   // Pull from context
   const {
@@ -178,14 +178,14 @@ function OnboardingStep2() {
 
       // Just store everything in context
       setError('');
-      navigate('/onboarding/step3');
+      navigate('onboarding-step3'); // <-- Updated navigate call, page name as string
     },
     [projectName, navigate]
   );
 
   return (
     <div className="onboarding-step2">
-      <Header variant="onboarding" currentStep={2} />
+      <Header variant="onboarding" currentStep={2} navigate={navigate} /> {/* ✅ Pass navigate prop to Header */}
       <main className="onboarding-step2-content">
         <section className="motivational-section">
           <TextGenerateEffect

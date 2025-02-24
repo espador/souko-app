@@ -19,9 +19,11 @@
 
 .journal-all-link {
     font-size: 16px;
-    color: var(--text-muted);
+    color: var(--accent-pink);
     font-family: var(--font-commit-mono);
     cursor: pointer;
+    background-color: transparent;
+    border: 0px;
 }
 
 .journal-all-link:hover {
