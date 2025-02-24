@@ -1,5 +1,4 @@
-import React, { useEffect, useState, useCallback, useMemo } from 'react';
-import { useParams } from 'react-router-dom'; // Keep useParams to get projectId from URL (if needed for initial load)
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import {
     doc,
     getDoc,
@@ -9,7 +8,6 @@ import {
     query,
     where,
     getDocs,
-    onSnapshot,
 } from 'firebase/firestore';
 import { db, auth } from '../services/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
@@ -27,9 +25,8 @@ import ConfirmModal from '../components/ConfirmModal';
 
 const CACHE_DURATION_MS = 30000; // 30 seconds - adjust as needed
 
-
-const SessionDetailPage = ({ navigate, sessionId: routeSessionId }) => { // <-- Receive navigate and sessionId props
-    const sessionId = routeSessionId; // Use sessionId prop directly
+const SessionDetailPage = ({ navigate, sessionId: routeSessionId }) => {
+    const sessionId = routeSessionId;
     const [user, setUser] = useState(null);
     const [session, setSession] = useState(null);
     const [projects, setProjects] = useState([]);
@@ -39,129 +36,161 @@ const SessionDetailPage = ({ navigate, sessionId: routeSessionId }) => { // <-- 
     const [loading, setLoading] = useState(true);
     const [isSaveActive, setIsSaveActive] = useState(false);
     const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
-    const [hasFetchedSession, setHasFetchedSession] = useState(false); // Flag to fetch session details only once
-    const [dataLoadCounter, setDataLoadCounter] = useState(0); // Counter for data loading
-
+    const previousSessionRef = useRef(null);
+    const hasLoaded = useRef(false);
 
     // Load cached session detail data if available - memoized
     const loadCachedData = useCallback((uid, sessionId) => {
-        const cachedStr = localStorage.getItem(`sessionDetailData_${uid}_${sessionId}`);
-        if (cachedStr) {
-            try {
-                const cached = JSON.parse(cachedStr);
-                if (Date.now() - cached.timestamp < CACHE_DURATION_MS) {
-                    setSession(cached.session || null);
-                    setProjects(cached.projects || []);
-                    setSelectedProject(cached.selectedProject || null);
-                    setSessionNotes(cached.sessionNotes || '');
-                    setIsBillable(cached.isBillable || true);
-                    return true;
-                }
-            } catch (e) {
-                console.error("Error parsing cached session detail data", e);
+        const cachedData = sessionStorage.getItem(`sessionDetail-${uid}-${sessionId}`);
+        if (cachedData) {
+            const { session, projects, selectedProject, sessionNotes, isBillable, timestamp } = JSON.parse(cachedData);
+            if (Date.now() - timestamp < CACHE_DURATION_MS) {
+                setSession(session);
+                setProjects(projects);
+                setSelectedProject(selectedProject);
+                setSessionNotes(sessionNotes);
+                setIsBillable(isBillable);
+                console.log("Session details loaded from cache");
+                return true;
+            } else {
+                sessionStorage.removeItem(`sessionDetail-${uid}-${sessionId}`); //remove outdated cache
+                console.log("Cached data expired, fetching from Firestore");
+                return false;
             }
         }
         return false;
     }, []);
 
-
-    // Cache data function - memoized
     const cacheData = useCallback((uid, sessionId, session, projects, selectedProject, sessionNotes, isBillable) => {
-        const cache = {
+        const cacheObject = {
             session,
             projects,
             selectedProject,
             sessionNotes,
             isBillable,
-            timestamp: Date.now(),
+            timestamp: Date.now()
         };
-        localStorage.setItem(`sessionDetailData_${uid}_${sessionId}`, JSON.stringify(cache));
+        sessionStorage.setItem(`sessionDetail-${uid}-${sessionId}`, JSON.stringify(cacheObject));
+        console.log("Session details cached");
     }, []);
 
-
-    // Fetch projects using onSnapshot for real-time updates - useCallback for dependency optimization
     const fetchProjects = useCallback(async (uid) => {
-        const projectsQuery = query(collection(db, 'projects'), where('userId', '==', uid));
-
-
-        let unsubProjects;
-
-
-        const handleProjectsSnapshot = (snapshot) => {
-            const userProjects = snapshot.docs.map((doc) => ({
+        try {
+            const projectsRef = collection(db, 'projects');
+            const q = query(projectsRef, where("userId", "==", uid));
+            const querySnapshot = await getDocs(q);
+            const projectsList = querySnapshot.docs.map(doc => ({
                 id: doc.id,
                 name: doc.data().name,
                 imageUrl: doc.data().imageUrl,
+                ...doc.data()
             }));
-            setProjects(userProjects);
-            setDataLoadCounter(prevCounter => prevCounter + 1); // Increment counter when projects loaded
-        };
-
-
-        unsubProjects = onSnapshot(projectsQuery, handleProjectsSnapshot, error => {
-            console.error("Projects onSnapshot error:", error);
-            setDataLoadCounter(prevCounter => prevCounter + 1); // Ensure counter is incremented even on error
-        });
-
-
-        return () => {
-            if (unsubProjects) unsubProjects();
-        };
-
-
-    }, []); // Dependencies array for useCallback
-
-
-    // Fetch session details - useCallback for dependency optimization
-    const fetchSessionDetails = useCallback(async (sessionIdToFetch, uid, cachedDataFound) => {
-        if (!sessionIdToFetch || !uid) return;
-        if (!cachedDataFound) {
-            setLoading(true); // Only set loading to true if not loaded from cache
+            setProjects(projectsList);
+            console.log("Projects fetched successfully:", projectsList);
+            return projectsList;
+        } catch (error) {
+            console.error("Error fetching projects:", error);
+            return [];
         }
+    }, []);
 
+    const fetchSessionDetails = useCallback(async (sessionIdToFetch) => { // Removed 'projects' argument
+        if (!sessionIdToFetch) return null;
 
         try {
             const sessionRef = doc(db, 'sessions', sessionIdToFetch);
             const sessionSnap = await getDoc(sessionRef);
             if (sessionSnap.exists()) {
                 const sessionData = sessionSnap.data();
-                setSession(sessionData);
-                setSessionNotes(sessionData.sessionNotes || '');
-                setIsBillable(sessionData.isBillable);
-                // Only set selectedProject if it hasn't been changed by the user already
-                // and if projects are already loaded
-                if (!selectedProject && projects.length > 0) {
-                    const project = projects.find(p => p.name === sessionData.project);
-                    setSelectedProject(project);
-                }
-                setDataLoadCounter(prevCounter => prevCounter + 1); // Increment counter when session details loaded
+                return sessionData;
             } else {
-                console.error("Session not found");
-                setSession(null);
-                setDataLoadCounter(prevCounter => prevCounter + 1); // Increment counter even if session not found to stop loading
+                console.error("Session not found in Firestore - sessionId:", sessionIdToFetch);
+                return null;
             }
         } catch (error) {
-            console.error("Error fetching session details:", error);
-            setSession(null);
-            setDataLoadCounter(prevCounter => prevCounter + 1); // Increment counter on error as well
-        } finally {
-            if (!cachedDataFound) { // Do not set loading to false here if data was loaded from cache, it's handled in useEffect
-                setLoading(false);
-            }
+            console.error("Error fetching session details:", error, sessionIdToFetch);
+            return null;
         }
-    }, [projects, selectedProject]); // Include projects and selectedProject in dependencies
+    }, []);
 
 
-    // Handle caching and loading states - useEffect for managing loading завершения
     useEffect(() => {
-        if (dataLoadCounter >= 2) { // Wait for both projects and session details to load (or fail)
-            if (user && sessionId && session && projects.length > 0 && selectedProject) { // Check if session and selectedProject are not null before caching
-                cacheData(user.uid, sessionId, session, projects, selectedProject, sessionNotes, isBillable);
+        console.log("Data Loading useEffect (Fetch Projects) - START - User State:", user, "SessionId Prop:", sessionId);
+        if (user && sessionId && !hasLoaded.current) {
+            hasLoaded.current = true;
+            const cachedDataFound = loadCachedData(user.uid, sessionId);
+            if (cachedDataFound) {
+                setLoading(false);
+            } else {
+                setLoading(true);
+                fetchProjects(user.uid); // Only fetch projects here
             }
-            setLoading(false); // Set loading to false after all data loading завершения
-            setDataLoadCounter(0); // Reset counter for future loads if needed
+        } else {
+            console.log("Data Loading useEffect (Fetch Projects) - Skipped: Already loaded or no user/sessionId");
         }
-    }, [dataLoadCounter, user, sessionId, session, projects, selectedProject, sessionNotes, isBillable, cacheData]); // Include cacheData in dependencies
+        console.log("Data Loading useEffect (Fetch Projects) - END");
+    }, [user, sessionId, fetchProjects, loadCachedData]);
+
+
+    useEffect(() => {
+        console.log("Data Loading useEffect (Fetch Session & Select Project) - START - Projects State Ready:", projects.length > 0, "SessionId:", sessionId);
+        if (projects.length > 0 && sessionId && user) { // Only run this effect when projects are available
+            fetchSessionDetails(sessionId)
+                .then(sessionData => {
+                    if (sessionData) {
+                        setSession(sessionData);
+                        setSessionNotes(sessionData.sessionNotes || '');
+                        setIsBillable(sessionData.isBillable);
+
+                        let projectToSelect = null;
+                        if (sessionData.projectId) {
+                            projectToSelect = projects.find(p => p.id === sessionData.projectId);
+                            if (projectToSelect) {
+                                console.log("Project found by projectId:", projectToSelect.name);
+                            } else {
+                                console.warn("Project ID from session not found in fetched projects. Falling back to project name.");
+                            }
+                        }
+                        if (!projectToSelect && sessionData.project) {
+                            projectToSelect = projects.find(p => p.name === sessionData.project);
+                            if(projectToSelect) {
+                                console.log("Project found by projectName (fallback):", projectToSelect.name);
+                            } else {
+                                console.warn("Project Name from session also not found in fetched projects.");
+                            }
+                        }
+
+
+                        if (projectToSelect) {
+                            setSelectedProject(projectToSelect);
+                            console.log("Data Loading useEffect - Project pre-selected:", projectToSelect.name);
+                        } else {
+                            console.warn("Data Loading useEffect - No project matched from session data. Falling back to first project or null.");
+                            setSelectedProject(projects[0] || null);
+                            if (projects[0]) {
+                                console.log("Data Loading useEffect - Fallback to first project:", projects[0].name);
+                            } else {
+                                console.log("Data Loading useEffect - No projects available to fallback to.");
+                                setSelectedProject(null);
+                            }
+                        }
+                    } else {
+                        setSession(null);
+                    }
+                })
+                .catch(e => {
+                    console.error("Data Loading useEffect (Fetch Session & Select Project) - Error:", e);
+                    setSession(null);
+                })
+                .finally(() => {
+                    setLoading(false);
+                });
+        } else if (projects.length === 0 && sessionId) {
+            console.log("Data Loading useEffect (Fetch Session & Select Project) - No projects available yet.");
+            if (!loading) setLoading(false); // Ensure loading is false if projects are not loaded and we're not already loading.
+        }
+        console.log("Data Loading useEffect (Fetch Session & Select Project) - END");
+    }, [projects, sessionId, user, fetchSessionDetails]); // Depend on 'projects' state
 
 
     useEffect(() => {
@@ -173,15 +202,10 @@ const SessionDetailPage = ({ navigate, sessionId: routeSessionId }) => { // <-- 
 
 
     useEffect(() => {
-        if (user && sessionId) {
-            const cachedDataFound = loadCachedData(user.uid, sessionId);
-            if (!cachedDataFound) {
-                setLoading(true); // Start loading only if not loaded from cache
-            }
-            fetchProjects(user.uid);
-            fetchSessionDetails(sessionId, user.uid, cachedDataFound); // Pass cachedDataFound flag
+        if (session && user && sessionId && projects.length > 0 && selectedProject) {
+            cacheData(user.uid, sessionId, session, projects, selectedProject, sessionNotes, isBillable);
         }
-    }, [user, sessionId, fetchProjects, fetchSessionDetails, loadCachedData]); // Include loadCachedData in dependencies
+    }, [user, sessionId, session, projects, selectedProject, sessionNotes, isBillable, cacheData]);
 
 
     useEffect(() => {
@@ -192,7 +216,7 @@ const SessionDetailPage = ({ navigate, sessionId: routeSessionId }) => { // <-- 
                 sessionNotes !== session.sessionNotes;
             setIsSaveActive(hasChanged);
         }
-    }, [selectedProject, isBillable, sessionNotes, session]);
+    }, [selectedProject?.name, isBillable, sessionNotes, session]);
 
 
     const handleProjectChange = (e) => {
@@ -201,53 +225,54 @@ const SessionDetailPage = ({ navigate, sessionId: routeSessionId }) => { // <-- 
         setSelectedProject(project);
     };
 
-
     const handleBillableToggle = () => {
         setIsBillable(!isBillable);
+        setIsSaveActive(true);
     };
-
 
     const handleNotesChange = (e) => {
         setSessionNotes(e.target.value);
+        setIsSaveActive(true);
     };
 
-
     const handleSaveSession = async () => {
-        if (!sessionId || !isSaveActive) return;
+        if (!isSaveActive || !session || !selectedProject) return;
+
         try {
             const sessionRef = doc(db, 'sessions', sessionId);
             await updateDoc(sessionRef, {
                 project: selectedProject.name,
-                projectId: selectedProject.id,
+                projectId: selectedProject.id, // Save projectId as well!
                 isBillable: isBillable,
                 sessionNotes: sessionNotes,
             });
+
+            const updatedSession = { ...session, project: selectedProject.name, projectId: selectedProject.id, isBillable: isBillable, sessionNotes: sessionNotes }; // Update session state with projectId
+            setSession(updatedSession);
             setIsSaveActive(false);
-            navigate('session-overview'); // <-- Use navigate prop, page name as string - to SessionOverviewPage
+            console.log('Session updated successfully!');
+
         } catch (error) {
-            console.error("Error updating session:", error);
-            // Optionally, add error feedback here
+            console.error('Error updating session:', error);
         }
     };
-
-
 
 
     const handleDeleteSession = () => {
         setShowDeleteConfirmModal(true);
     };
 
-
     const confirmDeleteSession = async () => {
-        setShowDeleteConfirmModal(false);
         try {
             await deleteDoc(doc(db, 'sessions', sessionId));
-            navigate('session-overview'); // <-- Use navigate prop, page name as string - to SessionOverviewPage
+            console.log('Session deleted successfully!');
+            navigate('/journal');
         } catch (error) {
-            console.error("Error deleting session:", error);
+            console.error('Error deleting session:', error);
+        } finally {
+            setShowDeleteConfirmModal(false);
         }
     };
-
 
     const cancelDeleteSession = () => {
         setShowDeleteConfirmModal(false);
@@ -270,7 +295,7 @@ const SessionDetailPage = ({ navigate, sessionId: routeSessionId }) => { // <-- 
 
     return (
         <div className="session-detail-page">
-            <Header variant="journalOverview" showBackArrow={true} navigate={navigate} /> {/* ✅ navigate prop passed to Header */}
+            <Header variant="journalOverview" showBackArrow={true} navigate={navigate} />
             <div className="timer-quote">This moment was yours</div>
             <div className="timer">
                 {new Date(session.elapsedTime * 1000).toISOString().substr(11, 8)}
@@ -295,6 +320,7 @@ const SessionDetailPage = ({ navigate, sessionId: routeSessionId }) => { // <-- 
                     value={selectedProject?.name || ''}
                     onChange={handleProjectChange}
                 >
+                    <option value="" disabled>Select Project</option>
                     {projects.map((project) => (
                         <option key={project.id} value={project.name}>
                             {project.name}
@@ -355,6 +381,5 @@ const SessionDetailPage = ({ navigate, sessionId: routeSessionId }) => { // <-- 
         </div>
     );
 };
-
 
 export default SessionDetailPage;

@@ -1,5 +1,5 @@
 // App.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, memo } from 'react'; // Import memo
 import {
   setPersistence,
   browserSessionPersistence,
@@ -32,7 +32,9 @@ import { OnboardingProvider } from './contexts/OnboardingContext';
 
 import './styles/global.css';
 
-const App = () => {
+const App = memo(() => { // Wrap App with React.memo
+  console.log("App - RENDER START"); // <--- ADD THIS LOG
+
   // State to manage the current page
   const [currentPage, setCurrentPage] = useState('login'); // Default to login page
   const [pageParams, setPageParams] = useState({}); // State to hold parameters like projectId, sessionId
@@ -99,6 +101,8 @@ const App = () => {
     }
   };
 
+  console.log("App - RENDER END");   // <--- ADD THIS LOG
+
   return (
     <OnboardingProvider>
       <div className="app-container">
@@ -117,6 +121,6 @@ const App = () => {
       </div>
     </OnboardingProvider>
   );
-};
+}); // Closing memo for App
 
 export default App;

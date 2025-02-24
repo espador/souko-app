@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
-import { useParams } from 'react-router-dom'; // Keep useParams to get projectId from URL (if needed for initial load)
+import { useParams } from 'react-router-dom'; // Keep useParams if you need to get projectId from URL (initial load)
 import {
     doc,
     getDoc,
@@ -88,11 +88,11 @@ const cacheProjectDetail = (uid, projectId, project, sessions, lastSessionDocCac
 };
 
 
-const ProjectDetailPage = React.memo(({ navigate, projectId }) => { // <-- Receive navigate and projectId props
+const ProjectDetailPage = React.memo(({ navigate, projectId }) => { // Receive navigate and projectId props from App.jsx
     const routeProjectId = projectId; // Use projectId prop directly
     const [project, setProject] = useState(null);
     const [sessions, setSessions] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(true); // Start loading as true
     const [currentUser, setCurrentUser] = useState(null);
 
     // Pagination state:
@@ -113,35 +113,45 @@ const ProjectDetailPage = React.memo(({ navigate, projectId }) => { // <-- Recei
 
 
     const fetchProjectDetails = useCallback(async (projectId, uid) => {
+        console.log("fetchProjectDetails START for projectId:", projectId, "uid:", uid);
         const cachedData = loadCachedProjectDetail(uid, projectId);
         if (cachedData) {
+            console.log("Cache found for projectId:", projectId);
             setProject(cachedData.project || null);
             setSessions(cachedData.sessions || []);
-            setLastSessionDoc(cachedData.lastSessionDoc || null); // Restore lastSessionDoc from cache
+            setLastSessionDoc(cachedData.lastSessionDoc || null);
             setHasMoreSessions(cachedData.sessions ? cachedData.sessions.length >= SESSIONS_LIMIT : true);
-            setLoading(false);
+            setLoading(false); // Set loading to false after cache load
+            console.log("fetchProjectDetails - Loaded from cache, loading:", loading, "project:", cachedData.project);
         } else {
-            setLoading(true); // Initial loading from firebase
+            console.log("No cache found for projectId:", projectId);
+            setLoading(true);
+            console.log("fetchProjectDetails - setLoading(true) - no cache, loading:", loading);
         }
-
+    
         try {
             const projectRef = doc(db, 'projects', projectId);
             const projectSnapshot = await getDoc(projectRef);
             if (!projectSnapshot.exists() || projectSnapshot.data().userId !== uid) {
                 console.error('Project not found or unauthorized.');
                 setProject(null);
-                setLoading(false);
+                // setLoading(false); // No need to set here, will be set in finally
+                console.log("fetchProjectDetails - Project not found in Firebase, loading will be set to false in finally, project: null");
                 return;
             }
             const projectData = { id: projectSnapshot.id, ...projectSnapshot.data() };
             setProject(projectData);
-
-            // Initial sessions fetch moved to separate useEffect with pagination handling
-
+            console.log("fetchProjectDetails - Project fetched from Firebase:", projectData);
+            // Sessions are fetched in separate useEffect
         } catch (error) {
             console.error('Error fetching project details:', error);
             setProject(null);
-            setLoading(false);
+            // setLoading(false); // No need to set here, will be set in finally
+            console.error("fetchProjectDetails - Error fetching from Firebase, loading will be set to false in finally, project: null", error);
+        } finally {
+            setLoading(false); // Unconditionally set loading to false in finally
+            console.log("fetchProjectDetails - finally setLoading(false), loading:", loading);
+            console.log("fetchProjectDetails END for projectId:", projectId);
         }
     }, []);
 
@@ -234,9 +244,9 @@ const ProjectDetailPage = React.memo(({ navigate, projectId }) => { // <-- Recei
                 setCurrentUser(user);
                 fetchProjectDetails(routeProjectId, user.uid); // Fetch project details on auth state change
             } else {
-                navigate('login'); // <-- Use navigate prop, page name as string
+                navigate('login'); // <-- Use navigate prop from App.jsx
             }
-            setLoading(false); // Set general loading to false after auth and project details are attempted
+            // setLoading(false); // Moved setLoading(false) to fetchProjectDetails and cache load to control loading state more precisely
         });
         return () => unsubscribe();
     }, [navigate, routeProjectId, fetchProjectDetails]);
@@ -403,7 +413,8 @@ const ProjectDetailPage = React.memo(({ navigate, projectId }) => { // <-- Recei
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
 
-    if (loading) {
+
+    if (loading) { // Show spinner if loading is true
         return (
             <div className="homepage-loading">
                 <SoukoLogoHeader className="profile-pic souko-logo-header spinning-logo" />
@@ -411,25 +422,26 @@ const ProjectDetailPage = React.memo(({ navigate, projectId }) => { // <-- Recei
         );
     }
 
-    if (!project) {
+    if (!project) { // Show "Project not found" if project is still null after loading is false
         return (
             <div className="project-container">
                 <h1 className="error-title">Project not found</h1>
-                <button className="button" onClick={() => navigate('home')}> {/* ✅ navigate to 'home' */}
+                <button className="button" onClick={() => navigate('home')}> {/* Use navigate prop */}
                     Return to Homepage
                 </button>
             </div>
         );
     }
 
+    // Render the full page only when not loading and project is available
     return (
         <div className="project-container">
-            <Header variant="journalOverview" showBackArrow={true} navigate={navigate} /> {/* ✅ navigate prop passed to Header */}
+            <Header variant="journalOverview" showBackArrow={true} navigate={navigate} /> {/* Pass navigate prop to Header */}
             <div
                 className="project-dropdown-container top-tile"
                 onClick={() => {
                     console.log('Navigating to update project with projectId:', project.id);
-                    navigate('update-project', { projectId: project.id, }); // ✅ navigate to 'update-project' with params
+                    navigate('update-project', { projectId: project.id, }); // Use navigate prop
                 }}
             >
                 {project?.imageUrl ? (
@@ -504,7 +516,7 @@ const ProjectDetailPage = React.memo(({ navigate, projectId }) => { // <-- Recei
                             </h2>
                             <ul className="sessions-list">
                                 {sessionsByDate[date].map((session) => (
-                                    // ✅ Replace <Link> with button and navigate to 'session-detail' with params
+                                    // ✅ Use navigate prop to navigate to 'session-detail'
                                     <li key={session.id} className="session-item input-tile" onClick={() => navigate('session-detail', { sessionId: session.id })}>
                                         <span className="session-start-time">{formatStartTime(session)}</span>
                                         <span
@@ -537,7 +549,7 @@ const ProjectDetailPage = React.memo(({ navigate, projectId }) => { // <-- Recei
                     </div>
                 )}
             </div>
-            <button ref={fabRef} className="fab" onClick={() => navigate('time-tracker')}> {/* ✅ navigate to 'time-tracker' */}
+            <button ref={fabRef} className="fab" onClick={() => navigate('time-tracker')}> {/* Use navigate prop */}
                 {hasActiveSession ? (
                     <StopTimerIcon className="fab-icon" />
                 ) : (
