@@ -60,15 +60,14 @@ const getInstanceId = () => {
   return id;
 };
 
-const TimeTrackerPage = React.memo(({ navigate }) => { // <-- Receive navigate as prop
-  console.log("TimeTrackerPage component rendered"); // *** ADDED: Component Render Log ***
+const TimeTrackerPage = React.memo(({ navigate }) => {
+  console.log('TimeTrackerPage component rendered');
 
   // Component state
   const [user, setUser] = useState(null);
   const [projects, setProjects] = useState([]);
   const [selectedProject, setSelectedProject] = useState(null);
   const [sessionNotes, setSessionNotes] = useState('');
-  const [notesLoaded, setNotesLoaded] = useState(false);
   const [isBillable, setIsBillable] = useState(true);
   const [timer, setTimer] = useState(0);
   const [isRunning, setIsRunning] = useState(false);
@@ -113,19 +112,22 @@ const TimeTrackerPage = React.memo(({ navigate }) => { // <-- Receive navigate a
         });
       }
       await signOut(auth);
-      navigate('login'); // <-- Updated navigate call, page name as string
+      navigate('login');
     } catch (error) {
       console.error('Error during sign out:', error);
     }
   }, [sessionId, navigate]);
-  // --- End Sign Out Handler ---
 
-  // Fetch projects and active session
+  /**
+   * fetchData: Fetch projects and check for an active session once on login
+   */
   const fetchData = useCallback(async (uid) => {
     try {
+      // 1) Get user projects
       const projectsRef = collection(db, 'projects');
       const projectQuery = query(projectsRef, where('userId', '==', uid));
       const projectSnapshot = await getDocs(projectQuery);
+
       const userProjects = projectSnapshot.docs.map((doc) => ({
         id: doc.id,
         name: doc.data().name,
@@ -133,10 +135,12 @@ const TimeTrackerPage = React.memo(({ navigate }) => { // <-- Receive navigate a
         lastTrackedTime: doc.data().lastTrackedTime,
       }));
       setProjects(userProjects);
+
       if (userProjects.length > 0 && !selectedProject) {
         setSelectedProject(userProjects[0]);
       }
 
+      // 2) Check if there's an existing active session
       const sessionsRef = collection(db, 'sessions');
       const activeSessionQuery = query(
         sessionsRef,
@@ -144,76 +148,92 @@ const TimeTrackerPage = React.memo(({ navigate }) => { // <-- Receive navigate a
         where('endTime', '==', null)
       );
       const activeSessionSnapshot = await getDocs(activeSessionQuery);
+
       if (!activeSessionSnapshot.empty) {
         const activeSessionDoc = activeSessionSnapshot.docs[0];
         const sessionData = activeSessionDoc.data();
         setSessionId(activeSessionDoc.id);
-        console.log("SessionId set in fetchData:", activeSessionDoc.id); // *** ADDED: SessionId log in fetchData ***
-        const matchingProject = userProjects.find(
-          (proj) => proj.name === sessionData.project
-        );
-        if (matchingProject) setSelectedProject(matchingProject);
 
-        if (!notesLoaded) {
-          setSessionNotes(sessionData.sessionNotes || '');
-          setNotesLoaded(true);
-        }
+        // Sync sessionNotes
+        setSessionNotes(sessionData.sessionNotes || '');
+
+        // Billable
         setIsBillable(
           sessionData.isBillable !== undefined ? sessionData.isBillable : true
         );
+
+        // Running/paused states
         if (sessionData.paused) {
+          // If paused, local timer is whatever Firestore had
           setTimer(sessionData.elapsedTime || 0);
           setIsRunning(true);
           setIsPaused(true);
         } else {
+          // If not paused, we show "running"
           setIsRunning(true);
           setIsPaused(false);
         }
-        if (sessionData.pauseEvents) setPauseEvents(sessionData.pauseEvents);
+        if (sessionData.pauseEvents) {
+          setPauseEvents(sessionData.pauseEvents);
+        }
 
-        // --- Token Check on App Load ---
+        // Project selection
+        const matchingProject = userProjects.find(
+          (proj) => proj.name === sessionData.project
+        );
+        if (matchingProject) {
+          setSelectedProject(matchingProject);
+        }
+
+        // Token check on page load
         const localSessionToken = localStorage.getItem('sessionToken');
         const firestoreSessionToken = sessionData.activeToken;
-
         if (firestoreSessionToken) {
           if (!localSessionToken) {
-            // No local token, set it from Firestore (first time on this device after session started elsewhere)
+            // First time on this device for this session
             localStorage.setItem('sessionToken', firestoreSessionToken);
           } else if (localSessionToken !== firestoreSessionToken) {
-            // Tokens don't match, session takeover scenario, show conflict modal
+            // Conflict => another device is active
             setConflictModalVisible(true);
           }
         } else if (localSessionToken) {
-          // Firestore token is missing but local token exists - handle potential edge case, maybe clear local token or investigate
-          console.warn("Firestore session token missing but local token exists. Consider clearing local storage.");
-          localStorage.removeItem('sessionToken'); // Example: Clear local token to avoid future mismatches. Adapt as needed.
+          // Firestore missing a token, but local has one => mismatch
+          console.warn(
+            'Firestore session token missing but local token exists. Clearing local token.'
+          );
+          localStorage.removeItem('sessionToken');
         }
-        // --- End Token Check on App Load ---
-
       } else {
-        setSessionId(null); // *** ADDED: Reset SessionId if no active session found ***
-        console.log("SessionId set to null in fetchData (no active session)"); // *** ADDED: SessionId log when set to null ***
+        // No active session
+        setSessionId(null);
       }
     } catch (error) {
       console.error('Error fetching data:', error);
     } finally {
       setLoading(false);
     }
-  }, [selectedProject, notesLoaded]);
+  }, [selectedProject]);
 
+  /**
+   * On AuthStateChanged => fetch projects & active session once
+   */
   useEffect(() => {
     const unsubscribeAuth = onAuthStateChanged(auth, async (currentUser) => {
       if (!currentUser) {
-        navigate('login'); // <-- Updated navigate call, page name as string
+        navigate('login');
       } else {
         setUser(currentUser);
         await fetchData(currentUser.uid);
       }
     });
     return () => unsubscribeAuth();
-  }, [navigate, fetchData]);
+    // Removed fetchData from deps to avoid re-runs.
+    // We only want to fetch once per login.
+  }, [navigate]);
 
-  // Local ticking timer
+  /**
+   * Local ticking timer (1 second intervals) if session is running
+   */
   useEffect(() => {
     let interval;
     if (sessionClientStartTime) {
@@ -229,80 +249,70 @@ const TimeTrackerPage = React.memo(({ navigate }) => { // <-- Receive navigate a
     };
   }, [sessionClientStartTime, baseElapsedTime]);
 
-  // Listen for real-time changes to the session doc
+  /**
+   * Real-time listener for session changes: conflict detection, pause/resume
+   */
   useEffect(() => {
     let unsubscribe;
     if (sessionId) {
       const sessionRef = doc(db, 'sessions', sessionId);
       unsubscribe = onSnapshot(sessionRef, (sessionSnap) => {
-        console.log("Firestore session snapshot received:", sessionId, sessionSnap.exists(), sessionSnap.data()); // *** MODIFIED LOG: Added sessionId ***
-        if (sessionSnap.exists()) {
-          const sessionData = sessionSnap.data();
+        if (!sessionSnap.exists()) {
+          console.log('Session doc no longer exists in Firestore.');
+          return;
+        }
+        const sessionData = sessionSnap.data();
 
-          // --- Token Check in onSnapshot ---
-          const localSessionToken = localStorage.getItem('sessionToken');
-          const firestoreSessionToken = sessionData.activeToken;
+        // Token mismatch => conflict
+        const localSessionToken = localStorage.getItem('sessionToken');
+        const firestoreSessionToken = sessionData.activeToken;
+        if (
+          firestoreSessionToken &&
+          localSessionToken &&
+          firestoreSessionToken !== localSessionToken
+        ) {
+          setConflictModalVisible(true);
+        }
 
-          if (firestoreSessionToken && localSessionToken && firestoreSessionToken !== localSessionToken) {
-            // Token mismatch detected in real-time, session taken over by another device
-            setConflictModalVisible(true);
-          }
-          // --- End Token Check in onSnapshot ---
+        // Optionally check instanceId if you also want instance-based conflict
+        // if (sessionData.activeInstanceId && sessionData.activeInstanceId !== instanceId) {
+        //   setConflictModalVisible(true);
+        // }
 
-          // --- Instance Locking ---  COMMENTED OUT for debugging
-          // if (sessionData.activeInstanceId && sessionData.activeInstanceId !== instanceId) {
-          //   setActiveInstanceId(sessionData.activeInstanceId);
-          //   // setConflictModalVisible(true); // Conflict modal is already shown by token check, no need to repeat here if you want only token check to trigger it. If instanceId locking is also important, keep it.
-          // } else {
-          //   if (!sessionData.activeInstanceId) {
-          //     updateDoc(sessionRef, { activeInstanceId: instanceId }).catch(console.error);
-          //   }
-          //   setActiveInstanceId(instanceId);
-          //   // setConflictModalVisible(false); // No need to set to false here, conflictModalVisible is managed by token check.
-          // }
-          // --- End Instance Locking ---
+        // If no mismatch, sync pause & running states
+        setIsPaused(!!sessionData.paused);
+        setIsRunning(
+          sessionData.status === 'running' || sessionData.status === 'paused'
+        );
 
+        if (sessionData.pauseEvents) {
+          setPauseEvents(sessionData.pauseEvents);
+        }
 
-          if (sessionData.pauseEvents) {
-            setPauseEvents(sessionData.pauseEvents);
-          }
-          // Update local pause/run state from Firestore
-          setIsPaused(!!sessionData.paused);
-          setIsRunning(sessionData.status === 'running' || sessionData.status === 'paused');
-
-          if (!sessionData.paused) {
-            const clientStart =
-              sessionData.clientStartTime ||
-              sessionData.startTimeMs ||
-              (sessionData.startTime ? sessionData.startTime.toDate().getTime() : Date.now());
-            setSessionClientStartTime(clientStart);
-            setBaseElapsedTime(sessionData.elapsedTime || 0);
-          } else {
-            setSessionClientStartTime(null);
-            setTimer(sessionData.elapsedTime || 0);
-          }
+        if (!sessionData.paused) {
+          // If running: update local start references
+          const clientStart =
+            sessionData.clientStartTime ||
+            sessionData.startTimeMs ||
+            (sessionData.startTime
+              ? sessionData.startTime.toDate().getTime()
+              : Date.now());
+          setSessionClientStartTime(clientStart);
+          setBaseElapsedTime(sessionData.elapsedTime || 0);
         } else {
-          console.log("Session document not found in snapshot:", sessionId); // *** MODIFIED LOG: Added sessionId ***
+          // If paused: freeze timer at whatever Firestore has
+          setSessionClientStartTime(null);
+          setTimer(sessionData.elapsedTime || 0);
         }
       });
-    } else {
-      if(unsubscribe) {
-        console.log("Unsubscribing onSnapshot because sessionId became null or empty:", sessionId); // *** ADDED: Unsubscribe log ***
-        unsubscribe(); // Explicitly unsubscribe if sessionId becomes null or empty
-      }
     }
     return () => {
       if (unsubscribe) {
-        console.log("Unmounting and unsubscribing onSnapshot:", sessionId); // *** ADDED: Unmount unsubscribe log ***
+        console.log('Cleaning up session onSnapshot listener');
         unsubscribe();
       }
     };
   }, [sessionId, instanceId]);
-
-  // Log sessionId changes
-  useEffect(() => {
-    console.log("SessionId changed:", sessionId); // *** ADDED: SessionId change log ***
-  }, [sessionId]);
 
   // Start a session
   const handleStart = useCallback(async () => {
@@ -313,8 +323,8 @@ const TimeTrackerPage = React.memo(({ navigate }) => { // <-- Receive navigate a
     if (!sessionId) {
       try {
         const sessionRef = doc(collection(db, 'sessions'));
-        const sessionToken = uuidv4(); // Generate UUID token
-        localStorage.setItem('sessionToken', sessionToken); // Store token locally
+        const sessionToken = uuidv4();
+        localStorage.setItem('sessionToken', sessionToken);
         await setDoc(sessionRef, {
           userId: user.uid,
           project: selectedProject.name,
@@ -329,12 +339,10 @@ const TimeTrackerPage = React.memo(({ navigate }) => { // <-- Receive navigate a
           paused: false,
           status: 'running',
           pauseEvents: [],
-          activeToken: sessionToken, // Store token in Firestore
+          activeToken: sessionToken,
           activeInstanceId: instanceId,
         });
         setSessionId(sessionRef.id);
-        console.log("SessionId set in handleStart:", sessionRef.id); // *** ADDED: SessionId log in handleStart ***
-        await getDoc(sessionRef);
       } catch (error) {
         console.error('Error starting session:', error);
       }
@@ -342,7 +350,14 @@ const TimeTrackerPage = React.memo(({ navigate }) => { // <-- Receive navigate a
     setTimer(0);
     setIsRunning(true);
     setIsPaused(false);
-  }, [selectedProject, sessionId, user, sessionNotes, isBillable, instanceId]);
+  }, [
+    selectedProject,
+    sessionId,
+    user,
+    sessionNotes,
+    isBillable,
+    instanceId,
+  ]);
 
   // Pause
   const handlePause = useCallback(async () => {
@@ -390,16 +405,17 @@ const TimeTrackerPage = React.memo(({ navigate }) => { // <-- Receive navigate a
     setShowStopConfirmModal(true);
   }, []);
 
-  // CONFIRM STOP => finalize session & update weeklyTrackedTime and totalTrackedTime
+  // CONFIRM STOP => finalize session & update project info & user’s tracked times
   const confirmStopSession = useCallback(async () => {
     setShowStopConfirmModal(false);
     setIsRunning(false);
     setIsPaused(false);
+
     if (sessionId && selectedProject) {
       try {
         const sessionRef = doc(db, 'sessions', sessionId);
-        const sessionDurationSeconds = timer; // Timer is in seconds
-        const sessionDurationMinutes = Math.round(sessionDurationSeconds / 60); // Convert seconds to minutes and round
+        const sessionDurationSeconds = timer;
+        const sessionDurationMinutes = Math.round(sessionDurationSeconds / 60);
 
         // 1) Calculate total paused time
         let totalPausedTimeMs = 0;
@@ -418,7 +434,7 @@ const TimeTrackerPage = React.memo(({ navigate }) => { // <-- Receive navigate a
         }
         const totalPausedTimeSeconds = Math.round(totalPausedTimeMs / 1000);
 
-        // 2) Mark session as ended in Firestore
+        // 2) Mark session ended in Firestore
         await updateDoc(sessionRef, {
           elapsedTime: timer,
           endTime: serverTimestamp(),
@@ -426,22 +442,25 @@ const TimeTrackerPage = React.memo(({ navigate }) => { // <-- Receive navigate a
           projectId: selectedProject.id,
           sessionNotes,
           status: 'stopped',
-          pauseEvents: pauseEvents,
+          pauseEvents,
           totalPausedTime: totalPausedTimeSeconds,
         });
 
-        // 3) Update project's lastTrackedTime if this session is the latest
+        // 3) Update project’s lastTrackedTime if this is the latest
         await runTransaction(db, async (transaction) => {
           const projectRef = doc(db, 'projects', selectedProject.id);
           const projectDoc = await transaction.get(projectRef);
           const currentLastTracked = projectDoc.data().lastTrackedTime;
           const newEndTime = Date.now();
-          if (!currentLastTracked || newEndTime > currentLastTracked.toMillis?.()) {
+          if (
+            !currentLastTracked ||
+            newEndTime > currentLastTracked.toMillis?.()
+          ) {
             transaction.update(projectRef, { lastTrackedTime: serverTimestamp() });
           }
         });
 
-        // 4) Update weeklyTrackedTime and totalTrackedTime in the user's profile doc
+        // 4) Update weeklyTrackedTime and totalTrackedTime in user profile
         await runTransaction(db, async (transaction) => {
           const profileRef = doc(db, 'profiles', user.uid);
           const profileSnap = await transaction.get(profileRef);
@@ -451,32 +470,35 @@ const TimeTrackerPage = React.memo(({ navigate }) => { // <-- Receive navigate a
           let currentWeeklyTime = profileData.weeklyTrackedTime || 0;
           let storedWeekStart = profileData.weekStart || 0;
           const thisMonday = getMondayOfCurrentWeek();
+
+          // If new week started
           if (storedWeekStart < thisMonday) {
             currentWeeklyTime = 0;
             storedWeekStart = thisMonday;
           }
+
           const newWeeklyTime = currentWeeklyTime + timer;
           let currentTotalTrackedTime = profileData.totalTrackedTime || 0;
-          const newTotalTrackedTime = currentTotalTrackedTime + sessionDurationMinutes; // Add session duration in minutes
+          // Add session minutes to totalTrackedTime
+          const newTotalTrackedTime = currentTotalTrackedTime + sessionDurationMinutes;
 
           transaction.update(profileRef, {
             weeklyTrackedTime: newWeeklyTime,
             weekStart: storedWeekStart,
-            totalTrackedTime: newTotalTrackedTime, // Update totalTrackedTime
+            totalTrackedTime: newTotalTrackedTime,
             lastUpdated: serverTimestamp(),
           });
         });
       } catch (error) {
         console.error('Error stopping session:', error);
       }
-    } else {
-      console.warn('Session ID or selected project not available during stop.');
     }
 
     // 5) Navigate to session overview
     localStorage.setItem('lastProjectId', selectedProject?.id || '');
-    navigate('session-overview', { // <-- Updated navigate call, page name as string, pass params
-      totalTime: timer, projectId: selectedProject?.id,
+    navigate('session-overview', {
+      totalTime: timer,
+      projectId: selectedProject?.id,
     });
 
     // 6) Reset local states
@@ -502,6 +524,7 @@ const TimeTrackerPage = React.memo(({ navigate }) => { // <-- Receive navigate a
     setIsPaused(false);
     setSessionClientStartTime(null);
     setBaseElapsedTime(0);
+
     if (sessionId) {
       try {
         const sessionRef = doc(db, 'sessions', sessionId);
@@ -558,6 +581,7 @@ const TimeTrackerPage = React.memo(({ navigate }) => { // <-- Receive navigate a
 
   // Autosave notes
   useEffect(() => {
+    // Only save if *this* instance is the active one
     if (sessionId && activeInstanceId === instanceId) {
       if (noteSaveTimeout.current) clearTimeout(noteSaveTimeout.current);
       noteSaveTimeout.current = setTimeout(async () => {
@@ -575,46 +599,54 @@ const TimeTrackerPage = React.memo(({ navigate }) => { // <-- Receive navigate a
   }, [sessionNotes, sessionId, activeInstanceId, instanceId]);
 
   const handleNotesChange = useCallback((e) => {
+    // Limit length to 140
     setSessionNotes(e.target.value.slice(0, 140));
   }, []);
 
-    // Take Over Session
-    const handleTakeOver = async () => {
-      if (sessionId) {
-        const sessionRef = doc(db, 'sessions', sessionId);
-        try {
-          await updateDoc(sessionRef, { activeToken: localStorage.getItem('sessionToken') }); // Update Firestore token to current device's token
-          await updateDoc(sessionRef, { activeInstanceId: instanceId }); // Also take over instance id for other functionalities relying on it.
-          const sessionSnap = await getDoc(sessionRef);
-          if (sessionSnap.exists()) {
-            const sessionData = sessionSnap.data();
-            setIsPaused(!!sessionData.paused);
-            setIsRunning(sessionData.status === 'running' || sessionData.status === 'paused');
-            if (!sessionData.paused) {
-              const clientStart =
-                sessionData.clientStartTime ||
-                sessionData.startTimeMs ||
-                (sessionData.startTime ? sessionData.startTime.toDate().getTime() : Date.now());
-              setSessionClientStartTime(clientStart);
-              setBaseElapsedTime(sessionData.elapsedTime || 0);
-            } else {
-              setSessionClientStartTime(null);
-              setTimer(sessionData.elapsedTime || 0);
-            }
+  // Take Over Session
+  const handleTakeOver = async () => {
+    if (sessionId) {
+      const sessionRef = doc(db, 'sessions', sessionId);
+      try {
+        // Overwrite Firestore token and instance to match this device
+        await updateDoc(sessionRef, {
+          activeToken: localStorage.getItem('sessionToken'),
+          activeInstanceId: instanceId,
+        });
+
+        const sessionSnap = await getDoc(sessionRef);
+        if (sessionSnap.exists()) {
+          const sessionData = sessionSnap.data();
+          setIsPaused(!!sessionData.paused);
+          setIsRunning(
+            sessionData.status === 'running' || sessionData.status === 'paused'
+          );
+          if (!sessionData.paused) {
+            const clientStart =
+              sessionData.clientStartTime ||
+              sessionData.startTimeMs ||
+              (sessionData.startTime
+                ? sessionData.startTime.toDate().getTime()
+                : Date.now());
+            setSessionClientStartTime(clientStart);
+            setBaseElapsedTime(sessionData.elapsedTime || 0);
+          } else {
+            setSessionClientStartTime(null);
+            setTimer(sessionData.elapsedTime || 0);
           }
-          setConflictModalVisible(false);
-          setActiveInstanceId(instanceId);
-        } catch (error) {
-          console.error('Error taking over session:', error);
         }
+        setConflictModalVisible(false);
+        setActiveInstanceId(instanceId);
+      } catch (error) {
+        console.error('Error taking over session:', error);
       }
-    };
+    }
+  };
 
-    // Close session on conflict
-    const handleCloseSession = () => {
-      navigate('home'); // <-- Updated navigate call, page name as string
-    };
-
+  // Close session on conflict
+  const handleCloseSession = () => {
+    navigate('home');
+  };
 
   if (loading) {
     return (
@@ -629,8 +661,8 @@ const TimeTrackerPage = React.memo(({ navigate }) => { // <-- Receive navigate a
       <Header
         variant="journalOverview"
         showBackArrow={true}
-        onBack={() => navigate('home', { skipAutoRedirect: true })} // <-- Updated navigate call, page name as string, pass params
-        navigate={navigate} // <-- Pass navigate prop to Header
+        onBack={() => navigate('home', { skipAutoRedirect: true })}
+        navigate={navigate}
         onProfileClick={() => setIsSidebarOpen(true)}
       />
       <div className="timer-quote">{timerQuote}</div>
@@ -661,7 +693,13 @@ const TimeTrackerPage = React.memo(({ navigate }) => { // <-- Receive navigate a
         </button>
         <button
           className="control-button small"
-          onClick={isRunning && !isPaused ? handlePause : isPaused ? handleResume : undefined}
+          onClick={
+            isRunning && !isPaused
+              ? handlePause
+              : isPaused
+              ? handleResume
+              : undefined
+          }
         >
           {isRunning && !isPaused ? (
             <PauseIcon style={{ width: '32px', height: '32px' }} />
@@ -672,6 +710,7 @@ const TimeTrackerPage = React.memo(({ navigate }) => { // <-- Receive navigate a
           )}
         </button>
       </div>
+
       <h2 className="projects-label">Details</h2>
       <div className="project-dropdown-container">
         {selectedProject?.imageUrl ? (
@@ -685,11 +724,11 @@ const TimeTrackerPage = React.memo(({ navigate }) => { // <-- Receive navigate a
             {selectedProject.name.charAt(0).toUpperCase()}
           </div>
         ) : null}
+
         <select
           className="project-dropdown"
           value={selectedProject?.name || ''}
           onChange={handleProjectChange}
-          // **REMOVED: disabled={isRunning} ** // Project dropdown is now enabled when timer is running
         >
           {projects.map((project) => (
             <option key={project.id} value={project.name}>
@@ -699,6 +738,7 @@ const TimeTrackerPage = React.memo(({ navigate }) => { // <-- Receive navigate a
         </select>
         <DropdownIcon className="dropdown-arrow" />
       </div>
+
       <div
         className="input-tile billable-tile"
         onClick={handleBillableToggle}
@@ -711,6 +751,7 @@ const TimeTrackerPage = React.memo(({ navigate }) => { // <-- Receive navigate a
           {isBillable ? <RadioActiveIcon /> : <RadioMutedIcon />}
         </div>
       </div>
+
       <div className="input-tile notes-input-tile" style={{ position: 'relative' }}>
         <textarea
           id="session-notes"
@@ -720,7 +761,10 @@ const TimeTrackerPage = React.memo(({ navigate }) => { // <-- Receive navigate a
           onChange={handleNotesChange}
           disabled={activeInstanceId !== instanceId}
           onBlur={() => {
-            timerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            timerRef.current?.scrollIntoView({
+              behavior: 'smooth',
+              block: 'start',
+            });
           }}
         />
         <EditIcon
@@ -728,6 +772,8 @@ const TimeTrackerPage = React.memo(({ navigate }) => { // <-- Receive navigate a
           style={{ position: 'absolute', top: '16px', right: '16px' }}
         />
       </div>
+
+      {/* Stop Confirm Modal */}
       <ConfirmModal
         show={showStopConfirmModal}
         onHide={() => setShowStopConfirmModal(false)}
@@ -737,6 +783,8 @@ const TimeTrackerPage = React.memo(({ navigate }) => { // <-- Receive navigate a
         confirmText="Yes, Stop & Save"
         cancelText="Cancel"
       />
+
+      {/* Reset Confirm Modal */}
       <ConfirmModal
         show={showResetConfirmModal}
         onHide={() => setShowResetConfirmModal(false)}
@@ -746,6 +794,8 @@ const TimeTrackerPage = React.memo(({ navigate }) => { // <-- Receive navigate a
         confirmText="Yes, Reset"
         cancelText="Cancel"
       />
+
+      {/* Conflict Modal */}
       <ConfirmModal
         show={conflictModalVisible}
         onHide={handleCloseSession}
@@ -755,13 +805,18 @@ const TimeTrackerPage = React.memo(({ navigate }) => { // <-- Receive navigate a
         confirmText="Take Over"
         cancelText="Return Home"
       />
+
+      {/* Sidebar */}
       <Sidebar
         isOpen={isSidebarOpen}
         onClose={() => setIsSidebarOpen(false)}
         onLogout={handleSignOut}
       />
       {isSidebarOpen && (
-        <div className="sidebar-overlay" onClick={() => setIsSidebarOpen(false)}></div>
+        <div
+          className="sidebar-overlay"
+          onClick={() => setIsSidebarOpen(false)}
+        ></div>
       )}
     </div>
   );

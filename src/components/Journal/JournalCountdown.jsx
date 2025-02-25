@@ -5,9 +5,8 @@ import '../../styles/global.css';
 import { TextGenerateEffect } from '../../styles/components/text-generate-effect.tsx';
 
 const JournalCountdown = React.memo(({ navigate }) => { // <-- Receive navigate as prop
-    const [timeLeft, setTimeLeft] = useState(calculateTimeLeft); // Initialize state directly with function
 
-    // Memoize calculateTimeLeft function
+    // Memoize calculateTimeLeft function - DEFINE IT FIRST
     const calculateTimeLeft = useCallback(() => {
         const now = new Date();
         const targetTime = new Date(now);
@@ -30,6 +29,9 @@ const JournalCountdown = React.memo(({ navigate }) => { // <-- Receive navigate 
 
         return { hours, minutes, seconds };
     }, []); // No dependencies as it's self-contained
+
+
+    const [timeLeft, setTimeLeft] = useState(calculateTimeLeft()); // Initialize state with function call AFTER definition
 
     useEffect(() => {
         const intervalId = setInterval(() => {
