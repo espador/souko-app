@@ -227,9 +227,7 @@ const TimeTrackerPage = React.memo(({ navigate }) => {
       }
     });
     return () => unsubscribeAuth();
-    // Removed fetchData from deps to avoid re-runs.
-    // We only want to fetch once per login.
-  }, [navigate]);
+  }, [navigate, fetchData]);
 
   /**
    * Local ticking timer (1 second intervals) if session is running
@@ -275,9 +273,15 @@ const TimeTrackerPage = React.memo(({ navigate }) => {
         }
 
         // Optionally check instanceId if you also want instance-based conflict
-        // if (sessionData.activeInstanceId && sessionData.activeInstanceId !== instanceId) {
-        //   setConflictModalVisible(true);
-        // }
+        if (
+          sessionData.activeInstanceId &&
+          sessionData.activeInstanceId !== instanceId
+        ) {
+          setConflictModalVisible(true);
+        }
+
+        // FIX: Set activeInstanceId from Firestore so we can enable notes text area for this instance
+        setActiveInstanceId(sessionData.activeInstanceId || null);
 
         // If no mismatch, sync pause & running states
         setIsPaused(!!sessionData.paused);
@@ -585,13 +589,12 @@ const TimeTrackerPage = React.memo(({ navigate }) => {
     if (sessionId && activeInstanceId === instanceId) {
       if (noteSaveTimeout.current) clearTimeout(noteSaveTimeout.current);
       noteSaveTimeout.current = setTimeout(async () => {
-        if (sessionNotes !== '') {
-          try {
-            const sessionRef = doc(db, 'sessions', sessionId);
-            await updateDoc(sessionRef, { sessionNotes });
-          } catch (error) {
-            console.error('Error saving session notes:', error);
-          }
+        // Save notes to Firestore if not empty
+        try {
+          const sessionRef = doc(db, 'sessions', sessionId);
+          await updateDoc(sessionRef, { sessionNotes });
+        } catch (error) {
+          console.error('Error saving session notes:', error);
         }
       }, 1000);
     }

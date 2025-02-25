@@ -1,5 +1,5 @@
 // src/components/Onboarding/OnboardingStep4.jsx
-import React from 'react';
+import React, { useState } from 'react'; // ✅ FIX: added { useState } here
 // REMOVED: import { useNavigate } from 'react-router-dom'; // <-- REMOVE useNavigate import
 import Header from '../Layout/Header';
 import './OnboardingStep4.css';
@@ -26,8 +26,7 @@ import {
 import { useOnboardingContext } from '../../contexts/OnboardingContext';
 
 function OnboardingStep4({ navigate }) { // <-- Receive navigate prop
-  // REMOVED: const navigate = useNavigate(); // <-- REMOVE useNavigate hook
-  const [error, setError] = useState('');
+  const [error, setError] = useState(''); // ✅ no more "useState is not defined" error
 
   // Pull any onboarding data from context
   const {
@@ -57,7 +56,7 @@ function OnboardingStep4({ navigate }) { // <-- Receive navigate prop
         { merge: true }
       );
 
-      // 2) Upload project image if we have one (and it isn't a string)
+      // 2) Upload project image if we have one (and it isn’t a string)
       let imageUrl = null;
       if (projectImage && typeof projectImage !== 'string') {
         const storage = getStorage();
@@ -71,9 +70,7 @@ function OnboardingStep4({ navigate }) { // <-- Receive navigate prop
           uploadTask.on(
             'state_changed',
             () => {},
-            (uploadError) => {
-              reject(uploadError);
-            },
+            (uploadError) => reject(uploadError),
             async () => {
               imageUrl = await getDownloadURL(uploadTask.snapshot.ref);
               resolve();
@@ -98,13 +95,12 @@ function OnboardingStep4({ navigate }) { // <-- Receive navigate prop
         userId: user.uid,
         projectId: projectRef.id,
         mood,
-        reflection: '', // or any reflection text if you want
-        createdAt: serverTimestamp(), // changed to createdAt for consistency
+        reflection: '', // or any reflection text if you like
+        createdAt: serverTimestamp(),
       });
 
       // Finally, navigate to the time tracker
-      navigate('time-tracker'); // <-- Updated navigate call, page name as string
-
+      navigate('time-tracker'); // moves you to your time tracker
     } catch (err) {
       console.error('Error finalizing onboarding:', err);
       setError('Failed to finish onboarding. Please try again.');
@@ -113,7 +109,7 @@ function OnboardingStep4({ navigate }) { // <-- Receive navigate prop
 
   return (
     <div className="onboarding-step4">
-      <Header variant="onboarding" currentStep={4} navigate={navigate} /> {/* ✅ Pass navigate prop to Header */}
+      <Header variant="onboarding" currentStep={4} navigate={navigate} />
       <main className="onboarding-step4-content">
         <section className="motivational-section">
           <TextGenerateEffect
