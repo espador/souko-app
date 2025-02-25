@@ -1,3 +1,4 @@
+// HomePage.jsx
 import React, { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import { auth, db } from '../services/firebase';
 import { signOut } from 'firebase/auth';
@@ -69,9 +70,6 @@ const cacheHomePageData = (
   localStorage.setItem(`homePageData_${uid}`, JSON.stringify(cache));
 };
 
-// --------------
-// HOME PAGE
-// --------------
 const HomePage = React.memo(({ navigate, skipAutoRedirect, currentPage }) => {
   const [user, setUser] = useState(null);
   const [projects, setProjects] = useState([]);
@@ -96,29 +94,20 @@ const HomePage = React.memo(({ navigate, skipAutoRedirect, currentPage }) => {
   // 1. On Auth - Load Cache Immediately, Then Fetch Fresh
   // -----------------------------------------------------
   const fetchHomeData = useCallback(async (uid) => {
-    // 1) Attempt loading from cache first
     const cachedData = loadCachedHomePageData(uid);
     if (cachedData) {
       console.log('HomePage: Loaded data from cache');
-      // Show cached data right away
       setProjects(cachedData.projects || []);
       setSessions(cachedData.sessions || []);
       setJournalEntries(cachedData.journalEntries || []);
       setUserProfile(cachedData.userProfile || null);
       setLevelConfig(cachedData.levelConfig || null);
       setHasTrackedEver(cachedData.hasTrackedEver || false);
-
-      // We won't set loading to false yet if we also want a fresh fetch
-      // so that we can show a spinner or partial UI update. 
-      // If you'd rather hide the spinner now, you can do so:
-      // setLoading(false);
     } else {
-      // No cache or cache is outdated
       console.log('HomePage: No valid cache found, show spinner');
       setLoading(true);
     }
 
-    // 2) Always fetch from Firestore in the background
     try {
       // Projects
       const projectsSnap = await getDocs(
@@ -170,7 +159,6 @@ const HomePage = React.memo(({ navigate, skipAutoRedirect, currentPage }) => {
         lvlCfg = levelConfigSnap.data();
       }
 
-      // Set states with fresh data
       setProjects(userProjects);
       setSessions(userSessions);
       setJournalEntries(userJournalEntries);
@@ -179,7 +167,6 @@ const HomePage = React.memo(({ navigate, skipAutoRedirect, currentPage }) => {
       setHasTrackedEver(userHasTrackedEver);
       setTotalTrackedTimeMinutes(totalMinutes);
 
-      // Cache the fresh data
       cacheHomePageData(
         uid,
         userProjects,
@@ -192,7 +179,6 @@ const HomePage = React.memo(({ navigate, skipAutoRedirect, currentPage }) => {
     } catch (err) {
       console.error('HomePage: Error fetching fresh data:', err);
     } finally {
-      // Hide spinner once done
       setLoading(false);
     }
   }, []);
@@ -204,7 +190,7 @@ const HomePage = React.memo(({ navigate, skipAutoRedirect, currentPage }) => {
         return;
       }
       setUser(currentUser);
-      fetchHomeData(currentUser.uid); // Load or refresh data
+      fetchHomeData(currentUser.uid);
     });
     return unsubscribeAuth;
   }, [navigate, fetchHomeData]);
@@ -214,8 +200,7 @@ const HomePage = React.memo(({ navigate, skipAutoRedirect, currentPage }) => {
   // -------------------------------------------
   useEffect(() => {
     if (!user) return;
-    (async () => {
-      const { onSnapshot } = await import('firebase/firestore');
+    import('firebase/firestore').then(({ onSnapshot }) => {
       const activeSessionQuery = query(
         collection(db, 'sessions'),
         where('userId', '==', user.uid),
@@ -223,13 +208,19 @@ const HomePage = React.memo(({ navigate, skipAutoRedirect, currentPage }) => {
       );
       const unsubActiveSession = onSnapshot(activeSessionQuery, (snap) => {
         if (!snap.empty) {
-          setActiveSession(snap.docs[0].data());
+          // We want the doc ID to navigate to time-tracker
+          const docRef = snap.docs[0];
+          const data = docRef.data();
+          setActiveSession({
+            ...data,
+            id: docRef.id, // so we can pass sessionId
+          });
         } else {
           setActiveSession(null);
         }
       });
       return () => unsubActiveSession && unsubActiveSession();
-    })();
+    });
   }, [user]);
 
   // -------------------------------------------
@@ -237,7 +228,6 @@ const HomePage = React.memo(({ navigate, skipAutoRedirect, currentPage }) => {
   // -------------------------------------------
   useEffect(() => {
     if (!loading && userProfile !== undefined) {
-      // If not on an onboarding route
       const isOnboardingRoute = currentPage.startsWith('onboarding');
       if (!isOnboardingRoute) {
         if (!userProfile || userProfile.onboardingComplete !== true) {
@@ -298,17 +288,24 @@ const HomePage = React.memo(({ navigate, skipAutoRedirect, currentPage }) => {
 
   const weeklyTrackedTime = userProfile?.weeklyTrackedTime || 0;
 
-  // -------------------------------------------
-  // 7. Render
-  // -------------------------------------------
   if (loading) {
-    // Show loading spinner if data is not yet loaded from Firestore or cache
     return (
       <div className="homepage-loading">
         <SoukoLogoHeader className="profile-pic souko-logo-header spinning-logo" />
       </div>
     );
   }
+
+  // --------------- FAB CLICK HANDLER ---------------
+  // If there's an active session => jump to it
+  // else => go to time-tracker-setup
+  const handleFabClick = () => {
+    if (activeSession) {
+      navigate('time-tracker', { sessionId: activeSession.id });
+    } else {
+      navigate('time-tracker-setup');
+    }
+  };
 
   return (
     <div className="homepage">
@@ -405,7 +402,8 @@ const HomePage = React.memo(({ navigate, skipAutoRedirect, currentPage }) => {
         <div className="sidebar-overlay" onClick={closeSidebar}></div>
       )}
 
-      <button ref={fabRef} className="fab" onClick={() => navigate('time-tracker')}>
+      {/* Updated FAB logic */}
+      <button ref={fabRef} className="fab" onClick={handleFabClick}>
         {hasActiveSession ? (
           <StopTimerIcon className="fab-icon" />
         ) : (

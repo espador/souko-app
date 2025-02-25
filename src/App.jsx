@@ -1,5 +1,5 @@
 // App.jsx
-import React, { useState, useEffect, memo } from 'react'; // Import memo
+import React, { useState, useEffect, memo } from 'react'; 
 import {
   setPersistence,
   browserSessionPersistence,
@@ -22,35 +22,37 @@ import JournalForm from './components/Journal/JournalForm';
 import JournalConfirmation from './components/Journal/JournalConfirmation';
 import UpdateProjectPage from './pages/UpdateProjectPage';
 
+// Onboarding components
 import OnboardingStep1 from './components/Onboarding/OnboardingStep1';
 import OnboardingStep2 from './components/Onboarding/OnboardingStep2';
 import OnboardingStep3 from './components/Onboarding/OnboardingStep3';
 import OnboardingStep4 from './components/Onboarding/OnboardingStep4';
+
+// NEW: Import our new setup page
+import TimeTrackerSetupPage from './pages/TimeTrackerSetupPage';
 
 // Import the OnboardingProvider
 import { OnboardingProvider } from './contexts/OnboardingContext';
 
 import './styles/global.css';
 
-const App = memo(() => { // Wrap App with React.memo
-  console.log("App - RENDER START"); // <--- ADD THIS LOG
+const App = memo(() => {
+  console.log("App - RENDER START");
 
   // State to manage the current page
   const [currentPage, setCurrentPage] = useState('login'); // Default to login page
-  const [pageParams, setPageParams] = useState({}); // State to hold parameters like projectId, sessionId
+  const [pageParams, setPageParams] = useState({}); 
 
   useEffect(() => {
     // Explicitly set Firebase auth persistence to session storage
     setPersistence(auth, browserSessionPersistence)
       .then(() => {
-        // No automatic navigation on auth state change in App anymore.
-        // Removed onAuthStateChanged listener for automatic navigation
         console.log("Firebase persistence set to browserSessionPersistence");
       })
       .catch((error) => {
         console.error('Error setting auth persistence:', error);
       });
-  }, []); // Removed currentPage from dependency array
+  }, []);
 
   // Function to handle navigation (state-based)
   const navigate = (page, params = {}) => {
@@ -68,8 +70,12 @@ const App = memo(() => { // Wrap App with React.memo
         return <HomePage navigate={navigate} currentPage={currentPage} skipAutoRedirect={pageParams.skipAutoRedirect} />;
       case 'projects':
         return <ProjectOverviewPage navigate={navigate} />;
+      // NEW: The setup page
+      case 'time-tracker-setup':
+        return <TimeTrackerSetupPage navigate={navigate} />;
+      // Pass the sessionId into TimeTrackerPage (if any)
       case 'time-tracker':
-        return <TimeTrackerPage navigate={navigate} />;
+        return <TimeTrackerPage navigate={navigate} sessionId={pageParams.sessionId} />;
       case 'create-project':
         return <CreateProjectPage navigate={navigate} />;
       case 'project-detail':
@@ -77,7 +83,7 @@ const App = memo(() => { // Wrap App with React.memo
       case 'session-detail':
         return <SessionDetailPage navigate={navigate} sessionId={pageParams.sessionId} />;
       case 'session-overview':
-        return <SessionOverviewPage navigate={navigate} />;
+        return <SessionOverviewPage navigate={navigate} totalTime={pageParams.totalTime} projectId={pageParams.projectId} />;
       case 'journal-countdown':
         return <JournalCountdown navigate={navigate} />;
       case 'journal-overview':
@@ -101,7 +107,7 @@ const App = memo(() => { // Wrap App with React.memo
     }
   };
 
-  console.log("App - RENDER END");   // <--- ADD THIS LOG
+  console.log("App - RENDER END");
 
   return (
     <OnboardingProvider>
@@ -121,6 +127,6 @@ const App = memo(() => { // Wrap App with React.memo
       </div>
     </OnboardingProvider>
   );
-}); // Closing memo for App
+});
 
 export default App;

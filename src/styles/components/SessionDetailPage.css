@@ -43,7 +43,6 @@
   background-color: var(--card-background);
   border-radius: 12px;
   padding: 16px;
-  margin-bottom: 16px;
   margin-top: 16px;
   cursor: pointer;
 }
@@ -98,10 +97,10 @@
   background-color: var(--card-background);
   border-radius: 12px;
   padding: 16px;
-  margin-bottom: 16px;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  cursor: pointer;
 }
 
 .billable-tile {

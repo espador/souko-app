@@ -210,6 +210,7 @@ h2.projects-label, h2.journal-label {
   font-family: var(--font-commit-mono);
   margin-bottom: 0;
   margin-top: 0;
+  font-weight: 400;
 }
 
 body.allow-scroll > html {

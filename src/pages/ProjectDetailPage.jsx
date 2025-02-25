@@ -1,3 +1,4 @@
+// ProjectDetailPage.jsx (FIRST FILE)
 import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import {
   doc,
@@ -25,10 +26,9 @@ import { TextGenerateEffect } from '../styles/components/text-generate-effect.ts
 import { ReactComponent as StartTimerIcon } from '../styles/components/assets/start-timer.svg';
 import { ReactComponent as StopTimerIcon } from '../styles/components/assets/stop-timer.svg';
 
-const CACHE_DURATION_MS = 30000; // 30 seconds
+const CACHE_DURATION_MS = 30000; 
 const SESSIONS_LIMIT = 30;
 
-// Helper to convert session start time into a Date object
 const convertToDate = (session) => {
   if (session.startTimeMs != null) {
     const num = Number(session.startTimeMs);
@@ -62,7 +62,7 @@ const convertToDate = (session) => {
   return null;
 };
 
-// Cache helpers
+// Cache
 const loadCachedProjectDetail = (uid, projectId) => {
   const cacheKey = `projectDetailData_${uid}_${projectId}`;
   const cachedStr = localStorage.getItem(cacheKey);
@@ -82,8 +82,8 @@ const loadCachedProjectDetail = (uid, projectId) => {
 const cacheProjectDetail = (uid, projectId, project, sessions, lastSessionDocCache) => {
   const cacheKey = `projectDetailData_${uid}_${projectId}`;
   const cache = {
-    project: project,
-    sessions: sessions,
+    project,
+    sessions,
     lastSessionDoc: lastSessionDocCache,
     timestamp: Date.now(),
   };
@@ -97,12 +97,10 @@ const ProjectDetailPage = React.memo(({ navigate, projectId }) => {
   const [loading, setLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState(null);
 
-  // Pagination
   const [lastSessionDoc, setLastSessionDoc] = useState(null);
   const [hasMoreSessions, setHasMoreSessions] = useState(true);
   const [sessionsLoading, setSessionsLoading] = useState(false);
 
-  // Filters & display
   const [selectedTimeRange, setSelectedTimeRange] = useState('total');
   const [displayMode, setDisplayMode] = useState('time');
   const [effectTrigger, setEffectTrigger] = useState(0);
@@ -111,29 +109,21 @@ const ProjectDetailPage = React.memo(({ navigate, projectId }) => {
   const fabRef = useRef(null);
   const scrollTimeout = useRef(null);
 
-  // Active session for FAB
   const [activeSession, setActiveSession] = useState(null);
 
-  // -------------------
-  // 1. Auth + Project
-  // -------------------
   const fetchProject = useCallback(async (uid, pid) => {
-    // If cached
     const cachedData = loadCachedProjectDetail(uid, pid);
     if (cachedData) {
       setProject(cachedData.project || null);
       setSessions(cachedData.sessions || []);
       setLastSessionDoc(cachedData.lastSessionDoc || null);
-      setHasMoreSessions(
-        cachedData.sessions?.length >= SESSIONS_LIMIT
-      );
+      setHasMoreSessions(cachedData.sessions?.length >= SESSIONS_LIMIT);
       setLoading(false);
     } else {
       setLoading(true);
     }
 
     try {
-      // Fetch project doc once (no onSnapshot needed if project rarely changes)
       const projectRef = doc(db, 'projects', pid);
       const projectSnap = await getDoc(projectRef);
       if (!projectSnap.exists() || projectSnap.data().userId !== uid) {
@@ -151,9 +141,6 @@ const ProjectDetailPage = React.memo(({ navigate, projectId }) => {
     }
   }, []);
 
-  // -------------------
-  // 2. Sessions (Stopped)
-  // -------------------
   const fetchInitialSessions = useCallback(async (uid, pid) => {
     setSessionsLoading(true);
     try {
@@ -178,7 +165,6 @@ const ProjectDetailPage = React.memo(({ navigate, projectId }) => {
           ? snapshot.docs[snapshot.docs.length - 1]
           : null
       );
-      // Update cache
       cacheProjectDetail(uid, pid, project, fetchedSessions, snapshot.docs[snapshot.docs.length - 1] || null);
     } catch (err) {
       console.error('Error fetching initial sessions:', err);
@@ -211,14 +197,14 @@ const ProjectDetailPage = React.memo(({ navigate, projectId }) => {
           ? snapshot.docs[snapshot.docs.length - 1]
           : lastSessionDoc
       );
-
-      // Update cache with appended sessions
       cacheProjectDetail(
         currentUser.uid,
         routeProjectId,
         project,
         [...sessions, ...more],
-        snapshot.docs.length > 0 ? snapshot.docs[snapshot.docs.length - 1] : lastSessionDoc
+        snapshot.docs.length > 0
+          ? snapshot.docs[snapshot.docs.length - 1]
+          : lastSessionDoc
       );
     } catch (err) {
       console.error('Error loading more sessions:', err);
@@ -235,7 +221,6 @@ const ProjectDetailPage = React.memo(({ navigate, projectId }) => {
     sessionsLoading,
   ]);
 
-  // Auth/Setup
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (user) => {
       if (!user) {
@@ -248,16 +233,13 @@ const ProjectDetailPage = React.memo(({ navigate, projectId }) => {
     return () => unsub();
   }, [fetchProject, routeProjectId, navigate]);
 
-  // Once we have user & project, fetch sessions
   useEffect(() => {
     if (currentUser && routeProjectId) {
       fetchInitialSessions(currentUser.uid, routeProjectId);
     }
   }, [currentUser, routeProjectId, fetchInitialSessions]);
 
-  // --------------------------------
-  // Active session listener for FAB
-  // --------------------------------
+  // Active session for FAB
   useEffect(() => {
     if (!currentUser) return;
     const activeSessionQuery = query(
@@ -267,11 +249,15 @@ const ProjectDetailPage = React.memo(({ navigate, projectId }) => {
     );
     let unsub;
     (async () => {
-      // Real-time for active session only
-      const { onSnapshot } = await import('firebase/firestore'); 
+      const { onSnapshot } = await import('firebase/firestore');
       unsub = onSnapshot(activeSessionQuery, (snap) => {
         if (!snap.empty) {
-          setActiveSession(snap.docs[0].data());
+          const docRef = snap.docs[0];
+          const data = docRef.data();
+          setActiveSession({
+            ...data,
+            id: docRef.id,
+          });
         } else {
           setActiveSession(null);
         }
@@ -280,7 +266,6 @@ const ProjectDetailPage = React.memo(({ navigate, projectId }) => {
     return () => unsub && unsub();
   }, [currentUser]);
 
-  // UI helpers
   const handleTimeRangeChange = useCallback((e) => {
     setSelectedTimeRange(e.target.value);
   }, []);
@@ -404,7 +389,7 @@ const ProjectDetailPage = React.memo(({ navigate, projectId }) => {
 
   const hasActiveSession = Boolean(activeSession);
 
-  // FAB hide/show on scroll
+  // FAB hide on scroll
   useEffect(() => {
     const handleScroll = () => {
       if (fabRef.current) {
@@ -419,9 +404,15 @@ const ProjectDetailPage = React.memo(({ navigate, projectId }) => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // --------------------------------------
-  // Rendering
-  // --------------------------------------
+  // FAB CLICK => if active session => time-tracker with sessionId, else => time-tracker-setup
+  const handleFabClick = () => {
+    if (activeSession) {
+      navigate('time-tracker', { sessionId: activeSession.id });
+    } else {
+      navigate('time-tracker-setup');
+    }
+  };
+
   if (loading) {
     return (
       <div className="homepage-loading">
@@ -518,45 +509,58 @@ const ProjectDetailPage = React.memo(({ navigate, projectId }) => {
       </div>
 
       <div className="sessions-container">
-        {sortedDates.length > 0 ? (
-          sortedDates.map((date) => (
-            <div key={date} className="sessions-by-day">
-              <h2>
-                {date === 'Invalid Date'
-                  ? 'Invalid Date'
-                  : new Date(date).toLocaleDateString('en-US', {
-                      weekday: 'long',
-                      month: 'long',
-                      day: 'numeric',
-                    })}
-              </h2>
-              <ul className="sessions-list">
-                {sessionsByDate[date].map((session) => (
-                  <li
-                    key={session.id}
-                    className="session-item input-tile"
-                    onClick={() =>
-                      navigate('session-detail', { sessionId: session.id })
-                    }
-                  >
-                    <span className="session-start-time">
-                      {formatStartTime(session)}
-                    </span>
-                    <span
-                      className="session-time"
-                      style={{
-                        color: session.isBillable
-                          ? 'var(--accent-color)'
-                          : 'var(--text-muted)',
-                      }}
-                    >
-                      {formatTime(session.elapsedTime)}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))
+        {Object.keys(sessionsByDate).length > 0 ? (
+          <>
+            {Object.keys(sessionsByDate)
+              .sort((a, b) => {
+                if (a === 'Invalid Date') return 1;
+                if (b === 'Invalid Date') return -1;
+                try {
+                  return new Date(b) - new Date(a);
+                } catch (error) {
+                  console.error('Error comparing dates:', error);
+                  return 0;
+                }
+              })
+              .map((date) => (
+                <div key={date} className="sessions-by-day">
+                  <h2>
+                    {date === 'Invalid Date'
+                      ? 'Invalid Date'
+                      : new Date(date).toLocaleDateString('en-US', {
+                          weekday: 'long',
+                          month: 'long',
+                          day: 'numeric',
+                        })}
+                  </h2>
+                  <ul className="sessions-list">
+                    {sessionsByDate[date].map((session) => (
+                      <li
+                        key={session.id}
+                        className="session-item input-tile"
+                        onClick={() =>
+                          navigate('session-detail', { sessionId: session.id })
+                        }
+                      >
+                        <span className="session-start-time">
+                          {formatStartTime(session)}
+                        </span>
+                        <span
+                          className="session-time"
+                          style={{
+                            color: session.isBillable
+                              ? 'var(--accent-color)'
+                              : 'var(--text-muted)',
+                          }}
+                        >
+                          {formatTime(session.elapsedTime)}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+          </>
         ) : (
           <p>No sessions tracked for this project yet.</p>
         )}
@@ -575,11 +579,8 @@ const ProjectDetailPage = React.memo(({ navigate, projectId }) => {
         )}
       </div>
 
-      <button
-        ref={fabRef}
-        className="fab"
-        onClick={() => navigate('time-tracker')}
-      >
+      {/* Updated FAB logic */}
+      <button ref={fabRef} className="fab" onClick={handleFabClick}>
         {hasActiveSession ? (
           <StopTimerIcon className="fab-icon" />
         ) : (

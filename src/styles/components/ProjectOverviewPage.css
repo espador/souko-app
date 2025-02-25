@@ -25,6 +25,7 @@
   text-align: left;
   color: var(--text-color);
   overflow: hidden;
+  margin-bottom: 16px;
 }
 
 .motivational-section h1 {
