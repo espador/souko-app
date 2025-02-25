@@ -29,6 +29,9 @@ export const cn = (...inputs) => twMerge(clsx(inputs));
 
 const CACHE_DURATION_MS = 30000; // 30 seconds
 
+// --------------
+// CACHE HELPERS
+// --------------
 const loadCachedHomePageData = (uid) => {
   const cacheKey = `homePageData_${uid}`;
   const cachedStr = localStorage.getItem(cacheKey);
@@ -66,44 +69,58 @@ const cacheHomePageData = (
   localStorage.setItem(`homePageData_${uid}`, JSON.stringify(cache));
 };
 
+// --------------
+// HOME PAGE
+// --------------
 const HomePage = React.memo(({ navigate, skipAutoRedirect, currentPage }) => {
   const [user, setUser] = useState(null);
   const [projects, setProjects] = useState([]);
   const [sessions, setSessions] = useState([]);
   const [journalEntries, setJournalEntries] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [userProfile, setUserProfile] = useState(null);
   const [levelConfig, setLevelConfig] = useState(null);
   const [hasTrackedEver, setHasTrackedEver] = useState(false);
+
+  const [loading, setLoading] = useState(true);
   const [activeSession, setActiveSession] = useState(null);
   const [totalTrackedTimeMinutes, setTotalTrackedTimeMinutes] = useState(0);
 
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
   const fabRef = useRef(null);
   const scrollTimeout = useRef(null);
+
   const hasActiveSession = Boolean(activeSession);
 
-  // ------------------------------------------------
-  // 1. fetchData with getDocs (one-time) + caching
-  // ------------------------------------------------
-  const fetchDataOnce = useCallback(async (uid) => {
-    // Attempt cache
+  // -----------------------------------------------------
+  // 1. On Auth - Load Cache Immediately, Then Fetch Fresh
+  // -----------------------------------------------------
+  const fetchHomeData = useCallback(async (uid) => {
+    // 1) Attempt loading from cache first
     const cachedData = loadCachedHomePageData(uid);
     if (cachedData) {
+      console.log('HomePage: Loaded data from cache');
+      // Show cached data right away
       setProjects(cachedData.projects || []);
       setSessions(cachedData.sessions || []);
       setJournalEntries(cachedData.journalEntries || []);
       setUserProfile(cachedData.userProfile || null);
       setLevelConfig(cachedData.levelConfig || null);
       setHasTrackedEver(cachedData.hasTrackedEver || false);
-      setLoading(false);
-      return; // Skip Firestore calls if cached is valid
+
+      // We won't set loading to false yet if we also want a fresh fetch
+      // so that we can show a spinner or partial UI update. 
+      // If you'd rather hide the spinner now, you can do so:
+      // setLoading(false);
     } else {
+      // No cache or cache is outdated
+      console.log('HomePage: No valid cache found, show spinner');
       setLoading(true);
     }
 
+    // 2) Always fetch from Firestore in the background
     try {
-      // 1) projects
+      // Projects
       const projectsSnap = await getDocs(
         query(collection(db, 'projects'), where('userId', '==', uid))
       );
@@ -112,14 +129,14 @@ const HomePage = React.memo(({ navigate, skipAutoRedirect, currentPage }) => {
         ...doc.data(),
       }));
 
-      // 2) sessions
+      // Sessions
       const sessionsSnap = await getDocs(
         query(collection(db, 'sessions'), where('userId', '==', uid))
       );
       const userSessions = sessionsSnap.docs.map((doc) => doc.data());
       const userHasTrackedEver = userSessions.length > 0;
 
-      // 3) journal (last 7 days)
+      // Journal (last 7 days)
       const sevenDaysAgo = new Date();
       sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
       const journalSnap = await getDocs(
@@ -134,9 +151,10 @@ const HomePage = React.memo(({ navigate, skipAutoRedirect, currentPage }) => {
         ...doc.data(),
       }));
 
-      // 4) user profile
+      // User profile
       const profileRef = doc(db, 'profiles', uid);
       const profileSnap = await getDoc(profileRef);
+
       let profileData = null;
       let totalMinutes = 0;
       if (profileSnap.exists()) {
@@ -144,7 +162,7 @@ const HomePage = React.memo(({ navigate, skipAutoRedirect, currentPage }) => {
         totalMinutes = profileData.totalTrackedTime || 0;
       }
 
-      // 5) level config
+      // Level config
       const levelConfigRef = doc(db, 'config', 'level_config');
       const levelConfigSnap = await getDoc(levelConfigRef);
       let lvlCfg = null;
@@ -152,16 +170,16 @@ const HomePage = React.memo(({ navigate, skipAutoRedirect, currentPage }) => {
         lvlCfg = levelConfigSnap.data();
       }
 
-      // Store in state
+      // Set states with fresh data
       setProjects(userProjects);
       setSessions(userSessions);
       setJournalEntries(userJournalEntries);
       setUserProfile(profileData);
-      setTotalTrackedTimeMinutes(totalMinutes);
       setLevelConfig(lvlCfg);
       setHasTrackedEver(userHasTrackedEver);
+      setTotalTrackedTimeMinutes(totalMinutes);
 
-      // Cache
+      // Cache the fresh data
       cacheHomePageData(
         uid,
         userProjects,
@@ -172,31 +190,28 @@ const HomePage = React.memo(({ navigate, skipAutoRedirect, currentPage }) => {
         userHasTrackedEver
       );
     } catch (err) {
-      console.error('Error in fetchDataOnce:', err);
+      console.error('HomePage: Error fetching fresh data:', err);
     } finally {
+      // Hide spinner once done
       setLoading(false);
     }
   }, []);
 
-  // ------------------------------------------------
-  // 2. Auth
-  // ------------------------------------------------
   useEffect(() => {
     const unsubscribeAuth = auth.onAuthStateChanged(async (currentUser) => {
-      if (currentUser) {
-        setUser(currentUser);
-        // Kick off one-time fetch
-        await fetchDataOnce(currentUser.uid);
-      } else {
+      if (!currentUser) {
         navigate('login');
+        return;
       }
+      setUser(currentUser);
+      fetchHomeData(currentUser.uid); // Load or refresh data
     });
     return unsubscribeAuth;
-  }, [navigate, fetchDataOnce]);
+  }, [navigate, fetchHomeData]);
 
-  // ------------------------------------------------
-  // 3. Real-time active session for FAB only
-  // ------------------------------------------------
+  // -------------------------------------------
+  // 2. Real-time active session for FAB only
+  // -------------------------------------------
   useEffect(() => {
     if (!user) return;
     (async () => {
@@ -217,12 +232,12 @@ const HomePage = React.memo(({ navigate, skipAutoRedirect, currentPage }) => {
     })();
   }, [user]);
 
-  // ------------------------------------------------
-  // 4. Onboarding Logic
-  // ------------------------------------------------
+  // -------------------------------------------
+  // 3. Onboarding Logic
+  // -------------------------------------------
   useEffect(() => {
     if (!loading && userProfile !== undefined) {
-      // if not on an onboarding route...
+      // If not on an onboarding route
       const isOnboardingRoute = currentPage.startsWith('onboarding');
       if (!isOnboardingRoute) {
         if (!userProfile || userProfile.onboardingComplete !== true) {
@@ -232,9 +247,9 @@ const HomePage = React.memo(({ navigate, skipAutoRedirect, currentPage }) => {
     }
   }, [loading, userProfile, navigate, currentPage]);
 
-  // ------------------------------------------------
-  // 5. UI Hooks
-  // ------------------------------------------------
+  // -------------------------------------------
+  // 4. Sidebar & Logout
+  // -------------------------------------------
   const handleLogout = useCallback(async () => {
     try {
       await signOut(auth);
@@ -247,7 +262,9 @@ const HomePage = React.memo(({ navigate, skipAutoRedirect, currentPage }) => {
   const openSidebar = useCallback(() => setIsSidebarOpen(true), []);
   const closeSidebar = useCallback(() => setIsSidebarOpen(false), []);
 
-  // Hide FAB on scroll
+  // -------------------------------------------
+  // 5. Hide FAB on scroll
+  // -------------------------------------------
   useEffect(() => {
     const handleScroll = () => {
       if (fabRef.current) {
@@ -262,9 +279,9 @@ const HomePage = React.memo(({ navigate, skipAutoRedirect, currentPage }) => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // ------------------------------------------------
+  // -------------------------------------------
   // 6. Computed Values
-  // ------------------------------------------------
+  // -------------------------------------------
   const projectsToRender = useMemo(() => {
     return [...projects]
       .sort((a, b) => (b.lastTrackedTime || 0) - (a.lastTrackedTime || 0))
@@ -281,10 +298,11 @@ const HomePage = React.memo(({ navigate, skipAutoRedirect, currentPage }) => {
 
   const weeklyTrackedTime = userProfile?.weeklyTrackedTime || 0;
 
-  // ------------------------------------------------
+  // -------------------------------------------
   // 7. Render
-  // ------------------------------------------------
+  // -------------------------------------------
   if (loading) {
+    // Show loading spinner if data is not yet loaded from Firestore or cache
     return (
       <div className="homepage-loading">
         <SoukoLogoHeader className="profile-pic souko-logo-header spinning-logo" />
@@ -294,7 +312,12 @@ const HomePage = React.memo(({ navigate, skipAutoRedirect, currentPage }) => {
 
   return (
     <div className="homepage">
-      <Header navigate={navigate} user={userProfile} showLiveTime={true} onProfileClick={openSidebar} />
+      <Header
+        navigate={navigate}
+        user={userProfile}
+        showLiveTime={true}
+        onProfileClick={openSidebar}
+      />
       <main className="homepage-content">
         <LevelProfile
           projectName="Souko"
@@ -322,7 +345,10 @@ const HomePage = React.memo(({ navigate, skipAutoRedirect, currentPage }) => {
           <div className="projects-header">
             <h2 className="projects-label">Your projects</h2>
             <div className="projects-actions">
-              <button onClick={() => navigate('projects')} className="projects-all-link">
+              <button
+                onClick={() => navigate('projects')}
+                className="projects-all-link"
+              >
                 All
               </button>
             </div>
@@ -333,7 +359,9 @@ const HomePage = React.memo(({ navigate, skipAutoRedirect, currentPage }) => {
                 <li
                   key={project.id}
                   className="project-item"
-                  onClick={() => navigate('project-detail', { projectId: project.id })}
+                  onClick={() =>
+                    navigate('project-detail', { projectId: project.id })
+                  }
                 >
                   <div className="project-image-container">
                     {project.imageUrl ? (
@@ -343,8 +371,13 @@ const HomePage = React.memo(({ navigate, skipAutoRedirect, currentPage }) => {
                         className="project-image"
                       />
                     ) : (
-                      <div className="default-project-image" style={{ backgroundColor: '#FE2F00' }}>
-                        <span>{project.name?.charAt(0).toUpperCase() || 'P'}</span>
+                      <div
+                        className="default-project-image"
+                        style={{ backgroundColor: '#FE2F00' }}
+                      >
+                        <span>
+                          {project.name?.charAt(0).toUpperCase() || 'P'}
+                        </span>
                       </div>
                     )}
                   </div>
@@ -363,8 +396,14 @@ const HomePage = React.memo(({ navigate, skipAutoRedirect, currentPage }) => {
         </section>
       </main>
 
-      <Sidebar isOpen={isSidebarOpen} onClose={closeSidebar} onLogout={handleLogout} />
-      {isSidebarOpen && <div className="sidebar-overlay" onClick={closeSidebar}></div>}
+      <Sidebar
+        isOpen={isSidebarOpen}
+        onClose={closeSidebar}
+        onLogout={handleLogout}
+      />
+      {isSidebarOpen && (
+        <div className="sidebar-overlay" onClick={closeSidebar}></div>
+      )}
 
       <button ref={fabRef} className="fab" onClick={() => navigate('time-tracker')}>
         {hasActiveSession ? (

@@ -1,10 +1,9 @@
 // src/components/Layout/Header.jsx
+
 import React, { useState, useEffect, memo } from 'react';
 import '../../styles/components/Header.css';
 import { ReactComponent as ReturnIcon } from '../../styles/components/assets/return.svg';
 import { ReactComponent as SoukoLogoHeader } from '../../styles/components/assets/Souko-logo-header.svg';
-
-// MUI stepper
 import MobileStepper from '@mui/material/MobileStepper';
 
 const Header = memo(({
@@ -18,11 +17,9 @@ const Header = memo(({
   onProfileClick,
   onActionClick = () => {},
   currentStep = 0,
-  navigate // <-- ADD 'navigate' prop here
+  navigate // <-- ADDED 'navigate' prop
 }) => {
   const [currentTime, setCurrentTime] = useState('');
-  // Removed setIsSpinning since we never call it
-  const [isSpinning] = useState(true);
 
   useEffect(() => {
     if (showLiveTime) {
@@ -45,7 +42,7 @@ const Header = memo(({
     if (onBack) {
       onBack();
     } else {
-      navigate('home'); // <-- Use navigate prop to go to 'home' (state-based)
+      navigate('home'); // fallback if no custom onBack
     }
   };
 
@@ -57,7 +54,6 @@ const Header = memo(({
             <ReturnIcon style={{ width: '40px', height: '40px' }} />
           </button>
         )}
-
         <MobileStepper
           className="onboarding-stepper"
           variant="progress"
@@ -71,7 +67,7 @@ const Header = memo(({
     );
   }
 
-  // Otherwise, handle "home", "projectOverview", etc.
+  // handle "home", "projectOverview", etc.
   let rightSection = null;
   if (variant === "projectOverview") {
     rightSection = (
@@ -85,7 +81,7 @@ const Header = memo(({
     } else if (!hideProfile) {
       rightSection = (
         <SoukoLogoHeader
-          className={`profile-pic souko-logo-header ${isSpinning ? 'spinning-logo' : ''}`}
+          className="profile-pic souko-logo-header spinning-logo"
           onClick={onProfileClick}
           style={{ cursor: 'pointer' }}
         />
@@ -104,9 +100,7 @@ const Header = memo(({
         {title && <h1 className="header-title">{title}</h1>}
         {showLiveTime && <div className="header-live-time">{currentTime}</div>}
       </div>
-      <div className="header-right-section">
-        {rightSection}
-      </div>
+      <div className="header-right-section">{rightSection}</div>
     </div>
   );
 });
