@@ -1,54 +1,55 @@
-/* TimeTrackerPage.css */
-
 .time-tracker-page {
   margin: 0 auto;
   max-width: 600px;
   background-color: transparent;
   color: var(--text-color);
-  /* Removed explicit font-family, will inherit from global styles */
-  display: flex;
-  flex-direction: column; /* Ensure content flows vertically */
-}
-
-.time-tracker-page-container {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  /* No extra bottom padding, since the bottom bar is fixed */
 }
 
-.timer-quote {
-  /* Removed explicit font-family, will inherit from global styles */
-  font-family: var(--font-commit-mono);
-  font-weight: 400;
-  font-size: 14px;
-  line-height: 24px;
-  color: var(--text-muted);
-  text-align: center;
-  margin-top: 24px;
-  margin-bottom: 8px;
+/* The container that holds the timer + buttons at the bottom */
+.bottom-sticky-bar {
+  position: fixed;
+  bottom: 64px;            /* pinned to bottom of viewport */
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 600px;
+  background-color: var(--background-color); /* Or semi-transparent, if desired */
+  padding: 16px 0;      /* top/bottom padding; adjust to taste */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;            /* space between timer and buttons */
+  z-index: 999;         /* ensure it stays on top */
+  /* Optionally add a slight box-shadow or border if you like */
+  /* box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.2); */
 }
 
-.timer {
-  /* Removed explicit font-family, will inherit from global styles */
+/* The timer text inside the bottom bar */
+.bottom-sticky-bar .timer {
   font-size: 56px;
   line-height: 64px;
-  margin-bottom: 24px;
   color: var(--accent-color);
   text-align: center;
+  margin: 0;            /* no extra margin needed now */
   transition: color 0.3s ease;
 }
 
-.timer.paused {
+.bottom-sticky-bar .timer.paused {
   color: var(--text-muted);
 }
 
-.controls {
+/* A row for the three buttons */
+.buttons-row {
   display: flex;
-  gap: 32px;
+  flex-direction: row;
   justify-content: center;
-  margin-bottom: 40px;
+  gap: 32px;  /* space between reset, stop, pause/resume */
 }
 
+/* Reuse or rename your control-button classes as needed */
 .control-button {
   background: none;
   border: none;
@@ -59,6 +60,14 @@
   padding: 0;
 }
 
+.control-button.small {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background-color: transparent;
+}
+
+/* The big stop button */
 .control-button.fab-like {
   width: 64px;
   height: 64px;
@@ -66,13 +75,11 @@
   background-color: #ffffff;
   box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.25);
   color: var(--background-color);
-  position: fixed;
-  bottom: 124px; /* from the bottom of the viewport */
-  z-index: 999;  /* ensure it stays on top */
 }
 
-.input-tile {
-  min-height: 40px; /* Adjust this value based on the desired height */
+/* (Below are unchanged from your original) */
+.input-tile-timer {
+  min-height: 40px;
   background-color: var(--card-background);
   border-radius: 12px;
   padding: 16px;
@@ -105,18 +112,17 @@
   width: 40px;
   height: 40px;
   border-radius: 20%;
-  background-color: var(--accent-color); /* Or any default color */
+  background-color: #FE2F00;
   color: var(--text-color);
   display: flex;
   justify-content: center;
   align-items: center;
   font-weight: bold;
   margin-right: 16px;
-  background-color: #FE2F00;
 }
 
 .project-dropdown {
-  flex-grow: 1; /* Allow dropdown to take remaining space */
+  flex-grow: 1;
   border: none;
   background-color: transparent;
   font-family: var(--font-commit-mono);
@@ -184,21 +190,6 @@
   color: var(--text-muted);
 }
 
-.notes-textarea {
-  width: 100%;
-  border: none;
-  background-color: transparent;
-  color: var(--text-color);
-  font-weight: 400;
-  font-size: 16px;
-  line-height: 20pt;
-  resize: none;
-  outline: none;
-  padding: 0;
-  height: 0px; /* Adjust this value based on how many lines you want to show initially */
-  overflow: hidden; /* Optional: Hide overflow if you don't want scrollbars */
-}
-
 .hour-rate-currency-container {
   position: relative;
   display: flex;
@@ -211,8 +202,7 @@
 }
 
 .hour-rate-currency-container .hour-rate-input {
-  /* So it lines up with the rest of your "tile" style */
-  flex: 1; /* Let it stretch across the available space */
+  flex: 1;
   border: none;
   background-color: transparent;
   color: var(--text-color);
@@ -220,10 +210,9 @@
   font-size: 16px;
   line-height: 24px;
   outline: none;
-  margin-right: 16px; /* give a gap before the currency dropdown */
+  margin-right: 16px;
 }
 
-/* The currency dropdown */
 .hour-rate-currency-container .currency-select {
   border: none;
   background-color: transparent;
@@ -232,210 +221,7 @@
   font-size: 16px;
   line-height: 24px;
   outline: none;
-  appearance: none; /* hides the default dropdown arrow in some browsers */
-  width: 20px; /* adjust to your liking */
-  text-align-last: center; /* center the symbol if you like */
-}
-
-/* SessionDetailPage.css */
-.session-detail-page {
-  /* padding: 24px;  Keep padding for content spacing */
-  margin: 0 auto;
-  max-width: 600px;
-  background-color: transparent;
-  color: var(--text-color);
-  /* min-height: 100vh; Remove this as body should handle the viewport height */
-  display: flex;
-  flex-direction: column; /* Ensure content flows vertically */
-}
-
-.timer-quote {
-  font-family: var(--font-commit-mono);
-  font-size: 16px;
-  color: var(--text-muted);
-  text-align: center;
-  margin-top: 24px;
-}
-
-.timer {
-  font-family: var(--font-commit-mono);
-  font-weight: 400;
-  font-size: 56px;
-  line-height: 64px;
-  color: var(--accent-color);
-  text-align: center;
-  transition: color 0.3s ease;
-}
-
-.projects-label {
-  font-family: var(--font-commit-mono);
-  font-size: 14px;
-  color: var(--text-muted);
-  margin-top: 32px;
-  margin-bottom: 8px;
-}
-
-.project-dropdown-container {
-  position: relative;
-  display: flex;
-  align-items: center;
-  background-color: var(--card-background);
-  border-radius: 12px;
-  padding: 16px;
-  margin-top: 16px;
-  cursor: pointer;
-}
-
-.dropdown-project-image {
-  width: 40px;
-  height: 40px;
-  border-radius: 8px;
-  margin-right: 8px;
-}
-
-.dropdown-default-image {
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
-  background-color: #FE2F00;
-  color: var(--text-color);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  font-size: 16px;
-  margin-right: 8px;
-}
-
-.project-dropdown {
-  flex-grow: 1;
-  background-color: transparent;
-  color: var(--text-color);
-  border: none;
-  font-family: var(--font-commit-mono);
-  font-size: 16px;
-  appearance: none; /* Remove default arrow in some browsers */
-  -webkit-appearance: none;
-  -moz-appearance: none;
-}
-
-.project-dropdown:focus {
-  outline: none;
-}
-
-.dropdown-arrow {
-  position: absolute;
-  right: 16px;
-  top: 50%;
-  transform: translateY(-50%);
+  appearance: none;
   width: 20px;
-  height: 20px;
-  fill: transparent;
-}
-
-.input-tile {
-  background-color: var(--card-background);
-  border-radius: 12px;
-  padding: 16px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  cursor: pointer;
-}
-
-.billable-tile {
-  cursor: pointer;
-}
-
-.input-label {
-  font-family: var(--font-commit-mono);
-  font-size: 16px;
-}
-
-.billable-label {
-  flex-grow: 1;
-}
-
-.billable-radio {
-  display: flex;
-}
-
-.notes-input-tile {
-  position: relative;
-  padding: 0;
-  display: block;
-}
-
-.notes-textarea {
-  width: 100%;
-  min-height: 100px;
-  padding: 16px;
-  border: none;
-  border-radius: 12px;
-  background-color: var(--card-background);
-  color: var(--text-color);
-  font-family: var(--font-commit-mono);
-  font-size: 16px;
-  resize: vertical;
-}
-
-.notes-textarea:focus {
-  outline: none;
-}
-
-.notes-edit-icon {
-  position: absolute;
-  top: 16px;
-  right: 16px;
-  width: 20px;
-  height: 20px;
-  fill: var(--text-muted);
-}
-
-.save-button {
-  font-family: var(--font-commit-mono);
-  font-weight: 400;
-  color: var(--accent-color);
-  background-color: transparent;
-  border: 1px solid var(--border-color);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.save-button:disabled {
-  font-family: var(--font-commit-mono);
-  font-weight: 400;
-  background-color: transparent;
-  color: var(--text-muted);
-  cursor: not-allowed;
-}
-
-.erase-button {
-  font-family: var(--font-commit-mono);
-  font-weight: 400;
-  background-color: transparent;
-  border: 1px solid var(--border-color);
-  color: var(--text-color);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.button-icon {
-  width: 24px;
-  height: 24px;
-  margin-right: 8px;
-  fill: var(--background-color);
-}
-
-.save-button .button-icon {
-  fill: var(--background-color);
-}
-
-.save-button:disabled .button-icon {
-  fill: var(--text-muted);
-}
-
-.erase-button .button-icon {
-  fill: var(--text-color);
+  text-align-last: center;
 }

@@ -1,5 +1,4 @@
-// ProjectOverviewPage.jsx
-import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { auth, db } from '../services/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
@@ -9,8 +8,6 @@ import '@fontsource/shippori-mincho';
 import { TextGenerateEffect } from '../styles/components/text-generate-effect.tsx';
 import '../styles/components/ProjectOverviewPage.css';
 import { ReactComponent as SoukoLogoHeader } from '../styles/components/assets/Souko-logo-header.svg';
-import { ReactComponent as StartTimerIcon } from '../styles/components/assets/start-timer.svg';
-import { ReactComponent as StopTimerIcon } from '../styles/components/assets/stop-timer.svg';
 
 // Helper to convert timestamps
 const parseTimestamp = (timestamp, fallbackTimestamp) => {
@@ -42,7 +39,7 @@ const parseTimestamp = (timestamp, fallbackTimestamp) => {
       return isNaN(date.getTime()) ? null : date;
     }
   }
-  // Last resort: try new Date(timestamp)
+  // Last resort
   const date = new Date(timestamp);
   return isNaN(date.getTime()) ? null : date;
 };
@@ -79,18 +76,12 @@ const ProjectOverviewPage = ({ navigate }) => {
   const [user, setUser] = useState(null);
   const [projects, setProjects] = useState([]);
   const [sessions, setSessions] = useState([]);
-  // Track active session for FAB logic:
-  const [activeSession, setActiveSession] = useState(null);
 
   const [loading, setLoading] = useState(true);
   const [dataLoadCounter, setDataLoadCounter] = useState(0);
 
   // We only define sortMode once!
   const [sortMode, setSortMode] = useState('tracked');
-
-  // Refs for FAB scroll effect
-  const fabRef = useRef(null);
-  const scrollTimeout = useRef(null);
 
   // 1) Auth + attempt cache + Firestore onSnapshot
   useEffect(() => {
@@ -162,45 +153,7 @@ const ProjectOverviewPage = ({ navigate }) => {
     }
   }, [dataLoadCounter, user, projects, sessions]);
 
-  // 3) Listen for active session -> for FAB
-  useEffect(() => {
-    if (user) {
-      const activeSessionQuery = query(
-        collection(db, 'sessions'),
-        where('userId', '==', user.uid),
-        where('endTime', '==', null)
-      );
-      const unsubActiveSession = onSnapshot(activeSessionQuery, (snapshot) => {
-        if (!snapshot.empty) {
-          const docRef = snapshot.docs[0];
-          const data = docRef.data();
-          setActiveSession({ ...data, id: docRef.id });
-        } else {
-          setActiveSession(null);
-        }
-      });
-      return () => unsubActiveSession();
-    }
-  }, [user]);
-
-  // Hide FAB on scroll
-  useEffect(() => {
-    const handleScroll = () => {
-      if (fabRef.current) {
-        fabRef.current.classList.add('scrolling');
-        clearTimeout(scrollTimeout.current);
-        scrollTimeout.current = setTimeout(() => {
-          fabRef.current && fabRef.current.classList.remove('scrolling');
-        }, 300);
-      }
-    };
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
-  // 4) Computed values
-  const hasActiveSession = Boolean(activeSession);
-
+  // 3) Computed values
   const totalSessionTime = useMemo(() => {
     const projectTimes = {};
     projects.forEach((project) => {
@@ -321,16 +274,7 @@ const ProjectOverviewPage = ({ navigate }) => {
     );
   }, [projects, sortedProjects, totalSessionTime, navigate, renderProjectImage]);
 
-  // 5) FAB logic
-  const handleFabClick = () => {
-    if (activeSession?.id) {
-      navigate('time-tracker', { sessionId: activeSession.id });
-    } else {
-      navigate('time-tracker-setup');
-    }
-  };
-
-  // 6) Render
+  // 4) Render
   if (loading) {
     return (
       <div className="homepage-loading">
@@ -367,15 +311,6 @@ const ProjectOverviewPage = ({ navigate }) => {
           {renderProjects}
         </section>
       </main>
-
-      {/* FAB button with active session logic */}
-      <button ref={fabRef} className="fab" onClick={handleFabClick}>
-        {hasActiveSession ? (
-          <StopTimerIcon className="fab-icon" />
-        ) : (
-          <StartTimerIcon className="fab-icon" />
-        )}
-      </button>
     </div>
   );
 };

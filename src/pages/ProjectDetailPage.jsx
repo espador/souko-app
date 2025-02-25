@@ -1,4 +1,3 @@
-// ProjectDetailPage.jsx (FIRST FILE)
 import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import {
   doc,
@@ -23,8 +22,6 @@ import { ReactComponent as TimerIcon } from '../styles/components/assets/timer.s
 import { ReactComponent as BillableIcon } from '../styles/components/assets/billable.svg';
 import { ReactComponent as EditIcon } from '../styles/components/assets/edit.svg';
 import { TextGenerateEffect } from '../styles/components/text-generate-effect.tsx';
-import { ReactComponent as StartTimerIcon } from '../styles/components/assets/start-timer.svg';
-import { ReactComponent as StopTimerIcon } from '../styles/components/assets/stop-timer.svg';
 
 const CACHE_DURATION_MS = 30000; 
 const SESSIONS_LIMIT = 30;
@@ -106,10 +103,6 @@ const ProjectDetailPage = React.memo(({ navigate, projectId }) => {
   const [effectTrigger, setEffectTrigger] = useState(0);
 
   const projectHeaderRef = useRef(null);
-  const fabRef = useRef(null);
-  const scrollTimeout = useRef(null);
-
-  const [activeSession, setActiveSession] = useState(null);
 
   const fetchProject = useCallback(async (uid, pid) => {
     const cachedData = loadCachedProjectDetail(uid, pid);
@@ -239,33 +232,6 @@ const ProjectDetailPage = React.memo(({ navigate, projectId }) => {
     }
   }, [currentUser, routeProjectId, fetchInitialSessions]);
 
-  // Active session for FAB
-  useEffect(() => {
-    if (!currentUser) return;
-    const activeSessionQuery = query(
-      collection(db, 'sessions'),
-      where('userId', '==', currentUser.uid),
-      where('endTime', '==', null)
-    );
-    let unsub;
-    (async () => {
-      const { onSnapshot } = await import('firebase/firestore');
-      unsub = onSnapshot(activeSessionQuery, (snap) => {
-        if (!snap.empty) {
-          const docRef = snap.docs[0];
-          const data = docRef.data();
-          setActiveSession({
-            ...data,
-            id: docRef.id,
-          });
-        } else {
-          setActiveSession(null);
-        }
-      });
-    })();
-    return () => unsub && unsub();
-  }, [currentUser]);
-
   const handleTimeRangeChange = useCallback((e) => {
     setSelectedTimeRange(e.target.value);
   }, []);
@@ -387,32 +353,6 @@ const ProjectDetailPage = React.memo(({ navigate, projectId }) => {
     return 'N/A';
   }, []);
 
-  const hasActiveSession = Boolean(activeSession);
-
-  // FAB hide on scroll
-  useEffect(() => {
-    const handleScroll = () => {
-      if (fabRef.current) {
-        fabRef.current.classList.add('scrolling');
-        clearTimeout(scrollTimeout.current);
-        scrollTimeout.current = setTimeout(() => {
-          fabRef.current && fabRef.current.classList.remove('scrolling');
-        }, 300);
-      }
-    };
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
-  // FAB CLICK => if active session => time-tracker with sessionId, else => time-tracker-setup
-  const handleFabClick = () => {
-    if (activeSession) {
-      navigate('time-tracker', { sessionId: activeSession.id });
-    } else {
-      navigate('time-tracker-setup');
-    }
-  };
-
   if (loading) {
     return (
       <div className="homepage-loading">
@@ -511,55 +451,44 @@ const ProjectDetailPage = React.memo(({ navigate, projectId }) => {
       <div className="sessions-container">
         {Object.keys(sessionsByDate).length > 0 ? (
           <>
-            {Object.keys(sessionsByDate)
-              .sort((a, b) => {
-                if (a === 'Invalid Date') return 1;
-                if (b === 'Invalid Date') return -1;
-                try {
-                  return new Date(b) - new Date(a);
-                } catch (error) {
-                  console.error('Error comparing dates:', error);
-                  return 0;
-                }
-              })
-              .map((date) => (
-                <div key={date} className="sessions-by-day">
-                  <h2>
-                    {date === 'Invalid Date'
-                      ? 'Invalid Date'
-                      : new Date(date).toLocaleDateString('en-US', {
-                          weekday: 'long',
-                          month: 'long',
-                          day: 'numeric',
-                        })}
-                  </h2>
-                  <ul className="sessions-list">
-                    {sessionsByDate[date].map((session) => (
-                      <li
-                        key={session.id}
-                        className="session-item input-tile"
-                        onClick={() =>
-                          navigate('session-detail', { sessionId: session.id })
-                        }
+            {sortedDates.map((date) => (
+              <div key={date} className="sessions-by-day">
+                <h2>
+                  {date === 'Invalid Date'
+                    ? 'Invalid Date'
+                    : new Date(date).toLocaleDateString('en-US', {
+                        weekday: 'long',
+                        month: 'long',
+                        day: 'numeric',
+                      })}
+                </h2>
+                <ul className="sessions-list">
+                  {sessionsByDate[date].map((session) => (
+                    <li
+                      key={session.id}
+                      className="session-item input-tile"
+                      onClick={() =>
+                        navigate('session-detail', { sessionId: session.id })
+                      }
+                    >
+                      <span className="session-start-time">
+                        {formatStartTime(session)}
+                      </span>
+                      <span
+                        className="session-time"
+                        style={{
+                          color: session.isBillable
+                            ? 'var(--accent-color)'
+                            : 'var(--text-muted)',
+                        }}
                       >
-                        <span className="session-start-time">
-                          {formatStartTime(session)}
-                        </span>
-                        <span
-                          className="session-time"
-                          style={{
-                            color: session.isBillable
-                              ? 'var(--accent-color)'
-                              : 'var(--text-muted)',
-                          }}
-                        >
-                          {formatTime(session.elapsedTime)}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ))}
+                        {formatTime(session.elapsedTime)}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
           </>
         ) : (
           <p>No sessions tracked for this project yet.</p>
@@ -567,9 +496,7 @@ const ProjectDetailPage = React.memo(({ navigate, projectId }) => {
         {hasMoreSessions && (
           <div className="load-more-container">
             <button
-              className={`load-more-button ${
-                sessionsLoading ? 'loading' : ''
-              }`}
+              className={`load-more-button ${sessionsLoading ? 'loading' : ''}`}
               onClick={handleLoadMore}
               disabled={sessionsLoading}
             >
@@ -578,15 +505,6 @@ const ProjectDetailPage = React.memo(({ navigate, projectId }) => {
           </div>
         )}
       </div>
-
-      {/* Updated FAB logic */}
-      <button ref={fabRef} className="fab" onClick={handleFabClick}>
-        {hasActiveSession ? (
-          <StopTimerIcon className="fab-icon" />
-        ) : (
-          <StartTimerIcon className="fab-icon" />
-        )}
-      </button>
     </div>
   );
 });

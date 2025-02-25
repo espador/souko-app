@@ -93,7 +93,7 @@ const HomePage = React.memo(({ navigate, skipAutoRedirect, currentPage }) => {
   // -----------------------------------------------------
   // 1. On Auth - Load Cache Immediately, Then Fetch Fresh
   // -----------------------------------------------------
-  const fetchHomeData = useCallback(async (uid) => {
+  const fetchHomeData = React.useCallback(async (uid) => {
     const cachedData = loadCachedHomePageData(uid);
     if (cachedData) {
       console.log('HomePage: Loaded data from cache');
@@ -224,18 +224,23 @@ const HomePage = React.memo(({ navigate, skipAutoRedirect, currentPage }) => {
   }, [user]);
 
   // -------------------------------------------
-  // 3. Onboarding Logic
+  // 3. Onboarding Logic: Skip if We Know It’s Complete
   // -------------------------------------------
   useEffect(() => {
-    if (!loading && userProfile !== undefined) {
-      const isOnboardingRoute = currentPage.startsWith('onboarding');
-      if (!isOnboardingRoute) {
-        if (!userProfile || userProfile.onboardingComplete !== true) {
-          navigate('onboarding-step1');
-        }
+    // Wait until we've stopped "loading" our data.
+    if (!loading) {
+      // If we're NOT on an onboarding route, and either:
+      //   - there's no profile doc yet, or
+      //   - userProfile.onboardingComplete is false
+      // then we jump to step1. Otherwise, we do nothing.
+      if (
+        !currentPage.startsWith('onboarding') &&
+        (!userProfile || userProfile.onboardingComplete !== true)
+      ) {
+        navigate('onboarding-step1');
       }
     }
-  }, [loading, userProfile, navigate, currentPage]);
+  }, [loading, userProfile, currentPage, navigate]);
 
   // -------------------------------------------
   // 4. Sidebar & Logout
@@ -336,7 +341,11 @@ const HomePage = React.memo(({ navigate, skipAutoRedirect, currentPage }) => {
           />
         </section>
 
-        <JournalSection navigate={navigate} journalEntries={journalEntries} loading={false} />
+        <JournalSection
+          navigate={navigate}
+          journalEntries={journalEntries}
+          loading={false}
+        />
 
         <section className="projects-section">
           <div className="projects-header">
@@ -402,7 +411,6 @@ const HomePage = React.memo(({ navigate, skipAutoRedirect, currentPage }) => {
         <div className="sidebar-overlay" onClick={closeSidebar}></div>
       )}
 
-      {/* Updated FAB logic */}
       <button ref={fabRef} className="fab" onClick={handleFabClick}>
         {hasActiveSession ? (
           <StopTimerIcon className="fab-icon" />

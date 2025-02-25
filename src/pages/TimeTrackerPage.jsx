@@ -1,4 +1,3 @@
-// TimeTrackerPage.jsx
 import { v4 as uuidv4 } from 'uuid';
 import React, {
   useEffect,
@@ -8,7 +7,6 @@ import React, {
   useMemo,
 } from 'react';
 import {
-  collection,
   doc,
   getDoc,
   updateDoc,
@@ -80,7 +78,9 @@ const TimeTrackerPage = React.memo(({ navigate, sessionId }) => {
   const [showResetConfirmModal, setShowResetConfirmModal] = useState(false);
   const timerRef = useRef(null);
 
-  // 1) Auth check => load session doc
+  // -----------------------------
+  // 1) Auth check => load session
+  // -----------------------------
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (currentUser) => {
       if (!currentUser) {
@@ -108,7 +108,9 @@ const TimeTrackerPage = React.memo(({ navigate, sessionId }) => {
     return () => unsub();
   }, [navigate, sessionId]);
 
+  // ----------------------------
   // 2) Real-time listener
+  // ----------------------------
   useEffect(() => {
     let unsubscribe;
     if (sessionId) {
@@ -135,12 +137,16 @@ const TimeTrackerPage = React.memo(({ navigate, sessionId }) => {
           setConflictModalVisible(true);
         }
 
+        // Mark paused/running
         setIsPaused(!!sData.paused);
         setIsRunning(sData.status === 'running' || sData.status === 'paused');
+
+        // Pause events
         if (sData.pauseEvents) {
           setPauseEvents(sData.pauseEvents);
         }
 
+        // If actively running, set up local ticking
         if (!sData.paused && sData.status === 'running') {
           const clientStart = sData.clientStartTime || sData.startTimeMs || Date.now();
           setSessionClientStartTime(clientStart);
@@ -157,7 +163,9 @@ const TimeTrackerPage = React.memo(({ navigate, sessionId }) => {
     return () => unsubscribe && unsubscribe();
   }, [sessionId, instanceId]);
 
+  // ----------------------------
   // 3) Local ticking timer
+  // ----------------------------
   useEffect(() => {
     let interval;
     if (sessionClientStartTime) {
@@ -173,7 +181,9 @@ const TimeTrackerPage = React.memo(({ navigate, sessionId }) => {
     };
   }, [sessionClientStartTime, baseElapsedTime]);
 
+  // ----------------------------
   // 4) Pause
+  // ----------------------------
   const handlePause = useCallback(async () => {
     setIsPaused(true);
     if (sessionId) {
@@ -193,7 +203,9 @@ const TimeTrackerPage = React.memo(({ navigate, sessionId }) => {
     }
   }, [sessionId, timer, instanceId]);
 
+  // ----------------------------
   // 5) Resume
+  // ----------------------------
   const handleResume = useCallback(async () => {
     setIsPaused(false);
     if (sessionId) {
@@ -216,7 +228,9 @@ const TimeTrackerPage = React.memo(({ navigate, sessionId }) => {
     setIsRunning(true);
   }, [sessionId, instanceId]);
 
+  // ----------------------------
   // 6) Stop flow
+  // ----------------------------
   const handleStop = useCallback(() => {
     setShowStopConfirmModal(true);
   }, []);
@@ -317,8 +331,11 @@ const TimeTrackerPage = React.memo(({ navigate, sessionId }) => {
     setPauseEvents([]);
   }, [navigate, sessionId, currentSession, timer, pauseEvents, user]);
 
+  // ----------------------------
   // 7) Reset Timer
+  // ----------------------------
   const handleReset = useCallback(() => {
+    // Only prompt confirm if there's something to reset
     if (isRunning || timer > 0) {
       setShowResetConfirmModal(true);
     }
@@ -347,7 +364,9 @@ const TimeTrackerPage = React.memo(({ navigate, sessionId }) => {
     }
   }, [sessionId]);
 
+  // ----------------------------
   // 8) Take Over if conflict
+  // ----------------------------
   const handleTakeOver = async () => {
     if (sessionId) {
       const sessionRef = doc(db, 'sessions', sessionId);
@@ -382,7 +401,9 @@ const TimeTrackerPage = React.memo(({ navigate, sessionId }) => {
     navigate('home');
   };
 
+  // ----------------------------
   // 9) Sign Out
+  // ----------------------------
   const handleSignOut = useCallback(async () => {
     try {
       if (sessionId) {
@@ -400,6 +421,9 @@ const TimeTrackerPage = React.memo(({ navigate, sessionId }) => {
     }
   }, [sessionId, navigate]);
 
+  // -------------------------------------
+  // Render & Conditionals
+  // -------------------------------------
   if (loading) {
     return (
       <div className="homepage-loading">
@@ -436,70 +460,75 @@ const TimeTrackerPage = React.memo(({ navigate, sessionId }) => {
         onProfileClick={() => setIsSidebarOpen(true)}
       />
 
-      {/* New quote */}
-      <div className="timer-quote">
+      <div className="motivational-section">
         The song of your roots is the song of now.
       </div>
 
-      <div ref={timerRef} className={`timer ${isPaused ? 'paused' : ''}`}>
-        {new Date(timer * 1000).toISOString().substr(11, 8)}
-      </div>
-
-      <div className="controls">
-        <button
-          className="control-button small"
-          onClick={handleReset}
-          disabled={!(isRunning || timer > 0)}
-        >
-          {(isRunning || timer > 0) ? (
-            <ResetActiveIcon style={{ width: '32px', height: '32px' }} />
-          ) : (
-            <ResetMuteIcon style={{ width: '32px', height: '32px' }} />
-          )}
-        </button>
-        <button
-          className="control-button fab-like"
-          onClick={isRunning ? handleStop : undefined}
-        >
-          {isRunning ? (
-            <StopTimerIcon style={{ width: '64px', height: '64px' }} />
-          ) : (
-            <StopTimerIcon style={{ width: '64px', height: '64px', opacity: 0.5 }} />
-          )}
-        </button>
-        <button
-          className="control-button small"
-          onClick={
-            isRunning && !isPaused
-              ? handlePause
-              : isPaused
-              ? handleResume
-              : undefined
-          }
-        >
-          {isRunning && !isPaused ? (
-            <PauseIcon style={{ width: '32px', height: '32px' }} />
-          ) : timer === 0 ? (
-            <PauseIcon style={{ width: '32px', height: '32px', opacity: 0.5 }} />
-          ) : (
-            <PlayIcon style={{ width: '32px', height: '32px' }} />
-          )}
-        </button>
-      </div>
-
-      {/* Session details (read-only, no notes) */}
       <h2 className="projects-label">Session details</h2>
-      <div className="input-tile" style={{ marginBottom: '8px' }}>
+      <div className="input-tile-timer" style={{ marginTop: '16px' }}>
         <strong>Project: </strong>&nbsp;{project}
       </div>
-      <div className="input-tile" style={{ marginBottom: '8px' }}>
+      <div className="input-tile-timer" style={{ marginTop: '8px' }}>
         <strong>Billable: </strong>&nbsp;{isBillable ? 'Yes' : 'No'}
       </div>
-      <div className="input-tile" style={{ marginBottom: '8px' }}>
+      <div className="input-tile-timer" style={{ marginTop: '8px' }}>
         <strong>Rate: </strong>&nbsp;{hourRate} {currencyId}
       </div>
 
-      {/* Stop Confirm Modal */}
+      {/* Bottom bar holding timer + controls */}
+      <div className="bottom-sticky-bar">
+        <div className={`timer ${isPaused ? 'paused' : ''}`}>
+          {new Date(timer * 1000).toISOString().substr(11, 8)}
+        </div>
+
+        <div className="buttons-row">
+          {/* Reset button */}
+          <button
+            className="control-button small"
+            onClick={handleReset}
+            /* Enabled if the session is running or has counted time */
+            disabled={!(isRunning || timer > 0)}
+          >
+            {(isRunning || timer > 0) ? (
+              <ResetActiveIcon style={{ width: '32px', height: '32px' }} />
+            ) : (
+              <ResetMuteIcon style={{ width: '32px', height: '32px' }} />
+            )}
+          </button>
+
+          {/* Stop button - ALWAYS clickable to confirm stop */}
+          <button
+            className="control-button fab-like"
+            onClick={handleStop}
+          >
+            <StopTimerIcon style={{ width: '64px', height: '64px' }} />
+          </button>
+
+          {/* Pause / Resume */}
+          <button
+            className="control-button small"
+            onClick={
+              isRunning && !isPaused
+                ? handlePause
+                : isPaused
+                ? handleResume
+                : undefined
+            }
+          >
+            {isRunning && !isPaused ? (
+              <PauseIcon style={{ width: '32px', height: '32px' }} />
+            ) : timer === 0 ? (
+              <PauseIcon
+                style={{ width: '32px', height: '32px', opacity: 0.5 }}
+              />
+            ) : (
+              <PlayIcon style={{ width: '32px', height: '32px' }} />
+            )}
+          </button>
+        </div>
+      </div>
+
+      {/* Confirm modals, sidebar, conflict modal, etc. */}
       <ConfirmModal
         show={showStopConfirmModal}
         onHide={() => setShowStopConfirmModal(false)}
@@ -510,7 +539,6 @@ const TimeTrackerPage = React.memo(({ navigate, sessionId }) => {
         cancelText="Cancel"
       />
 
-      {/* Reset Confirm Modal */}
       <ConfirmModal
         show={showResetConfirmModal}
         onHide={() => setShowResetConfirmModal(false)}
@@ -521,7 +549,6 @@ const TimeTrackerPage = React.memo(({ navigate, sessionId }) => {
         cancelText="Cancel"
       />
 
-      {/* Conflict Modal */}
       <ConfirmModal
         show={conflictModalVisible}
         onHide={handleCloseSession}
