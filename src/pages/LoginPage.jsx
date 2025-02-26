@@ -115,9 +115,9 @@ const LoginPage = ({ navigate }) => {
       <Header showLiveTime={true} />
       <main className="login-content">
         <section className="motivational-section">
-          <TextGenerateEffect words="The song of your roots is the song of now" />
+          <TextGenerateEffect words="Souko, the song of your roots is the song of now" />
           <h4>
-            Master your time, shape your craft, and let progress flow. Mastery isn’t rushed, it’s built.
+          This app is being built in public by @BramVanhaeren—things might break, errors will happen, but that’s all part of creating something cool!
           </h4>
         </section>
         <div className="login-actions">

@@ -20,8 +20,7 @@
 
 /* Reset and Global Defaults */
 html {
-  background-color: #17171D;
-  background-image: linear-gradient(to bottom, #17171D, #0C0C0C);
+  background-color: #0C0C0C;
   min-height: 100%;
 }
 
@@ -33,7 +32,7 @@ body.no-scroll, html.no-scroll { /* Apply to both html and body */
 body {
   margin: 0;
   padding: 0;
-  background: linear-gradient(to bottom, #17171D, #0C0C0C);
+  background:#0C0C0C;
   position: fixed; /* Keep position fixed */
   top: 0;
   left: 0;
@@ -82,7 +81,7 @@ body.allow-scroll {
 
 /* Theme Variables */
 :root {
-  --background-color: #0f0f14;
+  --background-color: ##0C0C0C;
   --text-color: #ffffff;
   --text-muted: #8F89A3;
   --accent-color: #00FF00;
@@ -300,6 +299,7 @@ p {
     overflow-y: auto; /* Enable vertical scrolling when content overflows */
     overflow-x: hidden; /* Hide horizontal scrollbar */
     position: relative; /* Establish positioning context for motion-container */
+    background-color: #0C0C0C;
   }
   
   /* Styling for the motion container (where your pages are rendered) */
@@ -325,8 +325,10 @@ p {
 /* Optional: Hide scrollbar track and thumb as well (for completeness, though width: 0 should be enough) */
 .app-container::-webkit-scrollbar-track {
   background: transparent; /* Make track transparent */
+  color: transparent;
 }
 
 .app-container::-webkit-scrollbar-thumb {
   background: transparent; /* Make thumb transparent */
+  color: transparent;
 }

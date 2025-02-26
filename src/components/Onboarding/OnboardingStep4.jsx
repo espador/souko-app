@@ -100,7 +100,7 @@ function OnboardingStep4({ navigate }) { // <-- Receive navigate prop
       });
 
       // Finally, navigate to the time tracker
-      navigate('time-tracker'); // moves you to your time tracker
+      navigate('time-tracker-setup'); // moves you to your time tracker setup
     } catch (err) {
       console.error('Error finalizing onboarding:', err);
       setError('Failed to finish onboarding. Please try again.');
