@@ -7,7 +7,7 @@ import Header from '../components/Layout/Header';
 import '@fontsource/shippori-mincho';
 import { TextGenerateEffect } from '../styles/components/text-generate-effect.tsx';
 import '../styles/components/ProjectOverviewPage.css';
-import { ReactComponent as SoukoLogoHeader } from '../styles/components/assets/Souko-logo-header.svg';
+import { ReactComponent as Spinner } from '../styles/components/assets/spinner.svg';
 
 // Helper to convert timestamps
 const parseTimestamp = (timestamp, fallbackTimestamp) => {
@@ -278,7 +278,7 @@ const ProjectOverviewPage = ({ navigate }) => {
   if (loading) {
     return (
       <div className="homepage-loading">
-        <SoukoLogoHeader className="profile-pic souko-logo-header spinning-logo" />
+        <Spinner className="profile-pic souko-logo-header spinning-logo" />
       </div>
     );
   }

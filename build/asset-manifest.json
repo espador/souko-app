@@ -1,7 +1,7 @@
 {
   "files": {
-    "main.css": "/static/css/main.a75a446d.css",
-    "main.js": "/static/js/main.53e3f761.js",
+    "main.css": "/static/css/main.b9187e16.css",
+    "main.js": "/static/js/main.36f6c7af.js",
     "static/media/CommitMono-700-Regular.ttf": "/static/media/CommitMono-700-Regular.abaf71e816dc70e8de48.ttf",
     "static/media/CommitMono-400-Regular.ttf": "/static/media/CommitMono-400-Regular.7acda3e77ae620cd8a41.ttf",
     "static/media/shippori-mincho-5-400-normal.woff": "/static/media/shippori-mincho-5-400-normal.21d9a20d3996449ccd3a.woff",
@@ -232,6 +232,7 @@
     "static/media/shippori-mincho-117-400-normal.woff2": "/static/media/shippori-mincho-117-400-normal.a13ca1211e46cdcd31f3.woff2",
     "static/media/shippori-mincho-56-400-normal.woff": "/static/media/shippori-mincho-56-400-normal.3a537ec70ce9b1e21d92.woff",
     "static/media/shippori-mincho-56-400-normal.woff2": "/static/media/shippori-mincho-56-400-normal.328a380e005c230ffb2f.woff2",
+    "static/media/spinner.svg": "/static/media/spinner.9d97dd279b7ac2838da45bad899ebc8a.svg",
     "static/media/uploadfile.svg": "/static/media/uploadfile.edf31f525e2d188d8a5598bb53550eec.svg",
     "static/media/shippori-mincho-53-400-normal.woff": "/static/media/shippori-mincho-53-400-normal.9fe97fde65e471fe99e6.woff",
     "static/media/shippori-mincho-54-400-normal.woff": "/static/media/shippori-mincho-54-400-normal.f4c1f57c437eab1910f3.woff",
@@ -259,8 +260,8 @@
     "static/media/euro.svg": "/static/media/euro.900b95ca6c1989c4ecaf03ab02bae784.svg",
     "static/media/shippori-mincho-55-400-normal.woff2": "/static/media/shippori-mincho-55-400-normal.ea7ba4861a2d644315b6.woff2",
     "index.html": "/index.html",
-    "static/media/return.svg": "/static/media/return.dcc6ae7fba91eceee2de31dfbd843e8f.svg",
-    "static/media/Souko-logo-header.svg": "/static/media/Souko-logo-header.d31024ffe206099b65e30c3861478478.svg",
+    "static/media/Souko-logo-header.svg": "/static/media/Souko-logo-header.6ec43a5b07dba366e31f607b66a861aa.svg",
+    "static/media/return.svg": "/static/media/return.a3b655a1817f13c46d53028ad362a6eb.svg",
     "static/media/edit.svg": "/static/media/edit.f17a19aa934da39bad77b391bc6c9227.svg",
     "static/media/save.svg": "/static/media/save.5ca7cb7e47226c51a3fbad84646ae9b4.svg",
     "static/media/updatebutton.svg": "/static/media/updatebutton.5ca7cb7e47226c51a3fbad84646ae9b4.svg",
@@ -276,11 +277,11 @@
     "static/media/dropdown.svg": "/static/media/dropdown.ced6d20a17c9cb36547b019bbf4721c7.svg",
     "static/media/play.svg": "/static/media/play.96fdd671041bba56eb630fd86c378b13.svg",
     "static/media/pause.svg": "/static/media/pause.6b572bc836f29e47ed6ef737423bb7cd.svg",
-    "main.a75a446d.css.map": "/static/css/main.a75a446d.css.map",
-    "main.53e3f761.js.map": "/static/js/main.53e3f761.js.map"
+    "main.b9187e16.css.map": "/static/css/main.b9187e16.css.map",
+    "main.36f6c7af.js.map": "/static/js/main.36f6c7af.js.map"
   },
   "entrypoints": [
-    "static/css/main.a75a446d.css",
-    "static/js/main.53e3f761.js"
+    "static/css/main.b9187e16.css",
+    "static/js/main.36f6c7af.js"
   ]
 }

@@ -17,7 +17,7 @@ import Header from '../components/Layout/Header';
 import '../styles/global.css';
 import '../styles/components/ProjectDetailPage.css';
 import { ReactComponent as DropdownIcon } from '../styles/components/assets/dropdown.svg';
-import { ReactComponent as SoukoLogoHeader } from '../styles/components/assets/Souko-logo-header.svg';
+import { ReactComponent as Spinner } from '../styles/components/assets/spinner.svg';
 import { ReactComponent as TimerIcon } from '../styles/components/assets/timer.svg';
 import { ReactComponent as BillableIcon } from '../styles/components/assets/billable.svg';
 import { ReactComponent as EditIcon } from '../styles/components/assets/edit.svg';
@@ -356,7 +356,7 @@ const ProjectDetailPage = React.memo(({ navigate, projectId }) => {
   if (loading) {
     return (
       <div className="homepage-loading">
-        <SoukoLogoHeader className="profile-pic souko-logo-header spinning-logo" />
+        <Spinner className="profile-pic souko-logo-header spinning-logo" />
       </div>
     );
   }

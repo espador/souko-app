@@ -20,7 +20,7 @@ import { ReactComponent as RadioActiveIcon } from '../styles/components/assets/r
 import { ReactComponent as RadioMutedIcon } from '../styles/components/assets/radio-muted.svg';
 import { ReactComponent as SaveIcon } from '../styles/components/assets/save.svg';
 import { ReactComponent as EraseIcon } from '../styles/components/assets/erase.svg';
-import { ReactComponent as SoukoLogoHeader } from '../styles/components/assets/Souko-logo-header.svg';
+import { ReactComponent as Spinner } from '../styles/components/assets/spinner.svg';
 import ConfirmModal from '../components/ConfirmModal';
 
 const CACHE_DURATION_MS = 30000; // 30 seconds - adjust as needed
@@ -299,7 +299,7 @@ const SessionDetailPage = ({ navigate, sessionId: routeSessionId }) => {
     if (loading) {
         return (
             <div className="homepage-loading">
-                <SoukoLogoHeader className="profile-pic souko-logo-header spinning-logo" />
+                <Spinner className="profile-pic souko-logo-header spinning-logo" />
             </div>
         );
     }

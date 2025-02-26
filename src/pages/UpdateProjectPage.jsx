@@ -26,7 +26,7 @@ import { ReactComponent as UploadFileIcon } from '../styles/components/assets/up
 import { ReactComponent as EuroIcon } from '../styles/components/assets/euro.svg';
 import { ReactComponent as DollarIcon } from '../styles/components/assets/dollar.svg';
 import { TextGenerateEffect } from '../styles/components/text-generate-effect.tsx';
-import { ReactComponent as SoukoLogoHeader } from '../styles/components/assets/Souko-logo-header.svg';
+import { ReactComponent as SpinnerLogo } from '../styles/components/assets/spinner.svg';
 
 const MAX_FILE_SIZE_KB = 2048;
 const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_KB * 2048;
@@ -431,7 +431,7 @@ const UpdateProjectPage = React.memo(({ navigate, projectId: routeProjectId }) =
     if (loading) {
         return (
             <div className="homepage-loading">
-                <SoukoLogoHeader className="profile-pic souko-logo-header spinning-logo" />
+                <SpinnerLogo className="profile-pic souko-logo-header spinning-logo" />
             </div>
         );
     }

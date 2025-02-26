@@ -34,7 +34,7 @@
 .header-live-time {
   margin-left: 0px;
   font-weight: 400;
-  color: #43404C;
+  color: var(--text-muted);
   font-size: 20px;
   line-height: 20px;
 }
@@ -69,7 +69,7 @@
 .back-button svg {
   width: 24px;
   height: 24px;
-  fill: var(--text-color);
+  color: #E682FF;
 }
 
 .header-action {

@@ -21,7 +21,7 @@ import ConfirmModal from '../components/ConfirmModal';
 import { ReactComponent as DropdownIcon } from '../styles/components/assets/dropdown.svg';
 import { ReactComponent as RadioActiveIcon } from '../styles/components/assets/radio-active.svg';
 import { ReactComponent as RadioMutedIcon } from '../styles/components/assets/radio-muted.svg';
-import { ReactComponent as SoukoLogoHeader } from '../styles/components/assets/Souko-logo-header.svg';
+import { ReactComponent as Spinner } from '../styles/components/assets/spinner.svg';
 import { ReactComponent as StartTimerIcon } from '../styles/components/assets/start-timer.svg';
 
 import '../styles/global.css';
@@ -153,7 +153,7 @@ const TimeTrackerSetupPage = React.memo(({ navigate }) => {
   if (loading) {
     return (
       <div className="homepage-loading">
-        <SoukoLogoHeader className="profile-pic souko-logo-header spinning-logo" />
+        <Spinner className="profile-pic souko-logo-header spinning-logo" />
       </div>
     );
   }

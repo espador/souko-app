@@ -29,7 +29,7 @@ import { ReactComponent as PlayIcon } from '../styles/components/assets/play.svg
 import { ReactComponent as StopTimerIcon } from '../styles/components/assets/stop-timer.svg';
 import '@fontsource/shippori-mincho';
 import ConfirmModal from '../components/ConfirmModal';
-import { ReactComponent as SoukoLogoHeader } from '../styles/components/assets/Souko-logo-header.svg';
+import { ReactComponent as Spinner } from '../styles/components/assets/spinner.svg';
 
 // Helper: Monday-based week start
 function getMondayOfCurrentWeek() {
@@ -427,7 +427,7 @@ const TimeTrackerPage = React.memo(({ navigate, sessionId }) => {
   if (loading) {
     return (
       <div className="homepage-loading">
-        <SoukoLogoHeader className="profile-pic souko-logo-header spinning-logo" />
+        <Spinner className="profile-pic souko-logo-header spinning-logo" />
       </div>
     );
   }

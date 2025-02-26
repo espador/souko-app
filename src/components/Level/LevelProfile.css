@@ -25,13 +25,13 @@
   background-color: #FE2F00; /* Red badge color */
   color: #000;
   border-radius: 25%;
-  width: 20px;
-  height: 20px;
+  width: 24px;
+  height: 24px;
   display: flex;
   justify-content: center;
   align-items: center;
   font-family: var(--font-commit-mono);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   margin-left: 4px; /* Optional: Add a little space between label and badge if needed */
 }
@@ -65,7 +65,7 @@
 }
 
 .progress-bar-fill {
-  background-image: linear-gradient(to right, #533FF5, #18A2FD, #E682FF ); /* Gradient fill */
+  background-image: linear-gradient(to right, #533FF5, #18A2FD, #E682FF, #FE2F00 ); /* Gradient fill */
   height: 100%;
   width: 0%; /* Width will be set dynamically by percentage */
   border-radius: 2px;
