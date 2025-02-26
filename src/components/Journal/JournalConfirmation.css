@@ -1,43 +1,67 @@
 /* src/components/Journal/JournalConfirmation.css */
-.journal-confirmation-container {
-    text-align: center;
-    margin-top: 40px;
-    max-width: 600px;
-    background-color: transparent;
-    color: var(--text-color);
-    display: flex;
-    flex-direction: column;
-    min-height: 100vh; /* Or remove if body handles viewport height */
-    box-sizing: border-box;
-    margin: 0 auto;
-    margin-top: 40px;
-  }
-  
-  .journal-confirmation-quote {
-    font-family: inherit;
-    font-weight: normal;
-    text-align: left;
-    color: var(--text-color);
-    font-size: 32px;
-    line-height: 40px;
-    margin-top: 0;
-    margin-bottom: 40px;
-  }
-  
-  .journal-confirmation-buttons {
-    display: flex;
-    flex-direction: column;
-    gap: 10px; /* Spacing between buttons */
-    margin-top: 20px;
-  }
-  
-  .journal-confirmation-button {
-    padding: 12px 24px;
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    background-color: transparent;
-    color: var(--text-color);
-    cursor: pointer;
-    font-family: var(--font-commit-mono);
-    text-decoration: none; /* Remove default link styling */
-  }
+
+.journal-confirmation-page {
+  display: flex;
+  flex-direction: column;
+  height: 100%; /* Ensure it takes full height */
+  overflow: hidden; /* Prevent scroll if content is less than viewport */
+  padding-bottom: 80px; /* Space for sticky buttons */
+  position: relative; /* For sticky button container positioning */
+}
+
+.journal-confirmation-quote-text {
+  margin-bottom: 0px;
+  color: var(--text-muted);
+  font-size: 32px;
+  line-height: 40px;
+  text-align: left;
+  color: var(--text-color);
+  overflow: hidden;
+}
+
+
+.journal-confirmation-buttons {
+  display: flex;
+  flex-direction: column; /* Stack buttons vertically */
+  gap: 16px; /* Spacing between buttons */
+  padding: 24px;
+}
+
+.journal-confirmation-button {
+  display: block;
+  padding: 16px;
+  background-color: transparent;
+  border: 1px solid var(--card-background);
+  border-radius: 12px;
+  text-align: center;
+  font-family: var(--font-commit-mono);
+  font-size: 16px;
+  color: var(--text-color);
+  cursor: pointer;
+  width: 100%; /* Full width buttons */
+  text-decoration: none; /* Remove default link styling if used as link */
+}
+
+.journal-overview-button {
+  color: var(--accent-color); /* Style for the "Open your journal" button if different */
+}
+
+/* Sticky button container styles - Reused and adapted from SessionDetailPage */
+.sticky-button-container {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(to top, var(--background-color), transparent); /* Optional: visual separation */
+  padding: 24px; /* Ensure same padding as other buttons */
+}
+
+/* Specific styling for buttons inside sticky container - if needed */
+.sticky-button-container .journal-confirmation-button {
+  /* You can add specific styles for buttons within the sticky container here if needed */
+  margin-bottom: 0; /* Reset default margins if necessary */
+}
+
+.return-home-button {
+  margin-bottom: 16px; /* Add margin between buttons if stacked */
+}

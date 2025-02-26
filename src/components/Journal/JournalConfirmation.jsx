@@ -1,25 +1,27 @@
 import React, { useCallback } from 'react';
 import './JournalConfirmation.css';
+import Header from '../Layout/Header';
 
-const JournalConfirmation = React.memo(({ navigate }) => { // <-- Receive navigate as prop
+const JournalConfirmation = React.memo(({ navigate }) => {
   const handleReturnHome = useCallback(() => {
-    navigate('home'); // <-- Updated navigate call, page name as string
+    navigate('home');
   }, [navigate]);
 
   const handleOpenJournal = useCallback(() => {
-    navigate('journal-overview'); // <-- Updated navigate call, page name as string
+    navigate('journal-overview');
   }, [navigate]);
 
   return (
-    <div className="journal-confirmation-container">
-      <p className="journal-confirmation-quote">
+    <div className="journal-confirmation-page"> {/* Updated class name for page layout */}
+      <Header variant="journalConfirmation" showBackArrow={true} navigate={navigate} /> {/* Add Header */}
+      <div className="timer-quote journal-confirmation-quote-text"> {/* Reusing timer-quote class for styling */}
         Embrace the rhythm of your journey.
-      </p>
-      <div className="journal-confirmation-buttons">
-        <button onClick={handleReturnHome} className="journal-confirmation-button">
+      </div>
+      <div className="journal-confirmation-buttons sticky-button-container"> {/* Sticky buttons container */}
+        <button onClick={handleReturnHome} className="journal-confirmation-button return-home-button">
           Return home
         </button>
-        <button onClick={handleOpenJournal} className="journal-confirmation-button journal-overview-link">
+        <button onClick={handleOpenJournal} className="journal-confirmation-button journal-overview-button">
           Open your journal
         </button>
       </div>
@@ -27,5 +29,5 @@ const JournalConfirmation = React.memo(({ navigate }) => { // <-- Receive naviga
   );
 });
 
-JournalConfirmation.displayName = 'JournalConfirmation'; // Recommended for React.memo
+JournalConfirmation.displayName = 'JournalConfirmation';
 export default JournalConfirmation;

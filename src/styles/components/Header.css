@@ -10,8 +10,10 @@
   width: 100%;
   z-index: 10;
   background-color: transparent;
-  position: sticky;
-  top: 0px;
+  /* REMOVED: Sticky positioning */
+  /* position: sticky;
+  top: 0px; */
+  position: relative; /* Set to relative for normal flow */
 }
 
 .header-left-section {
@@ -97,7 +99,7 @@
   box-sizing: border-box;
 }
 
-/* 
+/*
   .onboarding-stepper is the class we gave to <MobileStepper/>.
   We'll override MUI classes inside it to match your design.
 */

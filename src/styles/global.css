@@ -1,5 +1,4 @@
 /* global.css */
-/* global.css */
 
 /* Define Commit Mono font faces */
 @font-face {
@@ -22,13 +21,13 @@
 html {
   background-color: #0C0C0C;
   min-height: 100%;
+  scroll-behavior: smooth; /* Add smooth scrolling */
 }
 
 body.no-scroll, html.no-scroll { /* Apply to both html and body */
   overflow: hidden; /* Prevent scrolling when no-scroll is active */
 }
 
-/* global.css */
 body {
   margin: 0;
   padding: 0;
@@ -45,7 +44,7 @@ body {
   -moz-osx-font-smoothing: grayscale;
   overflow-x: hidden;
   box-sizing: border-box;
-  overflow: hidden; /* <-- ENSURE you have overflow: hidden; on body */
+  overflow: hidden; /* ENSURE you have overflow: hidden; on body */
 }
 
 /* Override global overflow for pages that need scrolling */
@@ -58,13 +57,6 @@ body.allow-scroll {
   overflow-y: auto; /* Ensure body can also scroll */
 }
 
-/* REMOVED: Background image for login page - No longer needed */
-/* body.login-page-background {
-  background-image: url('../styles/components/assets/bg-image.webp');
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-} */
 
 #root {
   height: 100%; /* Make root take up the full height of the body */
@@ -90,6 +82,7 @@ body.allow-scroll {
   --accent-purple: #7B7BFF;
   --accent-pink: #E682FF;
   --font-commit-mono: 'Commit Mono', monospace;
+  -webkit-tap-highlight-color: transparent; /* Remove tap highlight */
 }
 
 /* Layout Utilities */
@@ -301,7 +294,7 @@ p {
     position: relative; /* Establish positioning context for motion-container */
     background-color: #0C0C0C;
   }
-  
+
   /* Styling for the motion container (where your pages are rendered) */
   .motion-container {
     height: 100%; /* Take full height of app-container */
@@ -310,10 +303,6 @@ p {
     left: 0;
     right: 0;
     opacity: 1; /* Ensure it's visible */
-    /* You can adjust left/right padding or margins here if needed, 
-       or remove them to make it full-width within app-container */
-    /* left: 24px; 
-    right: 24px; */
   }
 
   /* WebKit (Chrome, Safari) - Hide Scrollbar */

@@ -264,9 +264,26 @@ const SessionDetailPage = ({ navigate, sessionId: routeSessionId }) => {
 
     const confirmDeleteSession = async () => {
         try {
+            // Fetch session details to get projectId before deleting
+            const sessionRef = doc(db, 'sessions', sessionId);
+            const sessionSnap = await getDoc(sessionRef);
+            let projectIdToNavigate = null;
+            if (sessionSnap.exists()) {
+                projectIdToNavigate = sessionSnap.data().projectId;
+            }
+
             await deleteDoc(doc(db, 'sessions', sessionId));
             console.log('Session deleted successfully!');
-            navigate('/journal');
+
+            // Navigate to project detail page with projectId
+            if (projectIdToNavigate) {
+                navigate('project-detail', { projectId: projectIdToNavigate });
+            } else {
+                // Fallback navigation if projectId is not found (optional, maybe navigate to projects overview)
+                navigate('projects');
+                console.warn("Project ID not found for deleted session, navigating to projects overview.");
+            }
+
         } catch (error) {
             console.error('Error deleting session:', error);
         } finally {
