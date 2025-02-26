@@ -72,7 +72,8 @@ const JournalSection = React.memo(({ journalEntries = [], loading, navigate }) =
                 if (currentHour < 18 && currentHour >= 2) {
                     navigate('journal-countdown');
                 } else {
-                    navigate('journal-form', { date: dayDateFormatted });
+                    // Corrected line: Pass selectedDate as part of the state
+                    navigate('journal-form', { selectedDate: dayDateFormatted });
                 }
             } else if (!isToday && !isFutureDay) {
                 if (entryForDay && entryForDay.createdAt) {
@@ -83,13 +84,14 @@ const JournalSection = React.memo(({ journalEntries = [], loading, navigate }) =
                             (entryHour >= 18 || entryHour < 2) &&
                             format(entryTimestamp, 'yyyy-MM-dd') === dayDateFormatted;
                         if (isWithinEditWindow) {
-                            navigate('journal-form', { date: dayDateFormatted });
+                            // Corrected line: Pass selectedDate as part of the state
+                            navigate('journal-form', { selectedDate: dayDateFormatted });
                         }
                     }
                 }
             }
         },
-        [startOfCurrentWeek, navigate, journalEntries, parseDateForJournal] // Removed 'today' from dependencies as startOfCurrentWeek is now dependent on 'today'
+        [startOfCurrentWeek, navigate, journalEntries, parseDateForJournal]
     );
 
 

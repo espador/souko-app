@@ -89,7 +89,8 @@ const App = memo(() => {
       case 'journal-overview':
         return <JournalOverviewPage navigate={navigate} />;
       case 'journal-form':
-        return <JournalForm navigate={navigate} />;
+        // Pass the selectedDate from pageParams to JournalForm as a prop
+        return <JournalForm navigate={navigate} selectedDate={pageParams.selectedDate} />;
       case 'journal-confirmation':
         return <JournalConfirmation navigate={navigate} />;
       case 'update-project':

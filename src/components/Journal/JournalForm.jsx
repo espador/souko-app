@@ -56,7 +56,7 @@ const JournalForm = React.memo(({ navigate, selectedDate: propSelectedDate }) =>
     const [mood, setMood] = useState('focused');
     const [textField1, setTextField1] = useState('');
     const [textField2, setTextField2] = useState('');
-    const selectedDate = propSelectedDate;
+    const selectedDate = propSelectedDate; // Use propSelectedDate directly as selectedDate
     const [journalEntryId, setJournalEntryId] = useState(null);
     const [showEraseConfirmModal, setShowEraseConfirmModal] = useState(false);
     const [loadingEntry, setLoadingEntry] = useState(false); // Loading state for entry fetch
@@ -78,15 +78,20 @@ const JournalForm = React.memo(({ navigate, selectedDate: propSelectedDate }) =>
 
     useEffect(() => {
         const loadEntry = async () => {
+            console.log("JournalForm useEffect triggered, selectedDate:", selectedDate); // ADDED: Log selectedDate on effect trigger
+
             if (selectedDate) {
                 const user = auth.currentUser;
                 if (user) {
+                    setLoadingEntry(true); // Start loading before fetching
                     const entryData = await fetchJournalEntry(user.uid, selectedDate); // Use memoized fetchJournalEntry
+                    setLoadingEntry(false); // End loading after fetching
                     if (entryData) {
                         setMood(entryData.mood);
                         setTextField1(entryData.reflection);
                         setTextField2(entryData.futureStep);
                         setJournalEntryId(entryData.id);
+                        console.log("Journal entry loaded successfully for date:", selectedDate); // ADDED: Success log
                     } else {
                         console.log(`No journal entry found for ${selectedDate}, creating new.`);
                         setJournalEntryId(null); // Ensure journalEntryId is null for new entries on same date
@@ -97,7 +102,7 @@ const JournalForm = React.memo(({ navigate, selectedDate: propSelectedDate }) =>
                 setTextField1('');
                 setTextField2('');
                 setJournalEntryId(null);
-                console.log("No selectedDate, resetting form for new entry.");
+                console.log("No selectedDate prop received, resetting form for new entry."); // Modified log message
             }
         };
         loadEntry();
@@ -145,8 +150,8 @@ const JournalForm = React.memo(({ navigate, selectedDate: propSelectedDate }) =>
 
 
             } else {
-                await addJournalEntry(user.uid, mood, reflectionText, futureStepText);
-                console.log('Journal entry saved to Firestore:', { mood, textField1, textField2 });
+                await addJournalEntry(user.uid, mood, reflectionText, futureStepText, selectedDate); // ADDED: Pass selectedDate when creating new entry
+                console.log('Journal entry saved to Firestore:', { mood, textField1, textField2, selectedDate }); // ADDED: Log selectedDate on save
                 logEvent('journal_saved_firestore', { mood: mood, textField1Length: textField1.length, textField2Length: textField2.length });
             }
             navigate('journal-confirmation'); // <-- Updated navigate call, page name as string
@@ -156,7 +161,7 @@ const JournalForm = React.memo(({ navigate, selectedDate: propSelectedDate }) =>
             console.error("Error saving/updating journal entry to Firestore:", error);
             logEvent('journal_save_failed', { mood: mood, error: error.message });
         }
-    }, [mood, textField1, textField2, navigate, journalEntryId]); // Dependencies for useCallback
+    }, [mood, textField1, textField2, navigate, journalEntryId, selectedDate]); // ADDED: selectedDate to dependencies
 
 
     // Erase handler - useCallback for memoization
