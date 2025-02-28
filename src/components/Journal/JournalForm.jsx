@@ -153,7 +153,7 @@ const JournalForm = React.memo(({ navigate, selectedDate: propSelectedDate }) =>
                 console.log('Journal entry saved to Firestore:', { mood, textField1, textField2, selectedDate }); // ADDED: Log selectedDate on save
                 logEvent('journal_saved_firestore', { mood: mood, textField1Length: textField1.length, textField2Length: textField2.length });
             }
-            navigate('journal-confirmation'); // <-- Updated navigate call, page name as string
+            navigate('home'); // <-- Updated navigate call, page name as string
 
 
         } catch (error) {

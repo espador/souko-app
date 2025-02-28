@@ -14,7 +14,7 @@ const JournalConfirmation = React.memo(({ navigate }) => {
   return (
     <div className="journal-confirmation-page"> {/* Updated class name for page layout */}
       <Header variant="journalConfirmation" showBackArrow={true} navigate={navigate} /> {/* Add Header */}
-      <div className="timer-quote journal-confirmation-quote-text"> {/* Reusing timer-quote class for styling */}
+      <div className="motivational-section"> {/* Reusing timer-quote class for styling */}
         Embrace the rhythm of your journey.
       </div>
       <div className="journal-confirmation-buttons sticky-button-container"> {/* Sticky buttons container */}
