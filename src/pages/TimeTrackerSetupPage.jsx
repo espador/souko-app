@@ -13,20 +13,15 @@ import {
 import { db, auth } from '../services/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import { v4 as uuidv4 } from 'uuid';
-
 import Header from '../components/Layout/Header';
 import Sidebar from '../components/Layout/Sidebar';
 import ConfirmModal from '../components/ConfirmModal';
-
 import { ReactComponent as DropdownIcon } from '../styles/components/assets/dropdown.svg';
 import { ReactComponent as RadioActiveIcon } from '../styles/components/assets/radio-active.svg';
 import { ReactComponent as RadioMutedIcon } from '../styles/components/assets/radio-muted.svg';
 import { ReactComponent as Spinner } from '../styles/components/assets/spinner.svg';
 import { ReactComponent as StartTimerIcon } from '../styles/components/assets/start-timer.svg';
-
 import '../styles/global.css';
-import '../styles/components/TimeTrackerPage.css'; // We can reuse some styles
-// Or create a separate .css for the setup page if you like
 
 const TimeTrackerSetupPage = React.memo(({ navigate }) => {
   const [loading, setLoading] = useState(true);

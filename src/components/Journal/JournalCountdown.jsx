@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import './JournalCountdown.css';
 import Header from '../Layout/Header';
 import '../../styles/global.css';
 import { TextGenerateEffect } from '../../styles/components/text-generate-effect.tsx';

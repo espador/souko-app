@@ -2,7 +2,7 @@
 import React, { useState } from 'react'; // ✅ FIX: added { useState } here
 // REMOVED: import { useNavigate } from 'react-router-dom'; // <-- REMOVE useNavigate import
 import Header from '../Layout/Header';
-import './OnboardingStep4.css';
+import '../../styles/global.css';
 import { TextGenerateEffect } from '../../styles/components/text-generate-effect.tsx';
 import { ReactComponent as StartTimerIcon } from '../../styles/components/assets/start-timer.svg';
 

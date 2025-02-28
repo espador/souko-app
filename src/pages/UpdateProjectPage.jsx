@@ -18,7 +18,7 @@ import {
     deleteObject
 } from 'firebase/storage';
 import Header from '../components/Layout/Header';
-import '../styles/components/UpdateProjectPage.css';
+import '../styles/global.css';
 import { ReactComponent as BillableIcon } from '../styles/components/assets/billable.svg';
 import { ReactComponent as UpdateButtonIcon } from '../styles/components/assets/updatebutton.svg';
 import { ReactComponent as EraseIcon } from '../styles/components/assets/erase.svg';
@@ -522,7 +522,7 @@ const UpdateProjectPage = React.memo(({ navigate, projectId: routeProjectId }) =
 
                 {/* UPDATE BUTTON */}
                 <button
-                    className={`update-project-button sticky-button-top ${!isSaveActive ? 'disabled' : ''}`}
+                    className={`save-button sticky-button-top ${!isSaveActive ? 'disabled' : ''}`}
                     onClick={handleUpdateProject}
                     disabled={uploading || !isSaveActive}
                 >
@@ -532,7 +532,7 @@ const UpdateProjectPage = React.memo(({ navigate, projectId: routeProjectId }) =
 
                 {/* DELETE BUTTON */}
                 <button
-                    className="delete-project-button sticky-button"
+                    className="erase-button sticky-button"
                     onClick={handleDeleteProject}
                 >
                     <EraseIcon className="button-icon" />

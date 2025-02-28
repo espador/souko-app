@@ -1,5 +1,5 @@
 import React, { useCallback } from 'react';
-import './JournalConfirmation.css';
+import '../../styles/global.css';
 import Header from '../Layout/Header';
 
 const JournalConfirmation = React.memo(({ navigate }) => {

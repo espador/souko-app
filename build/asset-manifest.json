@@ -1,7 +1,7 @@
 {
   "files": {
-    "main.css": "/static/css/main.9f7f5231.css",
-    "main.js": "/static/js/main.c96147c8.js",
+    "main.css": "/static/css/main.7b5c0e26.css",
+    "main.js": "/static/js/main.90a6e948.js",
     "static/media/CommitMono-700-Regular.ttf": "/static/media/CommitMono-700-Regular.abaf71e816dc70e8de48.ttf",
     "static/media/CommitMono-400-Regular.ttf": "/static/media/CommitMono-400-Regular.7acda3e77ae620cd8a41.ttf",
     "static/media/shippori-mincho-5-400-normal.woff": "/static/media/shippori-mincho-5-400-normal.21d9a20d3996449ccd3a.woff",
@@ -277,11 +277,11 @@
     "static/media/dropdown.svg": "/static/media/dropdown.ced6d20a17c9cb36547b019bbf4721c7.svg",
     "static/media/play.svg": "/static/media/play.96fdd671041bba56eb630fd86c378b13.svg",
     "static/media/pause.svg": "/static/media/pause.6b572bc836f29e47ed6ef737423bb7cd.svg",
-    "main.9f7f5231.css.map": "/static/css/main.9f7f5231.css.map",
-    "main.c96147c8.js.map": "/static/js/main.c96147c8.js.map"
+    "main.7b5c0e26.css.map": "/static/css/main.7b5c0e26.css.map",
+    "main.90a6e948.js.map": "/static/js/main.90a6e948.js.map"
   },
   "entrypoints": [
-    "static/css/main.9f7f5231.css",
-    "static/js/main.c96147c8.js"
+    "static/css/main.7b5c0e26.css",
+    "static/js/main.90a6e948.js"
   ]
 }

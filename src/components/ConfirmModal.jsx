@@ -1,7 +1,6 @@
 // src/components/ConfirmModal.jsx
 import React from 'react';
 import '../styles/global.css';
-import '../styles/components//ConfirmModal.css'; // Make sure to import your CSS
 
 const ConfirmModal = ({ show, onHide, title, body, onConfirm, confirmText, cancelText }) => {
   if (!show) {

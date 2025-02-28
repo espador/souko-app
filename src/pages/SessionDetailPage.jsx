@@ -13,7 +13,6 @@ import { db, auth } from '../services/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import Header from '../components/Layout/Header';
 import '../styles/global.css';
-import '../styles/components/SessionDetailPage.css';
 import { ReactComponent as EditIcon } from '../styles/components/assets/edit.svg';
 import { ReactComponent as DropdownIcon } from '../styles/components/assets/dropdown.svg';
 import { ReactComponent as RadioActiveIcon } from '../styles/components/assets/radio-active.svg';

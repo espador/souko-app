@@ -2,7 +2,7 @@
 import React from 'react';
 // REMOVED: import { useNavigate } from 'react-router-dom'; // <-- REMOVE useNavigate import
 import Header from '../Layout/Header';
-import './OnboardingStep1.css';
+import '../../styles/global.css';
 import { TextGenerateEffect } from '../../styles/components/text-generate-effect.tsx';
 import { ReactComponent as SaveIcon } from '../../styles/components/assets/save.svg';
 

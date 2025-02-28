@@ -5,7 +5,7 @@ import { collection, query, where, onSnapshot, orderBy } from 'firebase/firestor
 import Header from '../components/Layout/Header';
 import '@fontsource/shippori-mincho';
 import { TextGenerateEffect } from '../styles/components/text-generate-effect.tsx';
-import '../styles/components/JournalOverviewPage.css';
+import '../styles/global.css';
 
 const CACHE_DURATION_MS = 30000; // 30 seconds
 

@@ -13,13 +13,11 @@ import {
 import { formatTime } from '../utils/formatTime';
 import Header from '../components/Layout/Header';
 import '../styles/global.css';
-import '../styles/components/HomePage.css';
 import { ReactComponent as StartTimerIcon } from '../styles/components/assets/start-timer.svg';
 import { ReactComponent as StopTimerIcon } from '../styles/components/assets/stop-timer.svg';
 import { ReactComponent as Spinner } from '../styles/components/assets/spinner.svg';
 import '@fontsource/shippori-mincho';
 import Sidebar from '../components/Layout/Sidebar';
-import '../styles/components/Sidebar.css';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { TextGenerateEffect } from '../styles/components/text-generate-effect.tsx';
@@ -321,12 +319,6 @@ const HomePage = React.memo(({ navigate, skipAutoRedirect, currentPage }) => {
         onProfileClick={openSidebar}
       />
       <main className="homepage-content">
-        <LevelProfile
-          projectName="Souko"
-          totalTrackedTimeMinutes={totalTrackedTimeMinutes}
-          levelProgressionData={levelConfig}
-        />
-
         <section className="motivational-section">
           <TextGenerateEffect
             words={
@@ -340,6 +332,12 @@ const HomePage = React.memo(({ navigate, skipAutoRedirect, currentPage }) => {
             }
           />
         </section>
+        
+        <LevelProfile
+          projectName="Souko"
+          totalTrackedTimeMinutes={totalTrackedTimeMinutes}
+          levelProgressionData={levelConfig}
+        />
 
         <JournalSection
           navigate={navigate}

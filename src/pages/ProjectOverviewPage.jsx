@@ -6,7 +6,7 @@ import { formatTime } from '../utils/formatTime';
 import Header from '../components/Layout/Header';
 import '@fontsource/shippori-mincho';
 import { TextGenerateEffect } from '../styles/components/text-generate-effect.tsx';
-import '../styles/components/ProjectOverviewPage.css';
+import '../styles/global.css';
 import { ReactComponent as Spinner } from '../styles/components/assets/spinner.svg';
 
 // Helper to convert timestamps

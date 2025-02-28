@@ -1,10 +1,10 @@
 // src/components/Layout/Header.jsx
 
 import React, { useState, useEffect, memo } from 'react';
-import '../../styles/components/Header.css';
 import { ReactComponent as ReturnIcon } from '../../styles/components/assets/return.svg';
 import { ReactComponent as SoukoLogoHeader } from '../../styles/components/assets/Souko-logo-header.svg';
 import MobileStepper from '@mui/material/MobileStepper';
+import '../../styles/global.css';
 
 const Header = memo(({
   variant = "home", // "home" | "projectOverview" | "onboarding"

@@ -15,7 +15,6 @@ import { onAuthStateChanged } from 'firebase/auth';
 import { formatTime } from '../utils/formatTime';
 import Header from '../components/Layout/Header';
 import '../styles/global.css';
-import '../styles/components/ProjectDetailPage.css';
 import { ReactComponent as DropdownIcon } from '../styles/components/assets/dropdown.svg';
 import { ReactComponent as Spinner } from '../styles/components/assets/spinner.svg';
 import { ReactComponent as TimerIcon } from '../styles/components/assets/timer.svg';

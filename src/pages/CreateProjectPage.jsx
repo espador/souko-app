@@ -3,7 +3,7 @@ import { collection, addDoc } from 'firebase/firestore';
 import { db, auth } from '../services/firebase';
 import { getStorage, ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import Header from '../components/Layout/Header';
-import '../styles/components/CreateProjectPage.css';
+import '../styles/global.css';
 
 import { ReactComponent as BillableIcon } from '../styles/components/assets/billable.svg';
 import { ReactComponent as UploadFileIcon } from '../styles/components/assets/uploadfile.svg';

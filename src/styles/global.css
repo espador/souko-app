@@ -1,3 +1,281 @@
+/* src/components/ConfirmModal.css */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(29, 27, 37, 0.9);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background-color: var(--background-color);
+  margin:24px;
+  padding: 24px;
+}
+
+.modal-title {
+  font-family: var(--font-commit-mono);
+  font-weight: 400;
+  color: var(--primary-color); /* Ensure your CSS variables are defined or replace with actual colors */
+  font-weight: bold;
+}
+
+.modal-body p {
+  font-family: var(--font-commit-mono);
+  font-weight: 400;
+  font-size: 1rem;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.modal-footer button {
+  padding: 10px 15px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.modal-footer .btn-primary {
+  font-family: var(--font-commit-mono);
+  font-weight: 400;
+  color: var(--accent-color);
+  background-color: transparent;
+  border: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+
+.modal-footer .btn-secondary {
+  font-family: var(--font-commit-mono);
+  font-weight: 400;
+  color: var(--text-muted);
+  background-color: transparent;
+  border: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* CreateProjectPage.css */
+
+.create-project-page {
+  margin: 0 auto;
+  max-width: 600px;
+  background-color: transparent;
+  color: var(--text-color);
+  display: flex;
+  flex-direction: column;
+}
+
+.create-project-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding-bottom: 80px; /* Added padding to accommodate sticky button */
+}
+
+.project-details-section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.project-details-section h2 {
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 20px;
+}
+
+.project-input-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  position: relative;
+}
+
+.project-image-container {
+  width: 40px;
+  height: 40px;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+}
+
+.project-icon-container {
+  width: 40px;
+  height: 40px;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  background-color: var(--accent-purple);
+}
+
+.project-visual {
+  width: 20px;
+  height: 20px;
+}
+
+.project-image {
+  width: 100%;
+  height: auto;
+  object-fit: cover;
+}
+
+.default-project-image {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: var(--text-color);
+  font-weight: 400;
+  font-size: 20px;
+}
+
+.project-name-input {
+  flex: 1 1 auto; 
+  min-width: 0;  
+  background-color: transparent;
+  border: none;
+  color: var(--text-color);
+  font-family: var(--font-commit-mono);
+  font-weight: 400;
+  font-size: 16px;
+  outline: none;
+}
+
+.project-name-input::placeholder {
+  color: var(--text-muted);
+}
+
+.create-project-button {
+  background-color: transparent;
+  border: 1px solid var(--card-background);
+  border-radius: 12px;
+  text-align: center;
+  font-size: 16px;
+  color: var(--text-color);
+  padding: 16px;
+  cursor: pointer;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+}
+
+.create-project-button span {
+  color: var(--accent-color);
+  font-size: 20px;
+}
+
+.error-message {
+  color: red;
+  font-size: 14px;
+  margin-top: -8px;
+}
+
+h1 {
+  font-size: 32px;
+  line-height: 40px;
+  text-align: left;
+  color: var(--text-color);
+}
+
+.button-icon {
+  color: var(--accent-color);
+}
+
+.spinner {
+  border: 3px solid rgba(0, 0, 0, 0.1);
+  border-top-color: var(--accent-color);
+  border-radius: 50%;
+  width: 16px;
+  height: 16px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+}
+
+}
+
+.motivational-section {
+  margin-top: 24px;
+  margin-bottom: 48px;
+  font-size: 32px;
+  line-height: 40px;
+  text-align: left;
+  color: var(--text-color);
+}
+
+.sticky-button {
+  font-family: var(--font-commit-mono);
+  position: fixed;
+  bottom: 64px;
+  left: 24px;
+  right: 24px;
+  width: calc(100% - 48px);
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+  box-sizing: border-box;
+  background-color: var(--page-background);
+  padding-top: 16px;
+  padding-bottom: 16px;
+  border-radius: 12px;
+}
+
+/* The icon-button for uploadfile/euro/dollar */
+.icon-button {
+  width: 40px;
+  height: 40px;
+  background-color: transparent;
+  border: 1px solid;
+  border-color: #43404C;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+/* Ensure the SVGs inside icon-button are nicely sized */
+.icon-button svg {
+  width: 20px;
+  height: 20px;
+  fill: var(--text-color);
+}
+
+.project-image-container,
+.project-icon-container,
+.icon-button {
+  flex-shrink: 0;       /* Prevents shrinking in a flex container */
+  width: 40px;
+  height: 40px;
+  min-width: 40px;      /* Optional, ensures it never goes below 40px */
+  min-height: 40px;
+  max-width: 40px;      /* Optional, ensures it never exceeds 40px */
+  max-height: 40px;
+}
+
 /* global.css */
 
 /* Define Commit Mono font faces */
@@ -24,7 +302,8 @@ html {
   scroll-behavior: smooth; /* Add smooth scrolling */
 }
 
-body.no-scroll, html.no-scroll { /* Apply to both html and body */
+body.no-scroll, html.no-scroll {
+  /* Apply to both html and body */
   overflow: hidden; /* Prevent scrolling when no-scroll is active */
 }
 
@@ -56,7 +335,6 @@ body.allow-scroll > html {
 body.allow-scroll {
   overflow-y: auto; /* Ensure body can also scroll */
 }
-
 
 #root {
   height: 100%; /* Make root take up the full height of the body */
@@ -94,7 +372,6 @@ body.allow-scroll {
 
 .card {
   background-color: var(--card-background);
-  border-radius: 12px;
   padding: 16px;
   margin-bottom: 16px;
   display: flex;
@@ -152,7 +429,8 @@ body.allow-scroll {
 @media (max-width: 768px) {
   .container {
     padding: 16px;
-  }
+}
+
 }
 
 /* Login Page Specific Styles */
@@ -216,10 +494,6 @@ body.allow-scroll {
   gap: 8px;
 }
 
-.login-button:hover {
-  opacity: 0.9;
-}
-
 .google-icon {
   width: 18px;
   height: 18px;
@@ -248,22 +522,14 @@ body.allow-scroll {
   opacity: 0;
 }
 
-h1 {
-  font-family: var(--font-commit-mono);
-  font-weight: normal;
-  color: var(--text-color);
-  font-size: 32px;
-  line-height: 40px;
-  margin-bottom: 8px;
-}
-
 h2 {
   font-family: var(--font-commit-mono);
   font-weight: 400;
-  color: var(--text-color);
+  color: var(--text-muted);
   font-size: 16px;
   line-height: 24px;
 }
+
 h4 {
   font-family: var(--font-commit-mono);
   font-weight: 400;
@@ -280,32 +546,31 @@ p {
   color: var(--text-muted);
   font-size: 16px;
   line-height: 24px;
+}
 
-  }
+.accent-text {
+  color: var(--accent-color);
+}
 
-  .accent-text {
-    color: var(--accent-color);
-  }
-
-  .app-container {
-    height: 100vh; /* Take full viewport height */
+.app-container {
+  height: 100vh; /* Take full viewport height */
     overflow-y: auto; /* Enable vertical scrolling when content overflows */
     overflow-x: hidden; /* Hide horizontal scrollbar */
     position: relative; /* Establish positioning context for motion-container */
     background-color: #0C0C0C;
-  }
+}
 
-  /* Styling for the motion container (where your pages are rendered) */
+/* Styling for the motion container (where your pages are rendered) */
   .motion-container {
-    height: 100%; /* Take full height of app-container */
+  height: 100%; /* Take full height of app-container */
     position: absolute; /* Position absolutely within app-container */
     top: 0;
     left: 0;
     right: 0;
     opacity: 1; /* Ensure it's visible */
-  }
+}
 
-  /* WebKit (Chrome, Safari) - Hide Scrollbar */
+/* WebKit (Chrome, Safari) - Hide Scrollbar */
 .app-container::-webkit-scrollbar {
   width: 0; /* Set scrollbar width to 0 to hide it */
   background: transparent; /* Optional: make scrollbar background transparent for extra measure */
@@ -320,4 +585,2235 @@ p {
 .app-container::-webkit-scrollbar-thumb {
   background: transparent; /* Make thumb transparent */
   color: transparent;
+}
+
+/* src/styles/components/Header.css */
+
+/* Basic header layout */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 0px;
+  height: 64px;
+  width: 100%;
+  z-index: 10;
+  background-color: transparent;
+  /* REMOVED: Sticky positioning */
+  /* position: sticky;
+  top: 0px; */
+  position: relative; /* Set to relative for normal flow */
+}
+
+.header-left-section {
+  display: flex;
+  align-items: center;
+  color: var(--accent-color);
+}
+
+.header-title {
+  font-weight: 400;
+  color: var(--text-muted);
+  font-size: 16px;
+  line-height: 20px;
+  margin: 0;
+  margin-left: 8px; /* Spacing from back button if present */
+}
+
+.header-live-time {
+  margin-left: 0px;
+  font-weight: 400;
+  color: var(--text-muted);
+  font-size: 20px;
+  line-height: 20px;
+}
+
+.header-right-section {
+  display: flex;
+  align-items: center;
+}
+
+/* Profile image styling */
+.profile-pic {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  cursor: pointer;
+}
+
+/* Back button styling */
+.back-button {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 40px;
+  height: 40px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  padding: 0;
+}
+
+.back-button svg {
+  width: 24px;
+  height: 24px;
+  color: #E682FF;
+}
+
+.header-action {
+  font-size: 16px;
+  color: #E682FF;
+  font-family: var(--font-commit-mono);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+to {
+  transform: rotate(360deg);
+}
+
+.spinning-logo {
+  animation: spin 60s linear infinite;
+}
+
+/* Onboarding variant: full-width stepper with 24px margin each side */
+.header-onboarding {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 64px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/*
+  .onboarding-stepper is the class we gave to <MobileStepper/>.
+  We'll override MUI classes inside it to match your design.
+*/
+.header-onboarding .onboarding-stepper.MuiMobileStepper-root {
+  flex: 1;
+  margin: 0;         /* Remove any leftover margins */
+  padding: 0;
+  background: transparent;
+}
+
+/* The track behind the progress bar */
+.header-onboarding .onboarding-stepper .MuiMobileStepper-progress {
+  background-color: #25252d; /* the 'unfilled' track color */
+  height: 4px;
+  border-radius: 2px;
+}
+
+/* The bar container (root of the progress) */
+.header-onboarding .onboarding-stepper .MuiLinearProgress-root {
+  flex: 1;
+  background: #25252d;
+  border-radius: 2px;
+  height: 4px;
+}
+
+/* The actual FILLED portion => your gradient! */
+.header-onboarding .onboarding-stepper .MuiLinearProgress-bar {
+  background: linear-gradient(to right, #E682FF, #18A2FD, #7B7BFF) !important;
+  transition: width 0.2s ease-in-out;
+}
+
+/* HomePage.css */
+
+.homepage {
+  margin: 0 auto;
+  max-width: 600px;
+  background-color: transparent;
+  color: var(--text-color);
+  display: flex;
+  flex-direction: column;
+}
+
+body.allow-scroll html {
+  overflow: auto;
+  height: auto;
+}
+
+.homepage-content {
+  display: flex;
+  flex-direction: column;
+  flex: 0;
+}
+
+.motivational-section h1 {
+  margin: 0;
+}
+
+.motivational-section .word {
+  display: inline-block;
+  margin-right: 0.1em;
+}
+
+.motivational-section .letter {
+  display: inline-block;
+  opacity: 0;
+  transform: translateY(100%);
+  transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
+}
+
+.motivational-section h1.loaded .word .letter {
+  opacity: 1;
+  transform: translateY(0%);
+}
+
+/* Staggering effect example */
+.motivational-section h1 .word:nth-child(n) .letter {
+  transition-delay: calc(0.05s * n);
+}
+
+/* Specific styling for tracked-time span */
+.motivational-section h1 .tracked-time {
+  display: inline-block;
+  color: var(--accent-color);
+  font-weight: 400;
+}
+
+.motivational-section h1 .tracked-time .letter {
+  transition-delay: 0.6s;
+}
+
+.projects-section, .journal-section {
+  /* Apply section header styling to both */
+  display: flex;
+  flex-direction: column;
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 20px;
+  margin-top: 40px;
+  margin-bottom: 24px;
+}
+
+.projects-header, .journal-header {
+  display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.projects-all-link, .journal-all-link {
+  font-size: 16px;
+    color: var(--text-muted);
+    font-family: var(--font-commit-mono);
+    cursor: pointer;
+    text-decoration: none; /* Remove default underline from Link */
+}
+
+.projects-all-link:hover, .journal-all-link:hover {
+  color: var(--text-color);
+}
+
+.projects-label, .journal-label {
+  font-size: 16px;
+  color: var(--text-muted);
+  font-family: var(--font-commit-mono);
+  margin-bottom: 0;
+}
+
+.projects-list {
+  list-style: none;
+  color: var(--text-color);
+  font-size: 20px;
+  line-height: 24px;
+  padding: 0;
+  margin: 0;
+}
+
+.project-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 16px;
+  cursor: pointer;
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 20pt;
+  gap: 16px;
+}
+
+.project-name {
+  flex-grow: 1;
+}
+
+.project-total-time {
+  font-weight: 400;
+  color: var(--text-color);
+  font-size: 16px;
+  line-height: 20px;
+}
+
+.track-project-button {
+  background-color: transparent;
+  border: 1px solid var(--card-background);
+  border-radius: 12px;
+  text-align: center;
+  font-size: 16px;
+  color: var(--text-color);
+  padding: 16px;
+  cursor: pointer;
+  width: 100%;
+  display: none; /* Hide the button */
+}
+
+.fab-icon {
+  width: 100%;
+  height: 100%;
+}
+
+.motivational-section .tracked-time {
+  color: var(--accent-color);
+  font-weight: 400;
+}
+
+.project-label {
+  font-size: 16px;
+  color: var(--text-color);
+}
+
+h2.projects-label, h2.journal-label {
+  font-size: 16px;
+  color: var(--text-muted);
+  font-family: var(--font-commit-mono);
+  margin-bottom: 0;
+  margin-top: 0;
+  font-weight: 400;
+}
+
+body.allow-scroll > html {
+  overflow: auto;
+  height: auto;
+}
+
+/* Additions for projects actions and add link */
+.projects-actions {
+  display: flex; /* To lay out "All" and "+" side-by-side */
+  align-items: center; /* Vertically align items within actions */
+  text-align: right;
+}
+
+.projects-all-link {
+  font-size: 16px;
+  align-content: end;
+  color: var(--text-muted);
+  font-family: var(--font-commit-mono);
+  cursor: pointer;
+  background-color: transparent;
+  border: 0px;
+}
+
+.projects-add-link {
+  color: var(--text-muted); 
+  font-family: var(--font-commit-mono);
+  font-size: 20px;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.projects-add-link:hover {
+  color: var(--text-color);
+}
+
+/* Add to your global CSS or HomePage.css file */
+.homepage-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh; /* Full viewport height */
+}
+
+.spinning-logo {
+  animation: spin 30s linear infinite;
+}
+
+/* src/components/Journal/JournalConfirmation.css */
+
+.journal-confirmation-page {
+  display: flex;
+  max-width: 600px;
+  flex-direction: column;
+  height: 100%; /* Ensure it takes full height */
+  overflow: hidden; /* Prevent scroll if content is less than viewport */
+  padding-bottom: 80px; /* Space for sticky buttons */
+  position: relative; /* For sticky button container positioning */
+}
+
+.journal-confirmation-quote-text {
+  margin-bottom: 0px;
+  color: var(--text-muted);
+  font-size: 32px;
+  line-height: 40px;
+  text-align: left;
+  color: var(--text-color);
+  overflow: hidden;
+}
+
+.journal-confirmation-buttons {
+  display: flex;
+  flex-direction: column; /* Stack buttons vertically */
+  gap: 16px; /* Spacing between buttons */
+  padding: 24px;
+}
+
+.journal-confirmation-button {
+  display: block;
+  padding: 16px;
+  background-color: transparent;
+  border: 1px solid var(--card-background);
+  border-radius: 12px;
+  text-align: center;
+  font-family: var(--font-commit-mono);
+  font-size: 16px;
+  color: var(--text-color);
+  cursor: pointer;
+  width: 100%; /* Full width buttons */
+  text-decoration: none; /* Remove default link styling if used as link */
+}
+
+.journal-overview-button {
+  color: var(--accent-color); /* Style for the "Open your journal" button if different */
+}
+
+/* Sticky button container styles - Reused and adapted from SessionDetailPage */
+.sticky-button-container {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(to top, var(--background-color), transparent); /* Optional: visual separation */
+  padding: 24px; /* Ensure same padding as other buttons */
+}
+
+/* Specific styling for buttons inside sticky container - if needed */
+.sticky-button-container .journal-confirmation-button {
+  /* You can add specific styles for buttons within the sticky container here if needed */
+  margin-bottom: 0; /* Reset default margins if necessary */
+}
+
+.return-home-button {
+  margin-bottom: 16px; /* Add margin between buttons if stacked */
+}
+
+/* src/components/Journal/JournalCountdown.css */
+.journal-countdown-page {
+  margin: 0 auto;
+  max-width: 600px;
+  background-color: transparent;
+  color: var(--text-color);
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  box-sizing: border-box;
+}
+
+.journal-countdown-content {
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+  padding-bottom: 80px; /* Add padding to avoid overlap with sticky buttons */
+  margin-top: 24px;
+}
+
+.journal-countdown-quote {
+  line-height: 1.4;
+  margin-bottom: 32px;
+  font-weight: 400;
+  color: var(--text-color);
+  font-family: var(--font-commit-mono), monospace;
+  display: inline; /* Make quote inline to flow with timer */
+}
+
+.journal-countdown-quote .word {
+  display: inline-block;
+  margin-right: 0.1em;
+}
+
+.journal-countdown-quote .letter {
+  display: inline-block;
+  opacity: 0;
+  transform: translateY(100%);
+  transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
+}
+
+.journal-countdown-quote.loaded .word .letter {
+  opacity: 1;
+  transform: translateY(0%);
+}
+
+/* Staggering effect example */
+.journal-countdown-quote .word:nth-child(n) .letter {
+  transition-delay: calc(0.05s * n);
+}
+
+#countdown-timer,
+.countdown-timer {
+  color: var(--accent-color);
+  display: block; /* MODIFIED THIS LINE: Make timer a block element */
+  text-align: left; /* OPTIONAL: Center the timer text */
+  margin-top: 10px; /* OPTIONAL: Add some space between description and timer */
+}
+
+.journal-countdown-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+}
+
+.journal-countdown-button {
+  padding: 16px 24px;
+  border: 1px solid var(--card-background);
+  border-radius: 12px;
+  background-color: transparent;
+  color: var(--text-color);
+  cursor: pointer;
+  font-family: var(--font-commit-mono);
+  font-size: 16px;
+  text-align: center;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Sticky button styles added here */
+.sticky-button-top {
+  position: fixed;
+  bottom: 132px; /* Adjust bottom margin as needed */
+  left: 24px; /* Fixed left margin */
+  right: 24px; /* Fixed right margin */
+  width: calc(100% - 48px); /* Calculate width to account for 24px left and right margins */
+  max-width: 600px; /* Still respect max-width */
+  margin-left: auto; /* Center horizontally if width is less than max-width */
+  margin-right: auto; /* Center horizontally if width is less than max-width */
+  box-sizing: border-box;
+  background-color: var(--page-background);
+  padding-top: 16px;
+  padding-bottom: 16px;
+  border-radius: 12px;
+  border: 1px solid var(--card-background);
+}
+
+/* src/components/Journal/JournalForm.css (Updated Buttons to Vertical Stack and Input Tiles) */
+.journal-form-page {
+  margin: 0 auto;
+  max-width: 600px;
+  background-color: transparent;
+  color: var(--text-color);
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh; /* Or remove if body handles viewport height */
+  box-sizing: border-box;
+}
+
+.journal-form-content {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  margin-top: 24px;
+}
+
+.journal-form-title {
+  font-size: 32px; /* Match motivational text size from CreateProjectPage */
+  line-height: 40px;
+  text-align: left; /* Align title to the left like in CreateProjectPage */
+  font-family: var(--font-basic);
+  color: var(--text-color); /* Ensure text color is set */
+  margin: 0px; /* Reduce bottom margin to match section gap */
+}
+
+.mood-header {
+  font-family: var(--font-commit-mono);
+  font-size: 16px;
+  color: var(--text-color);
+  margin-bottom: 0px;
+  margin-top: 16px; /* Reduced top margin */
+}
+
+.mood-slider-container {
+  margin-bottom: 0px; /* Adjust spacing after slider */
+}
+
+.journal-form-section {
+  margin-top: 24px; /* Reduced spacing between form sections */
+  display: flex; /* Enable flexbox for label + input alignment */
+  flex-direction: column; /* Stack label and input vertically */
+  gap: 8px; /* Spacing between label and input */
+  width: 100%; /* Ensure section takes full width */
+}
+
+.journal-form-label {
+  display: block;
+  font-size: 16px;
+  color: var(--text-muted);
+  font-family: var(--font-commit-mono);
+  margin-bottom: 0;
+  margin-top: 0;
+}
+
+/* Shared styles for both input and textarea */
+.journal-text-input-style {
+  width: 100%;
+  background-color: transparent;
+  border: none;
+  border-radius: 12px;
+  color: var(--text-color);
+  font-family: var(--font-commit-mono);
+  font-size: 16px;
+  outline: none;
+  box-sizing: border-box;
+  vertical-align: top !important; /* ADDED !important - stronger override */
+  padding-right: 40px; /* Space for the edit icon */
+}
+
+.journal-input {
+  height: 80px;
+  resize: none;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: flex-start;
+  text-align: left;
+  padding-top: 8px; /* Adjusted padding-top to 8px */
+  padding-bottom: 16px; /* Keeping bottom padding consistent */
+  line-height: normal;
+  width: 100%;
+}
+
+.journal-textarea {
+  min-height: 80px;
+  resize: vertical;
+  vertical-align: top !important; /* ADDED !important - stronger override for textarea as well, just in case */
+  padding-top: 16px;
+}
+
+.journal-input::placeholder,
+.journal-textarea::placeholder {
+  color: var(--text-muted);
+}
+
+/* Buttons - Vertically Stacked and Full Width */
+.form-navigation-single-page {
+  margin-top: 24px;
+  display: flex;
+  flex-direction: column; /* Stack buttons vertically */
+  gap: 8px; /* 8px margin between buttons */
+  align-items: stretch; /* Make buttons stretch to full width */
+}
+
+.save-button,
+.erase-button {
+  background-color: transparent;
+  border: 1px solid var(--card-background);
+  border-radius: 12px;
+  text-align: center;
+  font-size: 16px;
+  color: var(--text-color);
+  padding: 16px; /* Padding to match CreateProjectPage button */
+  cursor: pointer;
+  width: 100%; /* Make buttons full width */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px; /* Icon spacing */
+  font-family: var(--font-commit-mono); /* Font family to match button text */
+  font-weight: 400; /* Font weight to match button text */
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease; /* Smooth transitions */
+  margin-bottom: 0; /* Remove bottom margin to rely on form-navigation-single-page gap */
+}
+
+.save-button {
+  color: var(--text-color); /* Accent color for Save button text */
+  border-color: var(--card-background); /* Accent color for Save button border */
+}
+
+.erase-button {
+  color: var(--text-color); /* Default text color for Erase button */
+  border-color: var(--card-background); /* Match border color to CreateProjectPage button */
+}
+
+.erase-button .button-icon {
+  fill: var(--error-color); /* Error color for erase button icon */
+}
+
+/* Input Tile Styling - Consistent with SessionDetailPage notes input */
+.journal-form-section-text1,
+.journal-form-section-text2 {
+  position: relative; /* needed for absolute positioning of the icon */
+    width: 100%; /* Ensure sections take full width */
+}
+
+.journal-input-tile {
+  position: relative; /* Needed for absolute positioning of the icon */
+    padding: 0;
+    display: block; /* Ensure block display */
+    width: 100%; /* Ensure input tile takes full width */
+}
+
+.journal-edit-icon {
+  position: absolute;
+    top: 16px; /* Adjust as needed to vertically align icon */
+    right: 16px;
+    width: 20px;
+    height: 20px;
+    fill: var(--text-muted); /* Icon color to match notes edit icon */
+}
+
+/* Specific styling for mood slider thumb (if needed, adjust as per your thumb icon) */
+.MuiSlider-thumb {
+  width: 20px;
+  height: 20px;
+}
+
+/* JournalOverviewPage.css */
+.journal-overview-container {
+  margin: 0 auto;
+  display: flex;
+  max-width: 600px;
+  flex-direction: column;
+  min-height: 100vh;
+  background-color: transparent;
+  color: var(--text-color);
+}
+
+.motivational-section .accent-text {
+  color: var(--accent-color);
+}
+
+.journal-overview-content {
+  padding: 0px;
+}
+
+.journal-entries-section {
+  margin-top: 40px;
+}
+
+.month-section {
+  margin-bottom: 30px;
+}
+
+.month-header {
+  font-size: 16px;
+  color: var(--text-muted);
+  font-family: var(--font-commit-mono);
+  margin-bottom: 0;
+  margin-top: 0;
+}
+
+.journal-entries-list {
+  list-style: none;
+  padding: 0;
+}
+
+.journal-entry-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  border-radius: 8px;
+}
+
+.entry-date {
+  font-size: 16px;
+  line-height: 20px;
+  color: var(--muted-text);
+}
+
+.entry-mood {
+  font-size: 16px;
+  line-height: 20px;
+  color: var(--text-muted);
+  font-weight: bold;
+}
+
+/* src/components/Journal/JournalSection.css */
+.journal-section {
+  display: flex;
+  flex-direction: column;
+}
+
+.journal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.journal-label {
+  font-size: 16px;
+  color: var(--text-muted);
+  font-family: var(--font-commit-mono);
+  margin-bottom: 0;
+}
+
+.journal-all-link {
+  font-size: 16px;
+    color: var(--text-muted);
+    font-family: var(--font-commit-mono);
+    cursor: pointer;
+    background-color: transparent;
+    border: 0px;
+}
+
+.journal-all-link:hover {
+  color: var(--text-color);
+}
+
+.journal-days {
+  display: flex;
+  gap: 16px; /* 16px gap between day containers */
+  align-items: flex-start;
+  width: calc(7 * 35px + 6 * 16px); /* Calculate total width */
+  overflow-x: auto; /* Enable horizontal scrolling if needed */
+}
+
+.day-container {
+  display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 35px; /* Fixed width for day container */
+}
+
+.day-button {
+  background-color: transparent;
+  border: none;
+  border-radius: 50%;
+  width: 35px; /* Adjusted to 35px */
+  height: 35px; /* Adjusted to 35px */
+  color: var(--text-color);
+  font-family: var(--font-commit-mono);
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: background-color 0.2s ease;
+  margin-bottom: 4px;
+}
+
+.day-button-today {
+  background-color: var(--background-color);
+}
+
+.day-button-filled {
+  background-color: var(--accent-color);
+}
+
+.day-button-past-unfilled {
+  background-color: var(--background-color);
+}
+
+.day-button-future {
+  background-color: var(--background-color);
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.mood-icon {
+  width: 35px;
+    height: 35px;
+}
+
+.day-button-filled .mood-icon {
+  background-color: var(--background-color);
+}
+
+.day-button-today .mood-icon {
+  fill: var(--accent-color);
+}
+
+.day-button-label {
+  font-size: 12px;
+    font-family: var(--font-commit-mono);
+    text-transform: uppercase;
+    color: var(--text-muted);
+}
+
+.day-button-label-today {
+  color: var(--accent-color);
+}
+
+.day-button-label-past {
+  color: var(--text-color);
+}
+
+.day-button-label-future {
+  color: var(--text-muted);
+}
+
+/* src/components/Level/LevelProfile.css */
+.level-profile-container {
+  background-color: transparent;
+  color: #fff; /* White text */
+  padding: 0px;
+  margin-bottom: 24px;
+}
+
+.level-header {
+  display: flex;
+  /* justify-content: space-between;  REMOVED justify-content: space-between */
+  align-items: flex-start;
+  margin-bottom: 12px;
+  gap: 8px; /* ADDED gap for spacing between label and badge */
+}
+
+.level-badge {
+  background-color: #FE2F00; /* Red badge color */
+  color: #000;
+  border-radius: 25%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-family: var(--font-commit-mono);
+  font-size: 12px;
+  font-weight: 700;
+  margin-left: 4px; /* Optional: Add a little space between label and badge if needed */
+}
+
+.level-stats {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 8px;
+}
+
+.total-lvl-time {
+  font-family: var(--font-commit-mono);
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--text-color);
+}
+
+.time-to-level-up {
+  font-family: var(--font-commit-mono);
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--text-muted);
+}
+
+.progress-bar {
+  background-color: #27272a; /* Darker background for the progress bar */
+  height: 4px;
+  border-radius: 2px;
+  overflow: hidden; /* Ensure fill stays within rounded corners */
+}
+
+.progress-bar-fill {
+  background-image: linear-gradient(to right, #533FF5, #18A2FD, #E682FF, #FE2F00 ); /* Gradient fill */
+  height: 100%;
+  width: 0%; /* Width will be set dynamically by percentage */
+  border-radius: 2px;
+  transition: width 0.3s ease-in-out; /* Smooth width transition */
+}
+
+/* LoginPage.css */
+.login-page {
+  margin: 0 auto;
+  max-width: 600px;
+  background-color: transparent;
+  color: var(--text-color);
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh; /* Ensure full viewport height */
+}
+
+.login-content {
+  flex-grow: 1; /* Allow content to take up remaining vertical space */
+  display: flex;
+  flex-direction: column;
+  justify-content: center; /* Vertically center content */
+  align-items: center; /* Horizontally center content */
+  padding: 0px; /* Add some padding around the content */
+  text-align: center; /* Center text within sections */
+  padding-bottom: 80px; /* Add padding at the bottom to accommodate sticky container - maybe adjust this */
+}
+
+.login-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  max-width: 400px; /* Limit button width if needed */
+  margin-bottom: 16px; /* Space between button and terms */
+}
+
+.login-terms {
+  font-family: var(--font-commit-mono);
+  color: var(--text-muted);
+  font-size: 14px; /* Slightly smaller for terms text */
+  line-height: 20px;
+  text-align: center; /* Keep text-align: center; for the text itself */
+  margin-bottom: 40px;
+  /* Removed display: flex; again - ensure it's just a block element */
+}
+
+.login-pwa {
+  font-family: var(--font-commit-mono);
+  color: var(--accent-pink);
+  font-size: 14px; /* Slightly smaller for terms text */
+  line-height: 20px;
+  text-align: center; /* Keep text-align: center; for the text itself */
+  margin-bottom: 40px;
+  /* Removed display: flex; again - ensure it's just a block element */
+}
+
+.login-link {
+  color: var(--text-muted); /* Or a different color for links */
+  text-decoration: none; /* Remove underline from links */
+}
+
+.login-link:hover {
+  text-decoration: underline; /* Underline on hover if desired */
+}
+
+/* Sticky button and terms at the bottom - Modified */
+.login-page > .login-content {
+  justify-content: space-between; /* Changed to space-between to push content and footer apart */
+}
+
+.login-page > .login-content > .login-actions {
+  margin-top: auto; /* Still push actions to the bottom of login-content */
+}
+
+.sticky-login-container {
+  /* Removed position: fixed, bottom, left, right, width, calc, box-sizing */
+  max-width: 600px; /* Keep max-width to match page */
+  margin-left: auto; /* Center horizontally using auto margins */
+  margin-right: auto; /* Center horizontally using auto margins */
+  margin-bottom: 24px; /* Add some bottom margin */
+  display: block; /* Ensure it's a block element */
+  text-align: center; /* Center text content within */
+}
+
+/* Ensure logo spins in header - if not already spinning from Header.jsx */
+.souko-logo-header.spinning-logo {
+  animation: spin 30s linear infinite;
+}
+
+/* src/components/Onboarding/OnboardingStep1.css */
+
+.onboarding-step1 {
+  margin: 0 auto;
+  max-width: 600px;
+  background-color: transparent;
+  color: var(--text-color);
+  display: flex;
+  flex-direction: column;
+}
+
+.onboarding-step1-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Color only "Souko" in accent color */
+.accent-text {
+  color: var(--accent-color);
+}
+
+.onboarding-description {
+  font-size: 16px;
+  line-height: 24px;
+  margin-top: 16px;
+  color: var(--text-muted);
+}
+
+.average-onboarding.sticky-button-top {
+  position: fixed;
+  bottom: 136px; /* Sits above the second button */
+  left: 24px;
+  right: 24px;
+  width: calc(100% - 48px);
+  max-width: 600px;
+  margin: 0 auto;
+  box-sizing: border-box;
+  background-color: transparent;
+  border: none;
+  border-radius: 12px;
+  padding: 16px;
+  font-size: 14px;
+  font-family: var(--font-commit-mono);
+  font-weight: 400;
+  text-align: center;
+  color: var(--text-muted);
+  cursor: default; /* Non-clickable */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  opacity: 0.9;
+}
+
+.get-started-button.sticky-button {
+  position: fixed;
+  bottom: 64px;
+  left: 24px;
+  right: 24px;
+  width: calc(100% - 48px);
+  max-width: 600px;
+  margin: 0 auto;
+  box-sizing: border-box;
+  background-color: transparent;
+  border: 1px solid var(--card-background);
+  border-radius: 12px;
+  padding: 16px;
+  font-size: 16px;
+  text-align: center;
+  color: var(--text-color);
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+}
+
+.onboarding-step2 {
+  margin: 0 auto;
+  max-width: 600px;
+  background-color: transparent;
+  color: var(--text-color);
+  display: flex;
+  flex-direction: column;
+}
+
+.onboarding-step2-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  /* No need for extra bottom padding if using sticky-button approach */
+}
+
+.sticky-button {
+  position: fixed;
+  bottom: 64px;
+  left: 24px;
+  right: 24px;
+  width: calc(100% - 48px);
+  max-width: 600px;
+  margin: 0 auto;
+  box-sizing: border-box;
+  background-color: transparent;
+  border: 1px solid var(--card-background);
+  border-radius: 12px;
+  padding: 16px;
+  font-size: 16px;
+  text-align: center;
+  color: var(--text-color);
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+}
+
+.project-image-container,
+.project-icon-container {
+  flex-shrink: 0;       /* Prevents shrinking in a flex container */
+  width: 40px;
+  height: 40px;
+  min-width: 40px;      /* Optional, ensures it never goes below 40px */
+  min-height: 40px;
+  max-width: 40px;      /* Optional, ensures it never exceeds 40px */
+  max-height: 40px;
+}
+
+/* src/components/Onboarding/OnboardingStep3.css */
+
+.onboarding-step3 {
+  margin: 0 auto;
+  max-width: 600px;
+  background-color: transparent;
+  color: var(--text-color);
+  display: flex;
+  flex-direction: column;
+}
+
+.onboarding-step3-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  /* No need for extra bottom padding because of sticky buttons */
+}
+
+/* Color words in accent color */
+.accent-text {
+  color: var(--accent-color);
+}
+
+.mood-container {
+  margin-top: 24px;
+  margin-bottom: 16px; /* Reduced bottom margin */
+}
+
+.mood-label {
+  font-family: var(--font-commit-mono);
+  font-size: 16px;
+  margin-bottom: 8px;
+  color: var(--text-muted);
+}
+
+.mood-value {
+  color: var(--text-color);
+  text-transform: capitalize;
+}
+
+.log-mood-button.sticky-button {
+  position: fixed;
+  bottom: 64px;
+  left: 24px;
+  right: 24px;
+  width: calc(100% - 48px);
+  max-width: 600px;
+  margin: 0 auto;
+  box-sizing: border-box;
+  background-color: transparent;
+  border: 1px solid var(--card-background);
+  border-radius: 12px;
+  padding: 16px;
+  font-size: 16px;
+  text-align: center;
+  color: var(--text-color);
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+}
+
+.onboarding-step4 {
+  margin: 0 auto;
+  max-width: 600px;
+  background-color: transparent;
+  color: var(--text-color);
+  display: flex;
+  flex-direction: column;
+}
+
+.onboarding-step4-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  /* No need for extra bottom padding if using FAB */
+}
+
+/* Color only "play" in accent color */
+.accent-text {
+  color: var(--accent-color);
+}
+
+/* Reusing onboarding-description style from OnboardingStep1.css */
+.onboarding-description {
+  font-size: 16px;
+  line-height: 24px;
+  margin-top: 16px;
+  color: var(--text-muted);
+}
+
+/* FAB Styling - Reusing HomePage FAB styles - REVISED FOR ICON SIZE AND POSITION */
+.fab {
+  position: fixed;
+  bottom: 64px;
+  right: 24px; /* Positioned at the bottom right corner NOW */
+  width: 64px;
+  height: 64px;
+  background-color: var(--card-background); /* Card background for FAB */
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease-in-out;
+}
+
+.fab:hover,
+.fab:focus {
+  transform: scale(1.05);
+  opacity: 0.85;
+}
+
+/* ProjectDetailPage.css */
+
+.project-container {
+  /* padding: 24px;  Keep padding for content spacing */
+  margin: 0 auto;
+  max-width: 600px;
+  background-color: transparent;
+  color: var(--text-color);
+  /* min-height: 100vh; Remove this as body should handle the viewport height */
+  display: flex;
+  flex-direction: column; /* Ensure content flows vertically */
+}
+
+.project-header {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.project-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background-color: var(--accent-color);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 0 auto 16px;
+  font-size: 24px;
+  color: var(--background-color);
+}
+
+.project-title {
+  font-size: 24px;
+  line-height: 1.2;
+  margin-top: 0;
+}
+
+.total-time {
+  font-weight: 400;
+  color: var(--accent-color);
+  font-size: 16px;
+  margin-top: 8px;
+}
+
+.sessions-container {
+  margin-top: 24px;
+}
+
+.sessions-by-day {
+  margin-bottom: 16px;
+}
+
+.sessions-by-day h2 {
+  font-size: 16px;
+  color: var(--text-muted);
+  font-family: var(--font-commit-mono);
+  margin-bottom: 8px;
+  margin-top: 0;
+}
+
+.sessions-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.session-item.input-tile {
+  margin-bottom: 0;
+  cursor: default;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.session-details {
+  color: var(--text-color);
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 1.4;
+}
+
+.session-start-time {
+  color: var(--text-color);
+  font-size: 16px;
+}
+
+.session-time {
+  font-size: 16px;
+}
+
+.billable {
+  color: #ffd700;
+  font-size: 12px;
+  font-style: italic;
+  margin-left: 16px;
+}
+
+.notes {
+  color: var(--text-muted);
+  font-size: 14px;
+  margin-top: 8px;
+  font-style: italic;
+}
+
+.button {
+  margin-top: 16px;
+  padding: 12px 24px;
+  background-color: var(--accent-color);
+  color: var(--background-color);
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 16px;
+  width: auto;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.loading {
+  color: var(--text-color);
+  text-align: center;
+  margin-top: 2rem;
+}
+
+.error-title {
+  color: var(--text-color);
+  text-align: center;
+}
+
+/* Additions for the top tile and total time */
+.project-dropdown-container.top-tile {
+  display: flex;
+  align-items: center;
+  background-color: var(--card-background);
+  border-radius: 12px;
+  padding: 16px;
+  gap: 16px;
+  margin-bottom: 16px; /* Reduced margin */
+  cursor: pointer; /* Add cursor pointer to indicate click action */
+  justify-content: space-between; /* Align items and space between */
+}
+
+.dropdown-project-image {
+  width: 40px;
+  height: 40px;
+  border-radius: 20%;
+  margin-right: 16px;
+  object-fit: cover;
+}
+
+.dropdown-default-image {
+  width: 40px;
+  height: 40px;
+  border-radius: 20%;
+  background-color: var(--accent-color);
+  color: var(--background-color);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-weight: bold;
+  margin-right: 16px;
+  background-color: #FE2F00;
+}
+
+.project-dropdown {
+  flex-grow: 1;
+  border: none;
+  background-color: transparent;
+  font-family: var(--font-commit-mono);
+  color: var(--text-color);
+  font-size: 16px;
+  line-height: 24px;
+  font-weight: normal;
+  outline: none;
+  appearance: none;
+}
+
+.dropdown-arrow {
+  position: absolute;
+  right: 16px;
+  width: 24px;
+  height: 24px;
+  pointer-events: none;
+}
+
+.timer.project-time {
+  margin: 0px;
+  font-size: 40px;
+  line-height: 48px;
+  margin-bottom: 0px;
+  color: var(--accent-color);
+  text-align: center;
+  transition: color 0.3s ease;
+}
+
+.session-link {
+  text-decoration: none;
+  color: inherit;
+  display: block;
+}
+
+.filters-container {
+  display: flex;
+  justify-content: space-between; /* Align items to start and end */
+  align-items: center;
+  margin-bottom: 32px; /* Reduced margin below filters */
+}
+
+.project-header-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.time-range-dropdown {
+  position: relative;
+  margin-right: auto; /* Push to the right - now to the left */
+  margin-left: 0; /* Reset left margin */
+}
+
+.time-range-select {
+  padding: 8px 32px 8px 16px;
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  background-color: transparent;
+  color: var(--text-color);
+  font-family: var(--font-primary);
+  font-size: 14px;
+  appearance: none;
+  outline: none;
+  cursor: pointer;
+  height: 40px; /* ADD THIS LINE */
+}
+
+.time-range-dropdown .dropdown-arrow {
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 20px;
+  height: 20px;
+  pointer-events: none;
+}
+
+.display-mode-toggle {
+  display: flex;
+  gap: 8px;
+  margin-left: auto; /* Push to the left - now to the right */
+  margin-right: 0; /* Reset right margin */
+}
+
+.display-mode-button {
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  background-color: transparent;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  outline: none;
+}
+
+.display-mode-button.active {
+  border-color: var(--border-color); /* Keep if you want border change on active */
+}
+
+.display-mode-button.muted {
+  border-color: var(--border-color); /* Keep if you want border change on muted */
+}
+
+.display-mode-icon {
+  width: 20px;
+  height: 20px;
+}
+
+.display-mode-button.active .display-mode-icon {
+  fill: var(--text-color) !important; /* Important! Ensure this style is applied */
+}
+
+.display-mode-button.muted .display-mode-icon {
+  fill: var(--text-muted) !important; /* Important! Ensure this style is applied */
+}
+
+.edit-icon {
+  width: 20px;
+    height: 20px;
+    fill: var(--text-color);
+    opacity: 0.7; /* Slightly muted edit icon */
+}
+
+.project-dropdown-container.top-tile:hover .edit-icon {
+  opacity: 1; /* Full opacity on hover */
+    fill: var(--accent-color);
+}
+
+.update-project-container {
+  margin: 0 auto;
+  max-width: 600px;
+  padding: 20px;
+  color: var(--text-color);
+}
+
+.update-project-content {
+  padding: 0px;
+}
+
+.update-project-content h1 {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.load-more-container {
+  text-align: center;
+  margin-top: 16px;
+}
+
+.load-more-button {
+  background-color: transparent;
+  border: 1px solid var(--card-background);
+  border-radius: 12px;
+  padding: 12px 24px;
+  font-size: 16px;
+  color: var(--text-color);
+  cursor: pointer;
+}
+
+/* ProjectOverviewPage.css */
+
+/* Container for the entire page */
+.project-container {
+  margin: 0 auto;
+  max-width: 600px;
+  background-color: transparent;
+  color: var(--text-color);
+  display: flex;
+  flex-direction: column;
+}
+
+/* Main content area */
+.homepage-content {
+  display: flex;
+  flex-direction: column;
+  flex: 0;
+}
+
+.motivational-section h1 .tracked-time {
+  display: inline-block;
+  color: var(--accent-color);
+  font-weight: 400;
+}
+
+/* Projects Section */
+.projects-section,
+.journal-section {
+  display: flex;
+  flex-direction: column;
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 20px;
+  margin-top: 0px;
+}
+
+/* Section Headers */
+.projects-header,
+.journal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+/* Standard label styling */
+.projects-label,
+.journal-label {
+  font-size: 16px;
+  color: var(--text-muted);
+  font-family: var(--font-commit-mono);
+  margin-bottom: 0;
+}
+
+/* Actions container for sort toggle */
+.projects-actions {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+/* Toggle label styling – matching projects-label */
+.projects-label.sort-toggle-label {
+  font-size: 16px;
+  color: var(--text-muted);
+  font-family: var(--font-commit-mono);
+  margin: 0;
+  padding: 0;
+  cursor: pointer;
+}
+
+.projects-label.sort-toggle-label:hover {
+  color: var(--text-color);
+}
+
+/* Projects list */
+.projects-list {
+  list-style: none;
+  color: var(--text-color);
+  font-size: 20px;
+  line-height: 24px;
+  padding: 0;
+  margin: 0;
+}
+
+/* Project image container */
+.project-image-container {
+  width: 32px;
+  height: 32px;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Project image styling */
+.project-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Default project image styling */
+.default-project-image {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: var(--text-color);
+  font-weight: bold;
+  font-size: 14px;
+  background-color: #FE2F00;
+}
+
+/* SessionDetailPage.css */
+.session-detail-page {
+  /* padding: 24px;  Keep padding for content spacing */
+  margin: 0 auto;
+  max-width: 600px;
+  background-color: transparent;
+  color: var(--text-color);
+  /* min-height: 100vh; Remove this as body should handle the viewport height */
+  display: flex;
+  flex-direction: column; /* Ensure content flows vertically */
+}
+
+.timer-quote {
+  font-family: var(--font-commit-mono);
+  font-size: 16px;
+  color: var(--text-muted);
+  text-align: center;
+  margin-top: 24px;
+}
+
+.timer {
+  font-family: var(--font-commit-mono);
+  font-weight: 400;
+  font-size: 56px;
+  line-height: 64px;
+  color: var(--accent-color);
+  text-align: center;
+  transition: color 0.3s ease;
+}
+
+.projects-label {
+  font-family: var(--font-commit-mono);
+  font-size: 14px;
+  color: var(--text-muted);
+  margin-top: 32px;
+  margin-bottom: 8px;
+}
+
+.project-dropdown-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  background-color: var(--card-background);
+  border-radius: 12px;
+  padding: 16px;
+  margin-top: 16px;
+  cursor: pointer;
+}
+
+.project-dropdown:focus {
+  outline: none;
+}
+
+.input-tile {
+  border-radius: 12px;
+  margin-top: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+}
+
+.billable-tile {
+  cursor: pointer;
+}
+
+.input-label {
+  font-family: var(--font-commit-mono);
+  font-size: 16px;
+}
+
+.billable-label {
+  flex-grow: 1;
+}
+
+.billable-radio {
+  display: flex;
+}
+
+.notes-input-tile {
+  position: relative;
+  padding: 0;
+  display: block;
+}
+
+.notes-textarea {
+  width: 100%;
+  min-height: 100px;
+  padding: 16px;
+  border: none;
+  border-radius: 12px;
+  background-color: var(--card-background);
+  color: var(--text-color);
+  font-family: var(--font-commit-mono);
+  font-size: 16px;
+  resize: vertical;
+}
+
+.notes-textarea:focus {
+  outline: none;
+}
+
+.notes-edit-icon {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 20px;
+  height: 20px;
+  fill: var(--text-muted);
+}
+
+.save-button:disabled {
+  font-family: var(--font-commit-mono);
+  font-weight: 400;
+  background-color: transparent;
+  color: var(--text-muted);
+  cursor: not-allowed;
+}
+
+.save-button .button-icon {
+  fill: var(--background-color);
+}
+
+.save-button:disabled .button-icon {
+  fill: var(--text-muted);
+}
+
+/* SessionOverviewPage.css */
+.session-overview-page {
+  /* padding: 24px;  Keep padding for content spacing */
+  margin: 0 auto;
+  max-width: 600px;
+  background-color: transparent;
+  color: var(--text-color);
+  /* min-height: 100vh; Remove this as body should handle the viewport height */
+  display: flex;
+  margin-top: 0px;
+  flex-direction: column; /* Ensure content flows vertically */
+}
+
+.overview-container {
+  width: 100%;
+  max-width: 600px;
+  /* Removed text-align: center; assuming TextGenerateEffect handles it */
+  margin-top: 64px; /* Adjust as needed */
+  margin-bottom: 24px; /* Add some bottom margin */
+}
+
+.overview-quote {
+  /* Removed specific font-family to inherit from global styles */
+  font-weight: normal;
+  color: var(--text-color);
+  font-size: 32px;
+  line-height: 40px;
+  margin-top: 0;
+  margin-bottom: 24px;
+}
+
+.overview-actions {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  margin-top: 24px; /* Add some top margin */
+}
+
+/* Button Styles - Consistent with HomePage and general button styles */
+.button {
+  font-family: inherit; /* Inherit font from body or global styles */
+  font-weight: 400;
+  padding: 16px;
+  border-radius: 12px;
+  text-align: center;
+  cursor: pointer;
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid var(--border-color);
+  background-color: transparent;
+  font-size: 16px; /* Consistent button font size */
+}
+
+.primary-button {
+  color: var(--text-color);
+  /* You might add specific primary button styles here if needed */
+}
+
+.secondary-button {
+  color: var(--text-color);
+}
+
+.disabled {
+  font-family: var(--font-commit-mono);
+  font-weight: 400;
+  background-color: transparent;
+  color: var(--text-muted);
+  cursor: not-allowed;
+}
+
+/* src/styles/components/Sidebar.css */
+.sidebar {
+  position: fixed;
+  top: 0;
+  right: 0;
+  background-origin: 1;
+  height: 100vh;
+  width: 100%; /* Adjust width as needed */
+  background-color: #0C0C0C;
+  box-shadow: -2px 0 5px rgba(0, 0, 0, 0.2);
+  transform: translateX(100%); /* Initially hidden off-screen */
+  transition: transform 0.2s ease-in-out;
+  z-index: 1000; /* Ensure it's above other content */
+}
+
+.sidebar.open {
+  transform: translateX(0);
+}
+
+.sidebar-content {
+  padding: 24px;
+}
+
+.close-button {
+  /* Removed explicit font-family, will inherit from global styles */
+  font-weight: 400;
+  color: var(--text-muted);
+  font-size: 16px;
+  line-height: 20px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  padding: 0px;
+}
+
+.close-button-container {
+  display: flex; /* Or other layout method */
+  justify-content: flex-start; /* Example: Align to the right */
+  margin-bottom: 20px; /* Add margin below the close button */
+}
+
+/* Optional: Add styling for the overlay */
+.sidebar-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: #0C0C0C; /* Semi-transparent black */
+  z-index: 999;
+  display: none;
+}
+
+.sidebar-overlay.open {
+  display: block;
+}
+
+/* src/components/Sidebar.css */
+/* ... your existing styles ... */
+
+.signout-button {
+  background-color: var(--background-color);
+border: 1px solid var(--border-color);
+border-radius: 12px;
+text-align: center;
+/* Removed explicit font-family, will inherit from global styles */
+font-size: 16px;
+color: var(--text-color);
+padding: 16px;
+margin-top: 24px;
+cursor: pointer;
+width: 100%;
+}
+
+.signout-button-icon {
+  color: #FE2F00;
+}
+
+.time-tracker-page {
+  margin: 0 auto;
+  max-width: 600px;
+  background-color: transparent;
+  color: var(--text-color);
+  display: flex;
+  flex-direction: column;
+  /* No extra bottom padding, since the bottom bar is fixed */
+}
+
+/* The container that holds the timer + buttons at the bottom */
+.bottom-sticky-bar {
+  position: fixed;
+  bottom: 64px;            /* pinned to bottom of viewport */
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 600px;
+  background-color: var(--background-color); /* Or semi-transparent, if desired */
+  padding: 16px 0;      /* top/bottom padding; adjust to taste */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;            /* space between timer and buttons */
+  z-index: 999;         /* ensure it stays on top */
+  /* Optionally add a slight box-shadow or border if you like */
+  /* box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.2); */
+}
+
+/* The timer text inside the bottom bar */
+.bottom-sticky-bar .timer {
+  font-size: 56px;
+  line-height: 64px;
+  color: var(--accent-color);
+  text-align: center;
+  margin: 0;            /* no extra margin needed now */
+  transition: color 0.3s ease;
+}
+
+.bottom-sticky-bar .timer.paused {
+  color: var(--text-muted);
+}
+
+/* A row for the three buttons */
+.buttons-row {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  gap: 32px;  /* space between reset, stop, pause/resume */
+}
+
+/* Reuse or rename your control-button classes as needed */
+.control-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0;
+}
+
+.control-button.small {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background-color: transparent;
+}
+
+/* The big stop button */
+.control-button.fab-like {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background-color: #ffffff;
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.25);
+  color: var(--background-color);
+}
+
+.input-tile-timer {
+  min-height: 40px;
+  background-color: var(--card-background);
+  border-radius: 12px;
+  padding: 16px;
+  color: var(--text-color);
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 20pt;
+  display: flex;
+  align-items: center;
+}
+
+.input-tile.billable-tile .billable-radio {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  color: var(--text-color);
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 20pt;
+}
+
+.input-tile.notes-input-tile {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 20pt;
+}
+
+.notes-textarea::placeholder {
+  color: var(--text-muted);
+}
+
+.hour-rate-currency-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  background-color: var(--card-background);
+  border-radius: 12px;
+  padding: 16px;
+  margin-top: 16px;
+  cursor: pointer;
+}
+
+.hour-rate-currency-container .hour-rate-input {
+  flex: 1;
+  border: none;
+  background-color: transparent;
+  color: var(--text-color);
+  font-family: var(--font-commit-mono);
+  font-size: 16px;
+  line-height: 24px;
+  outline: none;
+  margin-right: 16px;
+}
+
+.hour-rate-currency-container .currency-select {
+  border: none;
+  background-color: transparent;
+  color: var(--text-color);
+  font-family: var(--font-commit-mono);
+  font-size: 16px;
+  line-height: 24px;
+  outline: none;
+  appearance: none;
+  width: 32px;
+  text-align-last: center;
+}
+
+/* UpdateProjectPage.css */
+
+.update-project-page {
+  margin: 0 auto;
+  max-width: 600px;
+  background-color: transparent;
+  color: var(--text-color);
+  display: flex;
+  flex-direction: column;
+}
+
+.update-project-button,
+.delete-project-button {
+  font-family: var(--font-commit-mono);
+  background-color: transparent;
+  border: 1px solid var(--card-background);
+  border-radius: 12px;
+  text-align: center;
+  font-size: 16px;
+  color: var(--text-color);
+  padding: 16px;
+  cursor: pointer;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+}
+
+.update-project-button.disabled {
+  background-color: transparent;
+  color: var(--text-muted);
+  cursor: not-allowed;
+}
+
+.update-project-button.disabled .button-icon {
+  fill: var(--text-muted);
+}
+
+.motivational-section.h1 {
+  text-align: left;
+  margin-bottom: 0px;
+  font-size: 32px;
+  line-height: 40px;
+  color: var(--text-color);
+}
+
+/* Delete Confirmation Dialog Styles */
+.delete-confirmation-dialog {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: var(--card-background);
+  padding: 24px;
+  border-radius: 12px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  text-align: center;
+}
+
+.delete-confirmation-dialog p {
+  margin: 0;
+}
+
+.dialog-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+}
+
+.dialog-buttons button {
+  padding: 12px 24px;
+  border-radius: 8px;
+  cursor: pointer;
+  border: none;
+  font-size: 16px;
+}
+
+.confirm-delete {
+  background-color: #FF4D4D;
+  color: white;
+}
+
+.cancel-delete {
+  background-color: #ddd;
+  color: black;
+}
+
+.sticky-button-top {
+  position: fixed;
+  bottom: 132px;
+  left: 24px;
+  right: 24px;
+  width: calc(100% - 48px);
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+  box-sizing: border-box;
+  background-color: var(--page-background);
+  padding-top: 16px;
+  padding-bottom: 16px;
+  border-radius: 12px;
+  border: 1px solid var(--card-background);
 }

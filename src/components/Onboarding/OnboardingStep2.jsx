@@ -2,11 +2,7 @@
 import React, { useState, useRef, useCallback, useMemo } from 'react';
 // REMOVED: import { useNavigate } from 'react-router-dom'; // <-- REMOVE useNavigate import
 import Header from '../Layout/Header';
-import './OnboardingStep2.css';
-
-// Removed unused imports from 'firebase/storage'
-// import { getStorage, ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
-
+import '../../styles/global.css';
 import { TextGenerateEffect } from '../../styles/components/text-generate-effect.tsx';
 
 // Reuse your icons...

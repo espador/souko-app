@@ -2,7 +2,6 @@
 import React, { useCallback, useMemo } from 'react';
 import { formatTime } from '../utils/formatTime';
 import '../styles/global.css';
-import '../styles/components/SessionOverviewPage.css';
 import { TextGenerateEffect } from "../styles/components/text-generate-effect.tsx";
 import Header from '../components/Layout/Header';
 

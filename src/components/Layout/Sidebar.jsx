@@ -1,6 +1,6 @@
 // src/components/Sidebar.jsx
 import React from 'react';
-import '../../styles/components/Sidebar.css';
+import '../../styles/global.css';
 import { ReactComponent as CloseIcon } from '../../styles/components/assets/close.svg';
 
 const Sidebar = ({ isOpen, onClose, onLogout }) => {

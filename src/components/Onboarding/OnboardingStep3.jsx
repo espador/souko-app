@@ -2,12 +2,10 @@
 import React, { useState, useCallback } from 'react';
 // REMOVED: import { useNavigate } from 'react-router-dom'; // <-- REMOVE useNavigate import
 import Header from '../Layout/Header';
-import './OnboardingStep3.css';
+import '../../styles/global.css';
 import { TextGenerateEffect } from '../../styles/components/text-generate-effect.tsx';
 import Slider from '@mui/material/Slider';
 import { ReactComponent as SaveIcon } from '../../styles/components/assets/save.svg';
-
-// Import the context
 import { useOnboardingContext } from '../../contexts/OnboardingContext';
 
 const moodPoints = [0, 25, 50, 75, 100];

@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import './LevelProfile.css';
+import '../../styles/global.css';
 import { formatTimeFromMinutes } from '../../utils/formatTime';
 
 

@@ -3,7 +3,6 @@ import React, { useEffect, useCallback, useState } from 'react';
 import { signInWithPopup } from 'firebase/auth';
 import { auth, googleProvider, db } from '../services/firebase';
 import '../styles/global.css';
-import '../styles/components/LoginPage.css';
 import googleIcon from '../styles/components/assets/google-icon.svg';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { TextGenerateEffect } from '../styles/components/text-generate-effect.tsx';

@@ -21,7 +21,6 @@ import { onAuthStateChanged, signOut } from 'firebase/auth';
 import Header from '../components/Layout/Header';
 import Sidebar from '../components/Layout/Sidebar';
 import '../styles/global.css';
-import '../styles/components/TimeTrackerPage.css';
 import { ReactComponent as ResetMuteIcon } from '../styles/components/assets/reset-mute.svg';
 import { ReactComponent as ResetActiveIcon } from '../styles/components/assets/reset-active.svg';
 import { ReactComponent as PauseIcon } from '../styles/components/assets/pause.svg';

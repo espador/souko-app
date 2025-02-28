@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import './JournalSection.css';
 import { format, startOfWeek, addDays, parseISO } from 'date-fns';
 
 // PNG Imports - Memoized import of mood icons

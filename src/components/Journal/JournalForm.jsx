@@ -1,5 +1,4 @@
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
-import './JournalForm.css';
 import Header from '../Layout/Header';
 import '../../styles/global.css';
 import {
