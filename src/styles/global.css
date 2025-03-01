@@ -1,4 +1,16 @@
-/* src/components/ConfirmModal.css */
+:root {
+  --background-color: ##0C0C0C;
+  --text-color: #ffffff;
+  --text-muted: #494750;
+  --accent-color: #00FF00;
+  --card-background: #131314;
+  --border-color: #25252d;
+  --accent-purple: #7B7BFF;
+  --accent-pink: #E682FF;
+  --font-commit-mono: 'Commit Mono', monospace;
+  -webkit-tap-highlight-color: transparent; /* Remove tap highlight */
+}
+
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -14,8 +26,14 @@
 
 .modal-content {
   background-color: var(--background-color);
-  margin:24px;
+  margin-bottom:24px;
   padding: 24px;
+}
+
+.divider {
+  border-bottom: 1px solid var(--text-muted);
+  margin-top: 20px;
+  margin-bottom: 20px;
 }
 
 .modal-title {
@@ -316,7 +334,6 @@ body {
   left: 0;
   width: 100%;
   height: 100vh;
-  color: var(--text-color);
   font-family: var(--font-commit-mono), monospace;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
@@ -349,21 +366,6 @@ body.allow-scroll {
   box-sizing: inherit;
 }
 
-/* Theme Variables */
-:root {
-  --background-color: ##0C0C0C;
-  --text-color: #ffffff;
-  --text-muted: #494750;
-  --accent-color: #00FF00;
-  --card-background: #131314;
-  --border-color: #25252d;
-  --accent-purple: #7B7BFF;
-  --accent-pink: #E682FF;
-  --font-commit-mono: 'Commit Mono', monospace;
-  -webkit-tap-highlight-color: transparent; /* Remove tap highlight */
-}
-
-/* Layout Utilities */
 .container {
   margin: 0 auto;
   padding: 24px;
@@ -725,7 +727,6 @@ to {
   margin: 0 auto;
   max-width: 600px;
   background-color: transparent;
-  color: var(--text-color);
   display: flex;
   flex-direction: column;
 }
@@ -787,6 +788,20 @@ body.allow-scroll html {
   line-height: 20px;
   margin-top: 40px;
   margin-bottom: 24px;
+}
+
+.journal-badge {
+  background-color: var(--accent-color);
+  color: var(--background-color);
+  width: 24px;
+  height: 24px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-family: var(--font-commit-mono);
+  font-size: 12px;
+  font-weight: 700;
+  margin-left: 4px; 
 }
 
 .projects-header, .journal-header {
@@ -1451,16 +1466,14 @@ body.allow-scroll > html {
 
 .level-header {
   display: flex;
-  /* justify-content: space-between;  REMOVED justify-content: space-between */
   align-items: flex-start;
   margin-bottom: 12px;
-  gap: 8px; /* ADDED gap for spacing between label and badge */
+  gap: 8px; 
 }
 
 .level-badge {
-  background-color: #FE2F00; /* Red badge color */
+  background-color: #FE4B00;
   color: #000;
-  border-radius: 25%;
   width: 24px;
   height: 24px;
   display: flex;
@@ -1469,7 +1482,7 @@ body.allow-scroll > html {
   font-family: var(--font-commit-mono);
   font-size: 12px;
   font-weight: 700;
-  margin-left: 4px; /* Optional: Add a little space between label and badge if needed */
+  margin-left: 4px; 
 }
 
 .level-stats {
@@ -1501,7 +1514,7 @@ body.allow-scroll > html {
 }
 
 .progress-bar-fill {
-  background-image: linear-gradient(to right, #533FF5, #18A2FD, #E682FF, #FE2F00 ); /* Gradient fill */
+  background-image: linear-gradient(to right, #533FF5, #18A2FD, #E682FF, #FE4B00 ); /* Gradient fill */
   height: 100%;
   width: 0%; /* Width will be set dynamically by percentage */
   border-radius: 2px;

@@ -332,7 +332,9 @@ const HomePage = React.memo(({ navigate, skipAutoRedirect, currentPage }) => {
             }
           />
         </section>
-        
+    
+        <div className="divider"></div>
+
         <LevelProfile
           projectName="Souko"
           totalTrackedTimeMinutes={totalTrackedTimeMinutes}
