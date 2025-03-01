@@ -16,9 +16,12 @@ const moodIcons = {
 
 const JournalSection = React.memo(({ journalEntries = [], loading, navigate }) => {
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [isJournalAvailable, setIsJournalAvailable] = useState(false);
   const [currentStreak, setCurrentStreak] = useState(0);
 
+  // REMOVED: isJournalAvailable
+  // const [isJournalAvailable, setIsJournalAvailable] = useState(false);
+
+  // CHANGED: We no longer rely on restricted hours; we just consider "today" once per day
   const today = useMemo(() => new Date(), []);
   const startOfCurrentWeek = useMemo(
     () => startOfWeek(today, { weekStartsOn: 1 }),
@@ -30,9 +33,10 @@ const JournalSection = React.memo(({ journalEntries = [], loading, navigate }) =
     return () => clearInterval(timer);
   }, []);
 
-  useEffect(() => {
-    setIsJournalAvailable(currentTime.getHours() >= 18);
-  }, [currentTime]);
+  // REMOVED: We no longer set isJournalAvailable by hour
+  // useEffect(() => {
+  //   setIsJournalAvailable(currentTime.getHours() >= 18);
+  // }, [currentTime]);
 
   useEffect(() => {
     const fetchStreak = async () => {
@@ -67,13 +71,14 @@ const JournalSection = React.memo(({ journalEntries = [], loading, navigate }) =
     (index) => {
       const dayDate = addDays(startOfCurrentWeek, index);
       const dayDateFormatted = format(dayDate, 'yyyy-MM-dd');
+
+      // Zero out hours/mins/seconds for a consistent comparison
       const todayDate = new Date();
       todayDate.setHours(0, 0, 0, 0);
       dayDate.setHours(0, 0, 0, 0);
 
       const isToday = dayDate.getTime() === todayDate.getTime();
-      const currentHour = new Date().getHours();
-      const isFutureDay = dayDate > today;
+      const isFutureDay = dayDate > todayDate; // compare zeroed
 
       const entryForDay = journalEntries.find((entry) => {
         const entryCreatedAtDate = parseDateForJournal(entry.createdAt);
@@ -83,28 +88,25 @@ const JournalSection = React.memo(({ journalEntries = [], loading, navigate }) =
         );
       });
 
+      // CHANGED: We removed the hour-based restriction
+      // Only allow navigating for "today" or for a day that has an existing entry
       if (isToday) {
-        if (currentHour < 18 && currentHour >= 2) {
-          navigate('journal-countdown');
+        if (entryForDay) {
+          // We already have an entry for today — maybe allow editing or direct to the same form
+          navigate('journal-form', { selectedDate: dayDateFormatted });
         } else {
+          // No entry for today => create it
           navigate('journal-form', { selectedDate: dayDateFormatted });
         }
       } else if (!isToday && !isFutureDay) {
-        if (entryForDay && entryForDay.createdAt) {
-          const entryTimestamp = parseDateForJournal(entryForDay.createdAt);
-          if (entryTimestamp) {
-            const entryHour = entryTimestamp.getHours();
-            const isWithinEditWindow =
-              (entryHour >= 18 || entryHour < 2) &&
-              format(entryTimestamp, 'yyyy-MM-dd') === dayDateFormatted;
-            if (isWithinEditWindow) {
-              navigate('journal-form', { selectedDate: dayDateFormatted });
-            }
-          }
+        // It's in the past => only navigate if there's an entry (read-only or edit if you want)
+        if (entryForDay) {
+          navigate('journal-form', { selectedDate: dayDateFormatted });
         }
       }
+      // If it's a future day, we do nothing (disabled)
     },
-    [startOfCurrentWeek, navigate, journalEntries, parseDateForJournal, today]
+    [startOfCurrentWeek, navigate, journalEntries, parseDateForJournal]
   );
 
   const weekDays = useMemo(() => {
@@ -122,12 +124,15 @@ const JournalSection = React.memo(({ journalEntries = [], loading, navigate }) =
         );
       });
 
-      const isToday = format(dayDate, 'yyyy-MM-dd') === format(today, 'yyyy-MM-dd');
+      const isToday =
+        format(dayDate, 'yyyy-MM-dd') === format(today, 'yyyy-MM-dd');
       const isFutureDay = dayDate > today;
       let MoodIconComponent;
 
       if (isToday) {
-        MoodIconComponent = entryForDay ? moodIcons[entryForDay.mood] : JournalLoadingIcon;
+        MoodIconComponent = entryForDay
+          ? moodIcons[entryForDay.mood]
+          : JournalLoadingIcon;
       } else if (isFutureDay) {
         MoodIconComponent = JournalUnfilledIcon;
       } else {

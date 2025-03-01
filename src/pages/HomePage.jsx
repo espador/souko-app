@@ -1,4 +1,3 @@
-// HomePage.jsx
 import React, { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import { auth, db } from '../services/firebase';
 import { signOut } from 'firebase/auth';
@@ -227,10 +226,6 @@ const HomePage = React.memo(({ navigate, skipAutoRedirect, currentPage }) => {
   useEffect(() => {
     // Wait until we've stopped "loading" our data.
     if (!loading) {
-      // If we're NOT on an onboarding route, and either:
-      //   - there's no profile doc yet, or
-      //   - userProfile.onboardingComplete is false
-      // then we jump to step1. Otherwise, we do nothing.
       if (
         !currentPage.startsWith('onboarding') &&
         (!userProfile || userProfile.onboardingComplete !== true)
@@ -300,8 +295,6 @@ const HomePage = React.memo(({ navigate, skipAutoRedirect, currentPage }) => {
   }
 
   // --------------- FAB CLICK HANDLER ---------------
-  // If there's an active session => jump to it
-  // else => go to time-tracker-setup
   const handleFabClick = () => {
     if (activeSession) {
       navigate('time-tracker', { sessionId: activeSession.id });
@@ -332,7 +325,7 @@ const HomePage = React.memo(({ navigate, skipAutoRedirect, currentPage }) => {
             }
           />
         </section>
-    
+
         <div className="divider"></div>
 
         <LevelProfile

@@ -1,6 +1,6 @@
 const functions = require("firebase-functions");
 const admin = require("firebase-admin");
-const dateFns = require("date-fns");
+const dateFns = require("date-fns-tz");
 
 admin.initializeApp();
 
@@ -11,40 +11,27 @@ exports.calculateJournalStreak = functions.firestore
       const userId = newEntry.userId;
 
       if (!userId) {
-        functions.logger.error(
-            "No userId in new journal entry",
-            {entryId: context.params.journalEntryId},
-        );
+        functions.logger.error("No userId in new journal entry", { entryId: context.params.journalEntryId });
         return null;
       }
 
-      const profileRef = admin
-          .firestore()
-          .collection("profiles")
-          .doc(userId);
-
-      const journalRef = admin
-          .firestore()
-          .collection("journalEntries");
+      const profileRef = admin.firestore().collection("profiles").doc(userId);
+      const journalRef = admin.firestore().collection("journalEntries");
 
       try {
         const profileSnap = await profileRef.get();
         if (!profileSnap.exists) {
-          functions.logger.error(
-              "No profile for userId",
-              {userId: userId},
-          );
+          functions.logger.error("No profile for userId", { userId });
           return null;
         }
 
         const profileData = profileSnap.data();
         let streak = profileData.journalStreak || 0;
         let lastDate = null;
+        let userTimezone = profileData.timezone || "UTC";
 
         if (profileData.lastJournalDate) {
-          lastDate = dateFns.parseISO(
-              profileData.lastJournalDate,
-          );
+          lastDate = dateFns.utcToZonedTime(dateFns.parseISO(profileData.lastJournalDate), userTimezone);
         }
 
         const query = journalRef
@@ -53,59 +40,35 @@ exports.calculateJournalStreak = functions.firestore
             .limit(2);
 
         const entriesSnap = await query.get();
-
         const entries = [];
-        entriesSnap.forEach((doc) => {
-          entries.push(doc.data());
-        });
+        entriesSnap.forEach((doc) => entries.push(doc.data()));
+
+        // Convert new entry timestamp to user's timezone
+        const newDate = dateFns.startOfDay(dateFns.utcToZonedTime(newEntry.createdAt.toDate(), userTimezone));
 
         if (entries.length <= 1) {
           streak = 1;
-          lastDate = dateFns.startOfDay(
-              newEntry.createdAt.toDate(),
-          );
+          lastDate = newDate;
         } else {
           const latest = entries[0];
-          const previous = entries[1];
+          const latestDate = dateFns.startOfDay(dateFns.utcToZonedTime(latest.createdAt.toDate(), userTimezone));
 
-          const latestDate = dateFns.startOfDay(
-              latest.createdAt.toDate(),
-          );
-          const previousDate = dateFns.startOfDay(
-              previous.createdAt.toDate(),
-          );
-          const newDate = dateFns.startOfDay(
-              newEntry.createdAt.toDate(),
-          );
+          functions.logger.log("📅 Entry Dates:", {
+            latestDate: latestDate.toISOString(),
+            newEntryDate: newDate.toISOString(),
+            userTimezone
+          });
 
-          if (
-            dateFns.differenceInDays(
-                latestDate,
-                previousDate,
-            ) === 1
-          ) {
-            streak++;
-            lastDate = newDate;
-          } else if (
-            dateFns.differenceInDays(
-                latestDate,
-                previousDate,
-            ) === 0
-          ) {
-            lastDate = newDate;
+          if (dateFns.differenceInCalendarDays(newDate, latestDate) === 1) {
+            streak++; // Entry is on the next calendar day
+          } else if (dateFns.isSameDay(newDate, latestDate)) {
+            functions.logger.log("Journal entry is within the same day, keeping streak.");
           } else {
-            if (
-              dateFns.differenceInDays(
-                  latestDate,
-                  newDate,
-              ) !== 0
-            ) {
-              streak = 1;
-              lastDate = newDate;
-            } else {
-              lastDate = newDate;
-            }
+            functions.logger.log("Journal entry is NOT consecutive, resetting streak.");
+            streak = 1; // Reset streak if entry is not consecutive
           }
+
+          lastDate = newDate;
         }
 
         const update = {
@@ -114,17 +77,16 @@ exports.calculateJournalStreak = functions.firestore
         };
 
         await profileRef.update(update);
+        functions.logger.log("✅ Streak updated successfully:", { userId, newStreak: streak });
 
-        const logData = {userId, newStreak: streak};
-        functions.logger.log("Streak updated", logData);
+        // 🔥 **Force re-fetch to ensure the updated value is written**
+        const updatedProfileSnap = await profileRef.get();
+        const updatedProfileData = updatedProfileSnap.data();
+        functions.logger.log("🔄 Post-update profile check:", updatedProfileData);
 
         return null;
       } catch (error) {
-        functions.logger.error(
-            "Streak error",
-            error,
-            {userId},
-        );
+        functions.logger.error("❌ Streak calculation error", error, { userId });
         return null;
       }
     });
