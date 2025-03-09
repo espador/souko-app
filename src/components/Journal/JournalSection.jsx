@@ -6,6 +6,8 @@ import { doc, getDoc } from 'firebase/firestore';
 import JournalUnfilledIcon from '../../styles/components/assets/journal-future.png';
 import JournalLoadingIcon from '../../styles/components/assets/journal-loading.png';
 
+// If you have actual import paths for these mood icons, keep them. 
+// Otherwise, the require statements are fine:
 const moodIcons = {
   neutral: require('../../styles/components/assets/mood-neutral.png'),
   inspired: require('../../styles/components/assets/mood-inspired.png'),
@@ -18,26 +20,20 @@ const JournalSection = React.memo(({ journalEntries = [], loading, navigate }) =
   const [currentTime, setCurrentTime] = useState(new Date());
   const [currentStreak, setCurrentStreak] = useState(0);
 
-  // REMOVED: isJournalAvailable
-  // const [isJournalAvailable, setIsJournalAvailable] = useState(false);
-
-  // CHANGED: We no longer rely on restricted hours; we just consider "today" once per day
+  // We no longer rely on 'isJournalAvailable' or time-of-day checks. 
   const today = useMemo(() => new Date(), []);
   const startOfCurrentWeek = useMemo(
     () => startOfWeek(today, { weekStartsOn: 1 }),
     [today]
   );
 
+  // Update currentTime once per minute, so the UI can reflect the passage of time (if needed):
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 60 * 1000);
     return () => clearInterval(timer);
   }, []);
 
-  // REMOVED: We no longer set isJournalAvailable by hour
-  // useEffect(() => {
-  //   setIsJournalAvailable(currentTime.getHours() >= 18);
-  // }, [currentTime]);
-
+  // Fetch the user's currentStreak from Firestore once on mount:
   useEffect(() => {
     const fetchStreak = async () => {
       try {
@@ -46,6 +42,7 @@ const JournalSection = React.memo(({ journalEntries = [], loading, navigate }) =
           const profileSnap = await getDoc(doc(db, 'profiles', user.uid));
           if (profileSnap.exists()) {
             const profileData = profileSnap.data();
+            // Make sure your Cloud Function writes 'currentStreak' to the same doc:
             setCurrentStreak(profileData.currentStreak || 0);
           } else {
             setCurrentStreak(0);
@@ -59,6 +56,7 @@ const JournalSection = React.memo(({ journalEntries = [], loading, navigate }) =
     fetchStreak();
   }, []);
 
+  // Safely parse Firestore timestamps:
   const parseDateForJournal = useCallback((date) => {
     if (!date) return null;
     if (date instanceof Date) return date;
@@ -67,19 +65,21 @@ const JournalSection = React.memo(({ journalEntries = [], loading, navigate }) =
     return null;
   }, []);
 
+  // Navigate to the appropriate journal page when a week-day button is clicked:
   const handleDayClick = useCallback(
     (index) => {
       const dayDate = addDays(startOfCurrentWeek, index);
       const dayDateFormatted = format(dayDate, 'yyyy-MM-dd');
 
-      // Zero out hours/mins/seconds for a consistent comparison
+      // Zero out hours for a consistent comparison
       const todayDate = new Date();
       todayDate.setHours(0, 0, 0, 0);
       dayDate.setHours(0, 0, 0, 0);
 
       const isToday = dayDate.getTime() === todayDate.getTime();
-      const isFutureDay = dayDate > todayDate; // compare zeroed
+      const isFutureDay = dayDate > todayDate;
 
+      // Find an existing journal entry for that day (if any)
       const entryForDay = journalEntries.find((entry) => {
         const entryCreatedAtDate = parseDateForJournal(entry.createdAt);
         return (
@@ -88,31 +88,28 @@ const JournalSection = React.memo(({ journalEntries = [], loading, navigate }) =
         );
       });
 
-      // CHANGED: We removed the hour-based restriction
-      // Only allow navigating for "today" or for a day that has an existing entry
+      // Only allow creating or editing for "today" or past days with an entry
       if (isToday) {
-        if (entryForDay) {
-          // We already have an entry for today — maybe allow editing or direct to the same form
-          navigate('journal-form', { selectedDate: dayDateFormatted });
-        } else {
-          // No entry for today => create it
-          navigate('journal-form', { selectedDate: dayDateFormatted });
-        }
+        // If we already have an entry for today, we can navigate to edit it
+        // Otherwise, open a fresh form
+        navigate('journal-form', { selectedDate: dayDateFormatted });
       } else if (!isToday && !isFutureDay) {
-        // It's in the past => only navigate if there's an entry (read-only or edit if you want)
+        // It's in the past => open if there's an entry
         if (entryForDay) {
           navigate('journal-form', { selectedDate: dayDateFormatted });
         }
       }
-      // If it's a future day, we do nothing (disabled)
+      // If it's a future day, do nothing (disabled).
     },
     [startOfCurrentWeek, navigate, journalEntries, parseDateForJournal]
   );
 
+  // Generate an array of the 7 days in the current week
   const weekDays = useMemo(() => {
     return [...Array(7)].map((_, i) => addDays(startOfCurrentWeek, i));
   }, [startOfCurrentWeek]);
 
+  // Build the UI for each day in the current week
   const renderDayButtons = useCallback(() => {
     return weekDays.map((dayDate, i) => {
       const dateKey = format(dayDate, 'yyyy-MM-dd');
@@ -129,6 +126,7 @@ const JournalSection = React.memo(({ journalEntries = [], loading, navigate }) =
       const isFutureDay = dayDate > today;
       let MoodIconComponent;
 
+      // Decide which icon to show
       if (isToday) {
         MoodIconComponent = entryForDay
           ? moodIcons[entryForDay.mood]
@@ -172,6 +170,7 @@ const JournalSection = React.memo(({ journalEntries = [], loading, navigate }) =
     <section className="journal-section">
       <div className="journal-header">
         <h2 className="journal-label">Journal streak</h2>
+        {/* We display the user’s currentStreak in a “badge” */}
         <div className="journal-badge">{currentStreak}</div>
       </div>
       <div className="journal-days">{renderDayButtons()}</div>

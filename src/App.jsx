@@ -1,8 +1,7 @@
-// App.jsx
 import React, { useState, useEffect, memo } from 'react'; 
 import {
   setPersistence,
-  browserSessionPersistence,
+  browserLocalPersistence, // CHANGED HERE
 } from 'firebase/auth';
 import { auth } from './services/firebase';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -44,10 +43,10 @@ const App = memo(() => {
   const [pageParams, setPageParams] = useState({}); 
 
   useEffect(() => {
-    // Explicitly set Firebase auth persistence to session storage
-    setPersistence(auth, browserSessionPersistence)
+    // CHANGED: We now set Local Persistence, not Session.
+    setPersistence(auth, browserLocalPersistence)
       .then(() => {
-        console.log("Firebase persistence set to browserSessionPersistence");
+        console.log("Firebase persistence set to browserLocalPersistence");
       })
       .catch((error) => {
         console.error('Error setting auth persistence:', error);
@@ -67,33 +66,54 @@ const App = memo(() => {
       case 'login':
         return <LoginPage navigate={navigate} />;
       case 'home':
-        return <HomePage navigate={navigate} currentPage={currentPage} skipAutoRedirect={pageParams.skipAutoRedirect} />;
+        return <HomePage
+          navigate={navigate}
+          currentPage={currentPage}
+          skipAutoRedirect={pageParams.skipAutoRedirect}
+        />;
       case 'projects':
         return <ProjectOverviewPage navigate={navigate} />;
-      // NEW: The setup page
       case 'time-tracker-setup':
         return <TimeTrackerSetupPage navigate={navigate} />;
-      // Pass the sessionId into TimeTrackerPage (if any)
       case 'time-tracker':
-        return <TimeTrackerPage navigate={navigate} sessionId={pageParams.sessionId} />;
+        return <TimeTrackerPage
+          navigate={navigate}
+          sessionId={pageParams.sessionId}
+        />;
       case 'create-project':
         return <CreateProjectPage navigate={navigate} />;
       case 'project-detail':
-        return <ProjectDetailPage navigate={navigate} projectId={pageParams.projectId} />;
+        return <ProjectDetailPage
+          navigate={navigate}
+          projectId={pageParams.projectId}
+        />;
       case 'session-detail':
-        return <SessionDetailPage navigate={navigate} sessionId={pageParams.sessionId} />;
+        return <SessionDetailPage
+          navigate={navigate}
+          sessionId={pageParams.sessionId}
+        />;
       case 'session-overview':
-        return <SessionOverviewPage navigate={navigate} totalTime={pageParams.totalTime} projectId={pageParams.projectId} />;
+        return <SessionOverviewPage
+          navigate={navigate}
+          totalTime={pageParams.totalTime}
+          projectId={pageParams.projectId}
+        />;
       case 'journal-countdown':
         return <JournalCountdown navigate={navigate} />;
       case 'journal-overview':
         return <JournalOverviewPage navigate={navigate} />;
       case 'journal-form':
-        return <JournalForm navigate={navigate} selectedDate={pageParams.selectedDate} />;
+        return <JournalForm
+          navigate={navigate}
+          selectedDate={pageParams.selectedDate}
+        />;
       case 'journal-confirmation':
         return <JournalConfirmation navigate={navigate} />;
       case 'update-project':
-        return <UpdateProjectPage navigate={navigate} projectId={pageParams.projectId} />;
+        return <UpdateProjectPage
+          navigate={navigate}
+          projectId={pageParams.projectId}
+        />;
       case 'onboarding-step1':
         return <OnboardingStep1 navigate={navigate} />;
       case 'onboarding-step2':

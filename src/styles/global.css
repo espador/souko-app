@@ -1710,7 +1710,6 @@ body.allow-scroll > html {
   background-color: transparent;
   border: 1px solid var(--card-background);
   border-radius: 12px;
-  padding: 16px;
   font-size: 16px;
   text-align: center;
   color: var(--text-color);
@@ -2455,7 +2454,6 @@ body.allow-scroll > html {
 .overview-actions {
   display: flex;
   flex-direction: column;
-  width: 100%;
   margin-top: 24px; /* Add some top margin */
 }
 

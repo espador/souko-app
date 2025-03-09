@@ -1,10 +1,17 @@
-// src/pages/LoginPage.jsx
 import React, { useEffect, useCallback, useState } from 'react';
-import { signInWithPopup } from 'firebase/auth';
+import {
+  signInWithPopup,
+  signInWithRedirect
+} from 'firebase/auth';
 import { auth, googleProvider, db } from '../services/firebase';
 import '../styles/global.css';
 import googleIcon from '../styles/components/assets/google-icon.svg';
-import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
+import {
+  doc,
+  getDoc,
+  setDoc,
+  serverTimestamp
+} from 'firebase/firestore';
 import { TextGenerateEffect } from '../styles/components/text-generate-effect.tsx';
 import Header from '../components/Layout/Header';
 
@@ -14,8 +21,10 @@ const LoginPage = ({ navigate }) => {
   const [showInstallButton, setShowInstallButton] = useState(false);
 
   // Helper functions to detect iOS and standalone mode
-  const isIOS = () => /iphone|ipad|ipod/.test(window.navigator.userAgent.toLowerCase());
-  const isInStandaloneMode = () => ('standalone' in window.navigator) && window.navigator.standalone;
+  const isIOS = () =>
+    /iphone|ipad|ipod/.test(window.navigator.userAgent.toLowerCase());
+  const isInStandaloneMode = () =>
+    'standalone' in window.navigator && window.navigator.standalone;
 
   // Process login result: create profile if necessary then navigate to home
   const processLoginResult = useCallback(async (result) => {
@@ -58,9 +67,6 @@ const LoginPage = ({ navigate }) => {
     console.log('LoginPage useEffect - START');
     document.body.classList.add('no-scroll');
 
-    // No more automatic redirect, LoginPage always renders on app open.
-    // Removed checkRedirect and onAuthStateChanged listener
-
     // Listen for the beforeinstallprompt event (for Android)
     const handleBeforeInstallPrompt = (e) => {
       e.preventDefault();
@@ -75,16 +81,24 @@ const LoginPage = ({ navigate }) => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
       console.log('LoginPage useEffect - CLEANUP');
     };
-  }, []); // Removed processLoginResult from dependency array as it should be stable
+  }, []);
 
   const handleLogin = async () => {
     console.log('handleLogin - START');
     setLoading(true);
+
     try {
-      console.log('handleLogin - Using signInWithPopup');
-      const result = await signInWithPopup(auth, googleProvider);
-      console.log('handleLogin - signInWithPopup result:', result);
-      await processLoginResult(result);
+      // On iOS in standalone mode, popups can fail and session storage can vanish.
+      // signInWithRedirect is more reliable in that environment.
+      if (isIOS() && isInStandaloneMode()) {
+        console.log('handleLogin - Using signInWithRedirect for iOS PWA');
+        await signInWithRedirect(auth, googleProvider);
+      } else {
+        console.log('handleLogin - Using signInWithPopup');
+        const result = await signInWithPopup(auth, googleProvider);
+        console.log('handleLogin - signInWithPopup result:', result);
+        await processLoginResult(result);
+      }
     } catch (error) {
       console.error('handleLogin - Login Error:', error);
       alert('Authentication failed during login. Please try again.');
@@ -116,7 +130,7 @@ const LoginPage = ({ navigate }) => {
         <section className="motivational-section">
           <TextGenerateEffect words="Souko, the song of your roots is the song of now" />
           <h4>
-          This app is being built in public by @BramVanhaeren—things might break, errors will happen, but that’s all part of creating something cool!
+            This app is being built in public by @BramVanhaeren—things might break, errors will happen, but that’s all part of creating something cool!
           </h4>
         </section>
         <div className="login-actions">
