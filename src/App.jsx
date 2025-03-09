@@ -2,11 +2,12 @@ import React, { useState, useEffect, memo } from 'react';
 import {
   setPersistence,
   browserLocalPersistence,
+  onAuthStateChanged // <-- We’ll use this
 } from 'firebase/auth';
 import { auth } from './services/firebase';
 import { motion, AnimatePresence } from 'framer-motion';
 
-// Import all your page components
+// Import page components
 import LoginPage from './pages/LoginPage';
 import HomePage from './pages/HomePage';
 import TimeTrackerPage from './pages/TimeTrackerPage';
@@ -27,40 +28,65 @@ import OnboardingStep2 from './components/Onboarding/OnboardingStep2';
 import OnboardingStep3 from './components/Onboarding/OnboardingStep3';
 import OnboardingStep4 from './components/Onboarding/OnboardingStep4';
 
-// NEW: Import our new setup page
+// TimeTracker setup page
 import TimeTrackerSetupPage from './pages/TimeTrackerSetupPage';
 
-// Import the OnboardingProvider
 import { OnboardingProvider } from './contexts/OnboardingContext';
 
 import './styles/global.css';
 
 const App = memo(() => {
-  console.log("App - RENDER START");
+  console.log('App - RENDER START');
 
-  // State to manage the current page
-  const [currentPage, setCurrentPage] = useState('login'); // Default to login page
-  const [pageParams, setPageParams] = useState({}); 
+  // State to manage the current page & route params
+  const [currentPage, setCurrentPage] = useState('login'); 
+  const [pageParams, setPageParams] = useState({});
 
+  // Track the authenticated user at the top level
+  const [user, setUser] = useState(null);
+
+  // 1) Ensure we use local persistence to minimize iOS session clearing
   useEffect(() => {
-    // CHANGED: We now set Local Persistence, not Session.
     setPersistence(auth, browserLocalPersistence)
       .then(() => {
-        console.log("Firebase persistence set to browserLocalPersistence");
+        console.log('Firebase persistence set to browserLocalPersistence');
       })
       .catch((error) => {
         console.error('Error setting auth persistence:', error);
       });
   }, []);
 
-  // Function to handle navigation (state-based)
+  // 2) Listen to changes in the authenticated user, update state
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+      console.log('onAuthStateChanged - user:', firebaseUser);
+      setUser(firebaseUser);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  // 3) Whenever `user` changes, decide if we should redirect to login or home
+  useEffect(() => {
+    // If the user is logged in and we’re still on the login page, go home
+    if (user && currentPage === 'login') {
+      console.log('User is logged in; navigating to home...');
+      setCurrentPage('home');
+    }
+    // If the user is not logged in and we’re NOT on the login page, go login
+    if (!user && currentPage !== 'login') {
+      console.log('No user found; navigating to login...');
+      setCurrentPage('login');
+    }
+  }, [user, currentPage]);
+
+  // Wrapper function to handle navigation
   const navigate = (page, params = {}) => {
     setCurrentPage(page);
     setPageParams(params);
     console.log(`Navigating to: ${page} with params:`, params);
   };
 
-  // Function to render the current page based on state
+  // 4) Render based on current page
   const renderPage = () => {
     switch (currentPage) {
       case 'login':
@@ -141,7 +167,7 @@ const App = memo(() => {
     }
   };
 
-  console.log("App - RENDER END");
+  console.log('App - RENDER END');
 
   return (
     <OnboardingProvider>

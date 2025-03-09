@@ -2,7 +2,7 @@ import React, { useEffect, useCallback, useState } from 'react';
 import {
   signInWithPopup,
   signInWithRedirect,
-  getRedirectResult // <-- NEW import here
+  getRedirectResult
 } from 'firebase/auth';
 import { auth, googleProvider, db } from '../services/firebase';
 import '../styles/global.css';
@@ -27,60 +27,71 @@ const LoginPage = ({ navigate }) => {
   const isInStandaloneMode = () =>
     'standalone' in window.navigator && window.navigator.standalone;
 
-  // Process login result: create profile if necessary then navigate to home
-  const processLoginResult = useCallback(
-    async (result) => {
-      console.log('processLoginResult - START');
-      setLoading(true);
-      try {
-        const user = result.user;
-        console.log('processLoginResult - User object:', user);
+  // If signInWithRedirect returns, we must handle that result
+  const processLoginResult = useCallback(async (result) => {
+    console.log('processLoginResult - START');
+    setLoading(true);
+    try {
+      const user = result.user;
+      console.log('processLoginResult - User object:', user);
 
-        const profileRef = doc(db, 'profiles', user.uid);
-        const profileSnap = await getDoc(profileRef);
+      const profileRef = doc(db, 'profiles', user.uid);
+      const profileSnap = await getDoc(profileRef);
 
-        if (!profileSnap.exists()) {
-          await setDoc(profileRef, {
-            uid: user.uid,
-            email: user.email,
-            displayName: user.displayName,
-            profileImageUrl: user.photoURL,
-            featureAccessLevel: 'free',
-            createdAt: serverTimestamp(),
-            updatedAt: serverTimestamp(),
-          });
-          console.log(
-            'processLoginResult - New profile created for user:',
-            user.uid
-          );
-        } else {
-          console.log(
-            'processLoginResult - Profile already exists for user:',
-            user.uid
-          );
-        }
-
-        console.log('processLoginResult - User Info:', user);
-        navigate('home');
-        console.log('processLoginResult - Navigated to /home');
-      } catch (error) {
-        console.error('processLoginResult - Error:', error);
-        alert(
-          'Authentication failed during profile processing. Please try again.'
+      if (!profileSnap.exists()) {
+        await setDoc(profileRef, {
+          uid: user.uid,
+          email: user.email,
+          displayName: user.displayName,
+          profileImageUrl: user.photoURL,
+          featureAccessLevel: 'free',
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
+        });
+        console.log(
+          'processLoginResult - New profile created for user:',
+          user.uid
         );
-      } finally {
-        setLoading(false);
-        console.log('processLoginResult - FINISH');
+      } else {
+        console.log(
+          'processLoginResult - Profile already exists for user:',
+          user.uid
+        );
       }
-    },
-    [navigate]
-  );
 
+      console.log('processLoginResult - User Info:', user);
+      // We'll rely on the onAuthStateChanged logic in App.jsx to navigate
+      // But you *can* do it here if you want:
+      // navigate('home');
+
+    } catch (error) {
+      console.error('processLoginResult - Error:', error);
+      alert('Authentication failed during profile processing. Please try again.');
+    } finally {
+      setLoading(false);
+      console.log('processLoginResult - FINISH');
+    }
+  }, []);
+
+  // On mount, see if we’re returning from a redirect
+  useEffect(() => {
+    getRedirectResult(auth)
+      .then((result) => {
+        if (result) {
+          console.log('LoginPage - getRedirectResult:', result);
+          processLoginResult(result);
+        }
+      })
+      .catch((error) => {
+        console.error('LoginPage - getRedirectResult error:', error);
+      });
+  }, [processLoginResult]);
+
+  // On mount, also set up any “Add to Home Screen” logic
   useEffect(() => {
     console.log('LoginPage useEffect - START');
     document.body.classList.add('no-scroll');
 
-    // Listen for the beforeinstallprompt event (for Android)
     const handleBeforeInstallPrompt = (e) => {
       e.preventDefault();
       console.log('beforeinstallprompt event captured');
@@ -99,31 +110,18 @@ const LoginPage = ({ navigate }) => {
     };
   }, []);
 
-  // ** NEW useEffect to handle the redirect result **
-  useEffect(() => {
-    getRedirectResult(auth)
-      .then((result) => {
-        if (result) {
-          console.log('LoginPage - getRedirectResult result:', result);
-          processLoginResult(result);
-        }
-      })
-      .catch((error) => {
-        console.error('LoginPage - getRedirectResult error:', error);
-      });
-  }, [processLoginResult]);
-
+  // Called when the user taps “Continue with Google”
   const handleLogin = async () => {
     console.log('handleLogin - START');
     setLoading(true);
 
     try {
-      // On iOS in standalone mode, popups can fail and session storage can vanish.
-      // signInWithRedirect is more reliable in that environment.
+      // On iOS in PWA standalone, prefer signInWithRedirect
       if (isIOS() && isInStandaloneMode()) {
         console.log('handleLogin - Using signInWithRedirect for iOS PWA');
         await signInWithRedirect(auth, googleProvider);
       } else {
+        // Otherwise, signInWithPopup is often simpler
         console.log('handleLogin - Using signInWithPopup');
         const result = await signInWithPopup(auth, googleProvider);
         console.log('handleLogin - signInWithPopup result:', result);
@@ -138,6 +136,7 @@ const LoginPage = ({ navigate }) => {
     }
   };
 
+  // If user chooses to add app to home screen
   const handleInstallClick = async () => {
     if (deferredPrompt) {
       deferredPrompt.prompt();
@@ -161,12 +160,15 @@ const LoginPage = ({ navigate }) => {
           <TextGenerateEffect words="Souko, the song of your roots is the song of now" />
           <h4>
             This app is being built in public by @BramVanhaeren—things might
-            break, errors will happen, but that’s all part of creating something
-            cool!
+            break, errors will happen, but that’s all part of creating something cool!
           </h4>
         </section>
         <div className="login-actions">
-          <button className="login-button" onClick={handleLogin} disabled={loading}>
+          <button
+            className="login-button"
+            onClick={handleLogin}
+            disabled={loading}
+          >
             <img src={googleIcon} alt="Google Icon" className="google-icon" />
             Continue with Google
           </button>
@@ -176,8 +178,8 @@ const LoginPage = ({ navigate }) => {
           <div className="install-pwa">
             {isIOS() && !isInStandaloneMode() ? (
               <h2 className="login-pwa">
-                For the best experience, tap the <strong>Share</strong> icon and
-                select <strong>"Add to Home Screen"</strong>.
+                For the best experience, tap the <strong>Share</strong> icon
+                and select <strong>"Add to Home Screen"</strong>.
               </h2>
             ) : (
               <button onClick={handleInstallClick} className="install-button">
