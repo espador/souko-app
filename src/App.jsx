@@ -1,8 +1,7 @@
 import React, { useState, useEffect, memo } from 'react'; 
 import {
   setPersistence,
-  browserLocalPersistence,
-  onAuthStateChanged // <-- We’ll use this
+  browserLocalPersistence
 } from 'firebase/auth';
 import { auth } from './services/firebase';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -31,6 +30,7 @@ import OnboardingStep4 from './components/Onboarding/OnboardingStep4';
 // TimeTracker setup page
 import TimeTrackerSetupPage from './pages/TimeTrackerSetupPage';
 
+// Context provider
 import { OnboardingProvider } from './contexts/OnboardingContext';
 
 import './styles/global.css';
@@ -38,14 +38,11 @@ import './styles/global.css';
 const App = memo(() => {
   console.log('App - RENDER START');
 
-  // State to manage the current page & route params
-  const [currentPage, setCurrentPage] = useState('login'); 
+  // We manage only the "currentPage" + any pageParams
+  const [currentPage, setCurrentPage] = useState('login');
   const [pageParams, setPageParams] = useState({});
 
-  // Track the authenticated user at the top level
-  const [user, setUser] = useState(null);
-
-  // 1) Ensure we use local persistence to minimize iOS session clearing
+  // 1) Use local persistence so iOS has fewer reasons to clear sessions
   useEffect(() => {
     setPersistence(auth, browserLocalPersistence)
       .then(() => {
@@ -56,37 +53,21 @@ const App = memo(() => {
       });
   }, []);
 
-  // 2) Listen to changes in the authenticated user, update state
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
-      console.log('onAuthStateChanged - user:', firebaseUser);
-      setUser(firebaseUser);
-    });
-    return () => unsubscribe();
-  }, []);
+  /**
+   * This simpler approach:
+   * - We do NOT do onAuthStateChanged => navigate
+   * - We let LoginPage navigate to "home" after a successful login,
+   *   just like your older code did.
+   */
 
-  // 3) Whenever `user` changes, decide if we should redirect to login or home
-  useEffect(() => {
-    // If the user is logged in and we’re still on the login page, go home
-    if (user && currentPage === 'login') {
-      console.log('User is logged in; navigating to home...');
-      setCurrentPage('home');
-    }
-    // If the user is not logged in and we’re NOT on the login page, go login
-    if (!user && currentPage !== 'login') {
-      console.log('No user found; navigating to login...');
-      setCurrentPage('login');
-    }
-  }, [user, currentPage]);
-
-  // Wrapper function to handle navigation
+  // “navigate” function for child components
   const navigate = (page, params = {}) => {
     setCurrentPage(page);
     setPageParams(params);
     console.log(`Navigating to: ${page} with params:`, params);
   };
 
-  // 4) Render based on current page
+  // Renders whichever page is active
   const renderPage = () => {
     switch (currentPage) {
       case 'login':

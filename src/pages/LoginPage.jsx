@@ -21,20 +21,28 @@ const LoginPage = ({ navigate }) => {
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [showInstallButton, setShowInstallButton] = useState(false);
 
-  // Helper functions to detect iOS and standalone mode
+  // Helper: detect iOS + standalone
   const isIOS = () =>
     /iphone|ipad|ipod/.test(window.navigator.userAgent.toLowerCase());
   const isInStandaloneMode = () =>
     'standalone' in window.navigator && window.navigator.standalone;
 
-  // If signInWithRedirect returns, we must handle that result
+  /**
+   * "processLoginResult" => Firestore profile creation + navigate home.
+   * This matches your older code that always navigated to 'home' after sign-in.
+   */
   const processLoginResult = useCallback(async (result) => {
     console.log('processLoginResult - START');
     setLoading(true);
     try {
+      if (!result || !result.user) {
+        console.warn('processLoginResult - NO USER in result:', result);
+        return;
+      }
       const user = result.user;
       console.log('processLoginResult - User object:', user);
 
+      // Make sure user doc exists
       const profileRef = doc(db, 'profiles', user.uid);
       const profileSnap = await getDoc(profileRef);
 
@@ -48,22 +56,13 @@ const LoginPage = ({ navigate }) => {
           createdAt: serverTimestamp(),
           updatedAt: serverTimestamp(),
         });
-        console.log(
-          'processLoginResult - New profile created for user:',
-          user.uid
-        );
+        console.log('processLoginResult - New profile created for user:', user.uid);
       } else {
-        console.log(
-          'processLoginResult - Profile already exists for user:',
-          user.uid
-        );
+        console.log('processLoginResult - Profile already exists for user:', user.uid);
       }
 
-      console.log('processLoginResult - User Info:', user);
-      // We'll rely on the onAuthStateChanged logic in App.jsx to navigate
-      // But you *can* do it here if you want:
-      // navigate('home');
-
+      console.log('processLoginResult - Navigating to home...');
+      navigate('home');
     } catch (error) {
       console.error('processLoginResult - Error:', error);
       alert('Authentication failed during profile processing. Please try again.');
@@ -71,15 +70,21 @@ const LoginPage = ({ navigate }) => {
       setLoading(false);
       console.log('processLoginResult - FINISH');
     }
-  }, []);
+  }, [navigate]);
 
-  // On mount, see if we’re returning from a redirect
+  /**
+   * On first render, check if we just came back from a redirect sign-in.
+   * If so, "getRedirectResult" gives us the user => call "processLoginResult".
+   */
   useEffect(() => {
+    console.log('LoginPage useEffect - check redirect result');
     getRedirectResult(auth)
       .then((result) => {
         if (result) {
-          console.log('LoginPage - getRedirectResult:', result);
+          console.log('LoginPage - getRedirectResult found user:', result.user);
           processLoginResult(result);
+        } else {
+          console.log('LoginPage - getRedirectResult had no user');
         }
       })
       .catch((error) => {
@@ -87,7 +92,9 @@ const LoginPage = ({ navigate }) => {
       });
   }, [processLoginResult]);
 
-  // On mount, also set up any “Add to Home Screen” logic
+  /**
+   * Also set up "beforeinstallprompt" (Android) and disable body scroll
+   */
   useEffect(() => {
     console.log('LoginPage useEffect - START');
     document.body.classList.add('no-scroll');
@@ -102,26 +109,23 @@ const LoginPage = ({ navigate }) => {
 
     return () => {
       document.body.classList.remove('no-scroll');
-      window.removeEventListener(
-        'beforeinstallprompt',
-        handleBeforeInstallPrompt
-      );
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
       console.log('LoginPage useEffect - CLEANUP');
     };
   }, []);
 
-  // Called when the user taps “Continue with Google”
+  /**
+   * The button the user clicks: on iOS standalone, do signInWithRedirect
+   * on everything else, do signInWithPopup
+   */
   const handleLogin = async () => {
     console.log('handleLogin - START');
     setLoading(true);
-
     try {
-      // On iOS in PWA standalone, prefer signInWithRedirect
       if (isIOS() && isInStandaloneMode()) {
         console.log('handleLogin - Using signInWithRedirect for iOS PWA');
         await signInWithRedirect(auth, googleProvider);
       } else {
-        // Otherwise, signInWithPopup is often simpler
         console.log('handleLogin - Using signInWithPopup');
         const result = await signInWithPopup(auth, googleProvider);
         console.log('handleLogin - signInWithPopup result:', result);
@@ -136,7 +140,9 @@ const LoginPage = ({ navigate }) => {
     }
   };
 
-  // If user chooses to add app to home screen
+  /**
+   * If user taps “Add to Home Screen” button on Android
+   */
   const handleInstallClick = async () => {
     if (deferredPrompt) {
       deferredPrompt.prompt();
