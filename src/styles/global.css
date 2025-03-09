@@ -9,6 +9,7 @@
   --accent-pink: #E682FF;
   --font-commit-mono: 'Commit Mono', monospace;
   -webkit-tap-highlight-color: transparent; /* Remove tap highlight */
+  
 }
 
 .modal-overlay {
@@ -328,8 +329,8 @@ body.no-scroll, html.no-scroll {
 body {
   margin: 0;
   padding: 0;
-  background:#0C0C0C;
-  position: fixed; /* Keep position fixed */
+  background: transparent; /* Inherits from html */
+  position: fixed;
   top: 0;
   left: 0;
   width: 100%;
@@ -340,17 +341,17 @@ body {
   -moz-osx-font-smoothing: grayscale;
   overflow-x: hidden;
   box-sizing: border-box;
-  overflow: hidden; /* ENSURE you have overflow: hidden; on body */
-}
-
-/* Override global overflow for pages that need scrolling */
-body.allow-scroll > html {
-  overflow: auto; /* Enable scrolling on the html element */
-  height: auto; /* Allow content to expand */
+  overflow-y: hidden; /* Default to hidden vertical scroll */
 }
 
 body.allow-scroll {
-  overflow-y: auto; /* Ensure body can also scroll */
+  position: static; /* Allow body to scroll naturally */
+  height: auto;     /* Remove fixed height */
+  overflow-y: auto; /* Enable vertical scrolling when needed */
+}
+
+body.no-scroll {
+  overflow-y: hidden; /* Force no vertical scroll */
 }
 
 #root {
@@ -358,6 +359,7 @@ body.allow-scroll {
   padding-top: 0px;
   padding-left: 24px;
   padding-right: 24px;
+  padding-top: env(safe-area-inset-top);
 }
 
 *,

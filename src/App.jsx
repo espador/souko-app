@@ -1,7 +1,7 @@
 import React, { useState, useEffect, memo } from 'react'; 
 import {
   setPersistence,
-  browserLocalPersistence
+  browserLocalPersistence,
 } from 'firebase/auth';
 import { auth } from './services/firebase';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -30,7 +30,6 @@ import OnboardingStep4 from './components/Onboarding/OnboardingStep4';
 // TimeTracker setup page
 import TimeTrackerSetupPage from './pages/TimeTrackerSetupPage';
 
-// Context provider
 import { OnboardingProvider } from './contexts/OnboardingContext';
 
 import './styles/global.css';
@@ -38,11 +37,11 @@ import './styles/global.css';
 const App = memo(() => {
   console.log('App - RENDER START');
 
-  // We manage only the "currentPage" + any pageParams
+  // State-based navigation approach
   const [currentPage, setCurrentPage] = useState('login');
   const [pageParams, setPageParams] = useState({});
 
-  // 1) Use local persistence so iOS has fewer reasons to clear sessions
+  // Configure local persistence
   useEffect(() => {
     setPersistence(auth, browserLocalPersistence)
       .then(() => {
@@ -53,21 +52,14 @@ const App = memo(() => {
       });
   }, []);
 
-  /**
-   * This simpler approach:
-   * - We do NOT do onAuthStateChanged => navigate
-   * - We let LoginPage navigate to "home" after a successful login,
-   *   just like your older code did.
-   */
-
-  // “navigate” function for child components
+  // A simple state-based navigate function
   const navigate = (page, params = {}) => {
     setCurrentPage(page);
     setPageParams(params);
     console.log(`Navigating to: ${page} with params:`, params);
   };
 
-  // Renders whichever page is active
+  // Render the current page
   const renderPage = () => {
     switch (currentPage) {
       case 'login':

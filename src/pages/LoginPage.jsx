@@ -1,8 +1,9 @@
 import React, { useEffect, useCallback, useState } from 'react';
-import {
-  signInWithPopup,
-  signInWithRedirect,
-  getRedirectResult
+// We import onAuthStateChanged, getRedirectResult, signInWithPopup
+import { 
+  signInWithPopup, 
+  getRedirectResult, 
+  onAuthStateChanged 
 } from 'firebase/auth';
 import { auth, googleProvider, db } from '../services/firebase';
 import '../styles/global.css';
@@ -21,28 +22,29 @@ const LoginPage = ({ navigate }) => {
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [showInstallButton, setShowInstallButton] = useState(false);
 
-  // Helper: detect iOS + standalone
+  // Detect iOS + standalone (if you still want to show “Add to Home Screen” instructions)
   const isIOS = () =>
     /iphone|ipad|ipod/.test(window.navigator.userAgent.toLowerCase());
   const isInStandaloneMode = () =>
     'standalone' in window.navigator && window.navigator.standalone;
 
   /**
-   * "processLoginResult" => Firestore profile creation + navigate home.
-   * This matches your older code that always navigated to 'home' after sign-in.
+   * processLoginResult => Called once we have a user object (from popup or redirect).
+   * Writes the user profile doc, then navigates to 'home'.
    */
   const processLoginResult = useCallback(async (result) => {
     console.log('processLoginResult - START');
+    if (!result || !result.user) {
+      console.warn('processLoginResult - No user in result:', result);
+      return;
+    }
     setLoading(true);
+
     try {
-      if (!result || !result.user) {
-        console.warn('processLoginResult - NO USER in result:', result);
-        return;
-      }
       const user = result.user;
       console.log('processLoginResult - User object:', user);
 
-      // Make sure user doc exists
+      // Check if user doc exists; if not, create it
       const profileRef = doc(db, 'profiles', user.uid);
       const profileSnap = await getDoc(profileRef);
 
@@ -61,6 +63,7 @@ const LoginPage = ({ navigate }) => {
         console.log('processLoginResult - Profile already exists for user:', user.uid);
       }
 
+      // Immediately navigate to home (just like your old code did with navigate('/home'))
       console.log('processLoginResult - Navigating to home...');
       navigate('home');
     } catch (error) {
@@ -73,32 +76,46 @@ const LoginPage = ({ navigate }) => {
   }, [navigate]);
 
   /**
-   * On first render, check if we just came back from a redirect sign-in.
-   * If so, "getRedirectResult" gives us the user => call "processLoginResult".
-   */
-  useEffect(() => {
-    console.log('LoginPage useEffect - check redirect result');
-    getRedirectResult(auth)
-      .then((result) => {
-        if (result) {
-          console.log('LoginPage - getRedirectResult found user:', result.user);
-          processLoginResult(result);
-        } else {
-          console.log('LoginPage - getRedirectResult had no user');
-        }
-      })
-      .catch((error) => {
-        console.error('LoginPage - getRedirectResult error:', error);
-      });
-  }, [processLoginResult]);
-
-  /**
-   * Also set up "beforeinstallprompt" (Android) and disable body scroll
+   * useEffect #1 => Runs once on mount
+   * 1) Checks if there's a pending redirect result (like your old code).
+   * 2) Subscribes to onAuthStateChanged so if the user is already logged in, we go to home.
    */
   useEffect(() => {
     console.log('LoginPage useEffect - START');
     document.body.classList.add('no-scroll');
 
+    // 1) Check redirect result
+    const checkRedirect = async () => {
+      console.log('checkRedirect - START');
+      setLoading(true);
+      try {
+        const result = await getRedirectResult(auth);
+        console.log('checkRedirect - getRedirectResult:', result);
+        if (result) {
+          await processLoginResult(result);
+        } else {
+          console.log('checkRedirect - No redirect result found');
+        }
+      } catch (error) {
+        console.error('checkRedirect - Redirect login error:', error);
+        alert('Authentication failed during redirect. Please try again.');
+      } finally {
+        setLoading(false);
+        console.log('checkRedirect - FINISH');
+      }
+    };
+    checkRedirect();
+
+    // 2) Listen for auth changes => If user is already logged in, navigate home
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      console.log('onAuthStateChanged - Auth state changed:', user);
+      if (user) {
+        console.log('onAuthStateChanged - User logged in => navigate home');
+        navigate('home');
+      }
+    });
+
+    // 3) “beforeinstallprompt” for Android
     const handleBeforeInstallPrompt = (e) => {
       e.preventDefault();
       console.log('beforeinstallprompt event captured');
@@ -109,28 +126,23 @@ const LoginPage = ({ navigate }) => {
 
     return () => {
       document.body.classList.remove('no-scroll');
+      unsubscribe(); // stop listening to onAuthStateChanged
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
       console.log('LoginPage useEffect - CLEANUP');
     };
-  }, []);
+  }, [processLoginResult, navigate]);
 
   /**
-   * The button the user clicks: on iOS standalone, do signInWithRedirect
-   * on everything else, do signInWithPopup
+   * handleLogin => your old code used signInWithPopup always.
    */
   const handleLogin = async () => {
     console.log('handleLogin - START');
     setLoading(true);
     try {
-      if (isIOS() && isInStandaloneMode()) {
-        console.log('handleLogin - Using signInWithRedirect for iOS PWA');
-        await signInWithRedirect(auth, googleProvider);
-      } else {
-        console.log('handleLogin - Using signInWithPopup');
-        const result = await signInWithPopup(auth, googleProvider);
-        console.log('handleLogin - signInWithPopup result:', result);
-        await processLoginResult(result);
-      }
+      console.log('handleLogin - Using signInWithPopup');
+      const result = await signInWithPopup(auth, googleProvider);
+      console.log('handleLogin - signInWithPopup result:', result);
+      await processLoginResult(result);
     } catch (error) {
       console.error('handleLogin - Login Error:', error);
       alert('Authentication failed during login. Please try again.');
@@ -141,7 +153,7 @@ const LoginPage = ({ navigate }) => {
   };
 
   /**
-   * If user taps “Add to Home Screen” button on Android
+   * If the user chooses to "Add to Home Screen" on Android
    */
   const handleInstallClick = async () => {
     if (deferredPrompt) {
@@ -162,11 +174,11 @@ const LoginPage = ({ navigate }) => {
     <div className="login-page">
       <Header showLiveTime={true} />
       <main className="login-content">
+        {loading && <div className="loading-indicator">Loading...</div>}
         <section className="motivational-section">
-          <TextGenerateEffect words="Souko, the song of your roots is the song of now" />
+          <TextGenerateEffect words="The song of your roots is the song of now" />
           <h4>
-            This app is being built in public by @BramVanhaeren—things might
-            break, errors will happen, but that’s all part of creating something cool!
+            Master your time, shape your craft, and let progress flow. Mastery isn’t rushed, it’s built.
           </h4>
         </section>
         <div className="login-actions">
@@ -179,13 +191,11 @@ const LoginPage = ({ navigate }) => {
             Continue with Google
           </button>
         </div>
-
         {(showInstallButton || (isIOS() && !isInStandaloneMode())) && (
           <div className="install-pwa">
             {isIOS() && !isInStandaloneMode() ? (
               <h2 className="login-pwa">
-                For the best experience, tap the <strong>Share</strong> icon
-                and select <strong>"Add to Home Screen"</strong>.
+                For the best experience, tap the <strong>Share</strong> icon and select <strong>"Add to Home Screen"</strong>.
               </h2>
             ) : (
               <button onClick={handleInstallClick} className="install-button">
@@ -197,15 +207,7 @@ const LoginPage = ({ navigate }) => {
       </main>
       <div className="sticky-login-container">
         <h2 className="login-terms">
-          (Beta) By continuing, you agree to our{' '}
-          <a href="/terms" className="login-link">
-            Terms
-          </a>{' '}
-          and{' '}
-          <a href="/privacy" className="login-link">
-            Privacy Policy
-          </a>
-          .
+          (Beta) By continuing, you agree to our <a href="/terms" className="login-link">Terms</a> and <a href="/privacy" className="login-link">Privacy Policy</a>.
         </h2>
       </div>
     </div>
