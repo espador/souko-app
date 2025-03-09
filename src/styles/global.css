@@ -27,12 +27,12 @@
 
 .modal-content {
   background-color: var(--background-color);
-  margin-bottom:24px;
-  padding: 24px;
+  margin-bottom:0px;
+  padding: 0px;
 }
 
 .divider {
-  border-bottom: 1px solid var(--text-muted);
+  border-bottom: 1px solid #312E3C;
   margin-top: 20px;
   margin-bottom: 20px;
 }
@@ -329,8 +329,8 @@ body.no-scroll, html.no-scroll {
 body {
   margin: 0;
   padding: 0;
-  background: transparent; /* Inherits from html */
-  position: fixed;
+  background:#0C0C0C;
+  position: fixed; /* Keep position fixed if needed, otherwise consider removing */
   top: 0;
   left: 0;
   width: 100%;
@@ -339,9 +339,9 @@ body {
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  overflow-x: hidden;
+  overflow-x: hidden; /* Keep horizontal overflow hidden */
   box-sizing: border-box;
-  overflow-y: hidden; /* Default to hidden vertical scroll */
+  overflow-y: auto; /* Change to auto - enable vertical scroll when content overflows */
 }
 
 body.allow-scroll {
@@ -1378,10 +1378,23 @@ body.allow-scroll > html {
 
 .journal-days {
   display: flex;
-  gap: 16px; /* 16px gap between day containers */
+  gap: 16px; /* Default gap for wider screens */
   align-items: flex-start;
-  width: calc(7 * 35px + 6 * 16px); /* Calculate total width */
-  overflow-x: auto; /* Enable horizontal scrolling if needed */
+  overflow-x: auto; /* Keep horizontal scrolling enabled if needed */
+}
+
+/* Media query for smaller screens, e.g., screens less than 390px wide */
+@media (max-width: 390px) { /* You can adjust 390px breakpoint as needed */
+  .journal-days {
+    gap: 12px; /* Reduce gap to 12px on smaller screens */
+  }
+}
+
+/* Media query for even smaller screens, e.g., screens less than 320px wide */
+@media (max-width: 320px) { /* You can adjust 320px breakpoint as needed */
+  .journal-days {
+    gap: 8px; /* Reduce gap to minimum 8px on very small screens */
+  }
 }
 
 .day-container {

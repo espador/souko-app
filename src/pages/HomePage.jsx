@@ -334,14 +334,7 @@ const HomePage = React.memo(({ navigate, skipAutoRedirect, currentPage }) => {
           totalTrackedTimeMinutes={totalTrackedTimeMinutes}
           levelProgressionData={levelConfig}
         />
-
-        {/* ADDED: Example streak display, reading from userProfile.currentStreak */}
-        {userProfile?.currentStreak !== undefined && (
-          <div style={{ margin: '1rem 0', fontWeight: 'bold' }}>
-            Your Current Streak: {userProfile.currentStreak}
-          </div>
-        )}
-
+        
         <JournalSection
           navigate={navigate}
           journalEntries={journalEntries}
