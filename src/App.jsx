@@ -1,10 +1,12 @@
-import React, { useState, useEffect, memo } from 'react'; 
+// App.jsx
+import React, { useState, useEffect, memo } from 'react';
 import {
   setPersistence,
   browserLocalPersistence,
 } from 'firebase/auth';
-import { auth } from './services/firebase';
+import { auth, db } from './services/firebase';
 import { motion, AnimatePresence } from 'framer-motion';
+import { onSnapshot, collection, query, where } from 'firebase/firestore';
 
 // Import page components
 import LoginPage from './pages/LoginPage';
@@ -32,14 +34,18 @@ import TimeTrackerSetupPage from './pages/TimeTrackerSetupPage';
 
 import { OnboardingProvider } from './contexts/OnboardingContext';
 
+import FloatingNavigation from './components/Layout/FloatingNavigation';
 import './styles/global.css';
 
 const App = memo(() => {
   console.log('App - RENDER START');
 
-  // State-based navigation approach
   const [currentPage, setCurrentPage] = useState('login');
   const [pageParams, setPageParams] = useState({});
+
+  // Track user & active session so all pages can see it
+  const [currentUser, setCurrentUser] = useState(null);
+  const [activeSession, setActiveSession] = useState(null);
 
   // Configure local persistence
   useEffect(() => {
@@ -50,6 +56,41 @@ const App = memo(() => {
       .catch((error) => {
         console.error('Error setting auth persistence:', error);
       });
+  }, []);
+
+  // Listen for auth changes, then watch for an active session
+  useEffect(() => {
+    const unsubscribeAuth = auth.onAuthStateChanged(async (user) => {
+      setCurrentUser(user);
+      if (!user) {
+        // Not logged in => go to login screen
+        setCurrentPage('login');
+        setActiveSession(null);
+      } else {
+        // Logged in => set up a snapshot for the active session
+        const activeSessionQuery = query(
+          collection(db, 'sessions'),
+          where('userId', '==', user.uid),
+          where('endTime', '==', null)
+        );
+        const unsubSession = onSnapshot(activeSessionQuery, (snap) => {
+          if (!snap.empty) {
+            const docRef = snap.docs[0];
+            const data = docRef.data();
+            setActiveSession({
+              ...data,
+              id: docRef.id,
+            });
+          } else {
+            setActiveSession(null);
+          }
+        });
+      }
+    });
+    return () => {
+      unsubscribeAuth && unsubscribeAuth();
+      // unsubSession is covered in the callback
+    };
   }, []);
 
   // A simple state-based navigate function
@@ -142,6 +183,11 @@ const App = memo(() => {
 
   console.log('App - RENDER END');
 
+  // Show floating nav only on home, projects, and journal-overview
+  const showFloatingNav = ['home', 'projects', 'journal-overview'].includes(
+    currentPage
+  );
+
   return (
     <OnboardingProvider>
       <div className="app-container">
@@ -157,6 +203,15 @@ const App = memo(() => {
             {renderPage()}
           </motion.div>
         </AnimatePresence>
+
+        {showFloatingNav && (
+          <FloatingNavigation
+            currentPage={currentPage}
+            navigate={navigate}
+            hasActiveSession={Boolean(activeSession)}
+            activeSession={activeSession}
+          />
+        )}
       </div>
     </OnboardingProvider>
   );

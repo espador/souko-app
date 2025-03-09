@@ -33,8 +33,8 @@
 
 .divider {
   border-bottom: 1px solid #312E3C;
-  margin-top: 20px;
-  margin-bottom: 20px;
+  margin-top: 0px;
+  margin-bottom: 16px;
 }
 
 .modal-title {
@@ -238,7 +238,7 @@ h1 {
 
 .motivational-section {
   margin-top: 24px;
-  margin-bottom: 48px;
+  margin-bottom: 40px;
   font-size: 32px;
   line-height: 40px;
   text-align: left;
@@ -804,6 +804,7 @@ body.allow-scroll html {
   font-size: 12px;
   font-weight: 700;
   margin-left: 4px; 
+  margin-bottom: 16px;
 }
 
 .projects-header, .journal-header {
@@ -829,7 +830,7 @@ body.allow-scroll html {
   font-size: 16px;
   color: var(--text-muted);
   font-family: var(--font-commit-mono);
-  margin-bottom: 0;
+  margin-bottom: 16px;
 }
 
 .projects-list {
@@ -895,7 +896,7 @@ h2.projects-label, h2.journal-label {
   font-size: 16px;
   color: var(--text-muted);
   font-family: var(--font-commit-mono);
-  margin-bottom: 0;
+  margin-bottom: 16px;
   margin-top: 0;
   font-weight: 400;
 }
@@ -1254,6 +1255,8 @@ body.allow-scroll > html {
   fill: var(--error-color); /* Error color for erase button icon */
 }
 
+
+
 /* Input Tile Styling - Consistent with SessionDetailPage notes input */
 .journal-form-section-text1,
 .journal-form-section-text2 {
@@ -1377,20 +1380,26 @@ body.allow-scroll > html {
 }
 
 .journal-days {
-  display: flex;
-  gap: 16px; /* Default gap for wider screens */
-  align-items: flex-start;
-  overflow-x: auto; /* Keep horizontal scrolling enabled if needed */
+  display: grid;
+  /* 7 columns, each 35px wide */
+  grid-template-columns: repeat(7, 35px);
+
+  /* Let the gap scale between 8px and 16px based on viewport width */
+  gap: clamp(8px, 4vw, 16px);
+
+  /* You can choose one of the following: */
+  justify-content: space-evenly;  /* or space-around / space-between / center */
+
+  /* If you want the row centered in a parent container: */
+  margin: 0 auto;
 }
 
-/* Media query for smaller screens, e.g., screens less than 390px wide */
 @media (max-width: 390px) { /* You can adjust 390px breakpoint as needed */
   .journal-days {
-    gap: 12px; /* Reduce gap to 12px on smaller screens */
+    gap: 16px; /* Reduce gap to 12px on smaller screens */
   }
 }
 
-/* Media query for even smaller screens, e.g., screens less than 320px wide */
 @media (max-width: 320px) { /* You can adjust 320px breakpoint as needed */
   .journal-days {
     gap: 8px; /* Reduce gap to minimum 8px on very small screens */
@@ -1474,21 +1483,20 @@ body.allow-scroll > html {
 /* src/components/Level/LevelProfile.css */
 .level-profile-container {
   background-color: transparent;
-  color: #fff; /* White text */
   padding: 0px;
   margin-bottom: 24px;
 }
 
 .level-header {
   display: flex;
-  align-items: flex-start;
-  margin-bottom: 12px;
-  gap: 8px; 
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
 }
 
 .level-badge {
   background-color: #FE4B00;
-  color: #000;
+  color: var(--background-color);
   width: 24px;
   height: 24px;
   display: flex;
@@ -1497,7 +1505,6 @@ body.allow-scroll > html {
   font-family: var(--font-commit-mono);
   font-size: 12px;
   font-weight: 700;
-  margin-left: 4px; 
 }
 
 .level-stats {
@@ -2011,9 +2018,17 @@ body.allow-scroll > html {
 .dropdown-project-image {
   width: 40px;
   height: 40px;
-  border-radius: 20%;
+  border-radius: 0px;
   margin-right: 16px;
   object-fit: cover;
+}
+
+.dropdown-icon-left {
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  margin-right: 16px; /* space to the text input or select */
+  pointer-events: none; /* so clicks go through to the select/input */
 }
 
 .dropdown-default-image {
@@ -2030,25 +2045,44 @@ body.allow-scroll > html {
   background-color: #FE2F00;
 }
 
-.project-dropdown {
-  flex-grow: 1;
+.project-dropdown,
+.session-label-dropdown,
+.currency-select,
+.hour-rate-input,
+.objective-dropdown {
+  flex: 1;
+  background: transparent;
   border: none;
-  background-color: transparent;
-  font-family: var(--font-commit-mono);
+  outline: none;
+  appearance: none;         /* Hides default arrows in some browsers */
   color: var(--text-color);
+  font-family: var(--font-commit-mono);
   font-size: 16px;
   line-height: 24px;
-  font-weight: normal;
-  outline: none;
-  appearance: none;
+  padding-right: 36px;    /* Space for your custom dropdown arrow */
+  /* If you like a narrower input, reduce padding and container padding. */
+}
+
+/* Optional: style placeholders or the “no objective” option as muted */
+.project-dropdown::placeholder,
+.hour-rate-input::placeholder,
+.session-label-dropdown::placeholder,
+.objective-dropdown::placeholder {
+  color: var(--text-muted);
+}
+
+.project-dropdown option[value="no objective"],
+.objective-dropdown option[value="no objective"] {
+  color: var(--text-muted);
 }
 
 .dropdown-arrow {
   position: absolute;
-  right: 16px;
-  width: 24px;
-  height: 24px;
-  pointer-events: none;
+  right: 0px;
+  width: 40px;
+  height: 40px;
+  pointer-events: none; /* So clicks pass through to the select */
+  fill: var(--text-muted); 
 }
 
 .timer.project-time {
@@ -2227,6 +2261,7 @@ body.allow-scroll > html {
   font-size: 16px;
   line-height: 20px;
   margin-top: 0px;
+  margin-bottom: 24px;
 }
 
 /* Section Headers */
@@ -2235,7 +2270,7 @@ body.allow-scroll > html {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 16px;
+  margin-bottom: 0px;
 }
 
 /* Standard label styling */
@@ -2252,6 +2287,7 @@ body.allow-scroll > html {
   display: flex;
   align-items: flex-end;
   gap: 8px;
+  margin-bottom: 16px;
 }
 
 /* Toggle label styling – matching projects-label */
@@ -2346,15 +2382,42 @@ body.allow-scroll > html {
   margin-bottom: 8px;
 }
 
-.project-dropdown-container {
+.project-dropdown-container,
+.session-label-dropdown-container,
+.objective-dropdown-container {
   position: relative;
   display: flex;
   align-items: center;
+  justify-content: space-between;
+  background-color: transparent;
+  border: 0px solid var(--border-color);
+  border-radius: 0px;
+  padding-top: 0px;
+  padding-bottom: 0px;
+  margin-bottom: 16px;
+}
+
+.hour-rate-currency-container {
+  position: relative;           /* So we can absolutely-position the arrow */
+  display: flex;
+  align-items: center;
   background-color: var(--card-background);
+  border: 1px solid var(--border-color);
   border-radius: 12px;
   padding: 16px;
   margin-top: 16px;
-  cursor: pointer;
+}
+
+.hour-rate-input {
+  flex: 1;                      /* Grow to fill space */
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--text-color);
+  font-family: var(--font-commit-mono);
+  font-size: 16px;              /* or 20px, up to you */
+  line-height: 24px;
+  margin-right: 8px;            /* A little space between input & select */
 }
 
 .project-dropdown:focus {
@@ -2722,17 +2785,30 @@ width: 100%;
   margin-right: 16px;
 }
 
-.hour-rate-currency-container .currency-select {
+.hour-rate-currency-container .dropdown-arrow {
+  position: absolute;
+  right: 16px;          /* Align it with your container padding */
+  width: 24px;
+  height: 24px;
+  pointer-events: none; /* Let clicks go through to the select */
+  fill: var(--text-muted); /* Or var(--text-color) if you want it brighter */
+}
+
+.currency-select {
+  /* Override any global “padding-right: 36px” that may push the text off-center */
+  padding-right: 0 !important;
+
+  appearance: none;       /* Hide the default native arrow */
   border: none;
   background-color: transparent;
+  outline: none;
+
   color: var(--text-color);
   font-family: var(--font-commit-mono);
-  font-size: 16px;
+  font-size: 16px;              /* or 20px if you prefer it bigger */
   line-height: 24px;
-  outline: none;
-  appearance: none;
-  width: 32px;
-  text-align-last: center;
+  width: 48px;                  /* Enough room for “$” / “€” / “£” */
+  text-align-last: center;      /* This keeps the symbol centered horizontally */
 }
 
 /* UpdateProjectPage.css */
@@ -2842,4 +2918,37 @@ width: 100%;
   padding-bottom: 16px;
   border-radius: 12px;
   border: 1px solid var(--card-background);
+}
+
+/* == Floating Bottom Navigation == */
+.floating-navigation-container {
+  position: fixed;
+  /* 40px from the bottom, centered horizontally: */
+  bottom: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+  
+  width: 224px;
+  height: 56px;
+  border-radius: 28px;
+  
+  /* Slightly transparent #1D1B25 at 64%, plus a blur: */
+  background-color: rgba(29, 27, 37, 0.64);
+  backdrop-filter: blur(4px);
+  
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  z-index: 1000; /* So it sits on top of content */
+}
+
+.floating-navigation-button {
+  height: 40px;
+  background: transparent;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }

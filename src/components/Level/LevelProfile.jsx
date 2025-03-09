@@ -79,7 +79,7 @@ const LevelProfile = React.memo(({ projectName, totalTrackedTimeMinutes, levelPr
             </div>
             <div className="level-stats">
                 <span className="total-lvl-time">{formattedTotalTrackedTime}</span> {/* Use memoized formatted time */}
-                <span className="time-to-level-up">{formattedTimeToLevelUp} to level up</span> {/* Use memoized formatted time */}
+                <span className="time-to-level-up">{formattedTimeToLevelUp} to next lvl</span> {/* Use memoized formatted time */}
             </div>
             <div className="progress-bar">
                 <div className="progress-bar-fill" style={{ width: `${progressPercentage}%` }}></div>

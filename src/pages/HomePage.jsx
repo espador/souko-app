@@ -12,8 +12,8 @@ import {
 import { formatTime } from '../utils/formatTime';
 import Header from '../components/Layout/Header';
 import '../styles/global.css';
-import { ReactComponent as StartTimerIcon } from '../styles/components/assets/start-timer.svg';
-import { ReactComponent as StopTimerIcon } from '../styles/components/assets/stop-timer.svg';
+// Removed: import { ReactComponent as StartTimerIcon } from ...
+// Removed: import { ReactComponent as StopTimerIcon } from ...
 import { ReactComponent as Spinner } from '../styles/components/assets/spinner.svg';
 import '@fontsource/shippori-mincho';
 import Sidebar from '../components/Layout/Sidebar';
@@ -23,6 +23,7 @@ import { TextGenerateEffect } from '../styles/components/text-generate-effect.ts
 import JournalSection from '../components/Journal/JournalSection';
 import LevelProfile from '../components/Level/LevelProfile';
 
+// We'll keep your cn() utility
 export const cn = (...inputs) => twMerge(clsx(inputs));
 
 const CACHE_DURATION_MS = 30000; // 30 seconds
@@ -77,15 +78,12 @@ const HomePage = React.memo(({ navigate, skipAutoRedirect, currentPage }) => {
   const [hasTrackedEver, setHasTrackedEver] = useState(false);
 
   const [loading, setLoading] = useState(true);
-  const [activeSession, setActiveSession] = useState(null);
+
+  // We no longer track activeSession here for FAB usage,
+  // since we are using the floating nav in App.jsx
+
   const [totalTrackedTimeMinutes, setTotalTrackedTimeMinutes] = useState(0);
-
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-
-  const fabRef = useRef(null);
-  const scrollTimeout = useRef(null);
-
-  const hasActiveSession = Boolean(activeSession);
 
   // -----------------------------------------------------
   // 1. On Auth - Load Cache Immediately, Then Fetch Fresh
@@ -193,38 +191,9 @@ const HomePage = React.memo(({ navigate, skipAutoRedirect, currentPage }) => {
   }, [navigate, fetchHomeData]);
 
   // -------------------------------------------
-  // 2. Real-time active session for FAB only
+  // 2. Onboarding Logic: Skip if Not Complete
   // -------------------------------------------
   useEffect(() => {
-    if (!user) return;
-    import('firebase/firestore').then(({ onSnapshot }) => {
-      const activeSessionQuery = query(
-        collection(db, 'sessions'),
-        where('userId', '==', user.uid),
-        where('endTime', '==', null)
-      );
-      const unsubActiveSession = onSnapshot(activeSessionQuery, (snap) => {
-        if (!snap.empty) {
-          // We want the doc ID to navigate to time-tracker
-          const docRef = snap.docs[0];
-          const data = docRef.data();
-          setActiveSession({
-            ...data,
-            id: docRef.id, // so we can pass sessionId
-          });
-        } else {
-          setActiveSession(null);
-        }
-      });
-      return () => unsubActiveSession && unsubActiveSession();
-    });
-  }, [user]);
-
-  // -------------------------------------------
-  // 3. Onboarding Logic: Skip if We Know It’s Complete
-  // -------------------------------------------
-  useEffect(() => {
-    // Wait until we've stopped "loading" our data.
     if (!loading) {
       if (
         !currentPage.startsWith('onboarding') &&
@@ -236,7 +205,7 @@ const HomePage = React.memo(({ navigate, skipAutoRedirect, currentPage }) => {
   }, [loading, userProfile, currentPage, navigate]);
 
   // -------------------------------------------
-  // 4. Sidebar & Logout
+  // 3. Sidebar & Logout
   // -------------------------------------------
   const handleLogout = useCallback(async () => {
     try {
@@ -251,24 +220,7 @@ const HomePage = React.memo(({ navigate, skipAutoRedirect, currentPage }) => {
   const closeSidebar = useCallback(() => setIsSidebarOpen(false), []);
 
   // -------------------------------------------
-  // 5. Hide FAB on scroll
-  // -------------------------------------------
-  useEffect(() => {
-    const handleScroll = () => {
-      if (fabRef.current) {
-        fabRef.current.classList.add('scrolling');
-        clearTimeout(scrollTimeout.current);
-        scrollTimeout.current = setTimeout(() => {
-          fabRef.current && fabRef.current.classList.remove('scrolling');
-        }, 300);
-      }
-    };
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
-  // -------------------------------------------
-  // 6. Computed Values
+  // 4. Computed Values
   // -------------------------------------------
   const projectsToRender = useMemo(() => {
     return [...projects]
@@ -293,15 +245,6 @@ const HomePage = React.memo(({ navigate, skipAutoRedirect, currentPage }) => {
       </div>
     );
   }
-
-  // --------------- FAB CLICK HANDLER ---------------
-  const handleFabClick = () => {
-    if (activeSession) {
-      navigate('time-tracker', { sessionId: activeSession.id });
-    } else {
-      navigate('time-tracker-setup');
-    }
-  };
 
   return (
     <div className="homepage">
@@ -334,7 +277,7 @@ const HomePage = React.memo(({ navigate, skipAutoRedirect, currentPage }) => {
           totalTrackedTimeMinutes={totalTrackedTimeMinutes}
           levelProgressionData={levelConfig}
         />
-        
+
         <JournalSection
           navigate={navigate}
           journalEntries={journalEntries}
@@ -404,14 +347,6 @@ const HomePage = React.memo(({ navigate, skipAutoRedirect, currentPage }) => {
       {isSidebarOpen && (
         <div className="sidebar-overlay" onClick={closeSidebar}></div>
       )}
-
-      <button ref={fabRef} className="fab" onClick={handleFabClick}>
-        {hasActiveSession ? (
-          <StopTimerIcon className="fab-icon" />
-        ) : (
-          <StartTimerIcon className="fab-icon" />
-        )}
-      </button>
     </div>
   );
 });
