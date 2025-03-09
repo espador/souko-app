@@ -1,7 +1,8 @@
 import React, { useEffect, useCallback, useState } from 'react';
 import {
   signInWithPopup,
-  signInWithRedirect
+  signInWithRedirect,
+  getRedirectResult // <-- NEW import here
 } from 'firebase/auth';
 import { auth, googleProvider, db } from '../services/firebase';
 import '../styles/global.css';
@@ -27,41 +28,53 @@ const LoginPage = ({ navigate }) => {
     'standalone' in window.navigator && window.navigator.standalone;
 
   // Process login result: create profile if necessary then navigate to home
-  const processLoginResult = useCallback(async (result) => {
-    console.log('processLoginResult - START');
-    setLoading(true);
-    try {
-      const user = result.user;
-      console.log('processLoginResult - User object:', user);
-      const profileRef = doc(db, 'profiles', user.uid);
-      const profileSnap = await getDoc(profileRef);
+  const processLoginResult = useCallback(
+    async (result) => {
+      console.log('processLoginResult - START');
+      setLoading(true);
+      try {
+        const user = result.user;
+        console.log('processLoginResult - User object:', user);
 
-      if (!profileSnap.exists()) {
-        await setDoc(profileRef, {
-          uid: user.uid,
-          email: user.email,
-          displayName: user.displayName,
-          profileImageUrl: user.photoURL,
-          featureAccessLevel: 'free',
-          createdAt: serverTimestamp(),
-          updatedAt: serverTimestamp(),
-        });
-        console.log('processLoginResult - New profile created for user:', user.uid);
-      } else {
-        console.log('processLoginResult - Profile already exists for user:', user.uid);
+        const profileRef = doc(db, 'profiles', user.uid);
+        const profileSnap = await getDoc(profileRef);
+
+        if (!profileSnap.exists()) {
+          await setDoc(profileRef, {
+            uid: user.uid,
+            email: user.email,
+            displayName: user.displayName,
+            profileImageUrl: user.photoURL,
+            featureAccessLevel: 'free',
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp(),
+          });
+          console.log(
+            'processLoginResult - New profile created for user:',
+            user.uid
+          );
+        } else {
+          console.log(
+            'processLoginResult - Profile already exists for user:',
+            user.uid
+          );
+        }
+
+        console.log('processLoginResult - User Info:', user);
+        navigate('home');
+        console.log('processLoginResult - Navigated to /home');
+      } catch (error) {
+        console.error('processLoginResult - Error:', error);
+        alert(
+          'Authentication failed during profile processing. Please try again.'
+        );
+      } finally {
+        setLoading(false);
+        console.log('processLoginResult - FINISH');
       }
-
-      console.log('processLoginResult - User Info:', user);
-      navigate('home');
-      console.log('processLoginResult - Navigated to /home');
-    } catch (error) {
-      console.error('processLoginResult - Error:', error);
-      alert('Authentication failed during profile processing. Please try again.');
-    } finally {
-      setLoading(false);
-      console.log('processLoginResult - FINISH');
-    }
-  }, [navigate]);
+    },
+    [navigate]
+  );
 
   useEffect(() => {
     console.log('LoginPage useEffect - START');
@@ -78,10 +91,27 @@ const LoginPage = ({ navigate }) => {
 
     return () => {
       document.body.classList.remove('no-scroll');
-      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+      window.removeEventListener(
+        'beforeinstallprompt',
+        handleBeforeInstallPrompt
+      );
       console.log('LoginPage useEffect - CLEANUP');
     };
   }, []);
+
+  // ** NEW useEffect to handle the redirect result **
+  useEffect(() => {
+    getRedirectResult(auth)
+      .then((result) => {
+        if (result) {
+          console.log('LoginPage - getRedirectResult result:', result);
+          processLoginResult(result);
+        }
+      })
+      .catch((error) => {
+        console.error('LoginPage - getRedirectResult error:', error);
+      });
+  }, [processLoginResult]);
 
   const handleLogin = async () => {
     console.log('handleLogin - START');
@@ -130,7 +160,9 @@ const LoginPage = ({ navigate }) => {
         <section className="motivational-section">
           <TextGenerateEffect words="Souko, the song of your roots is the song of now" />
           <h4>
-            This app is being built in public by @BramVanhaeren—things might break, errors will happen, but that’s all part of creating something cool!
+            This app is being built in public by @BramVanhaeren—things might
+            break, errors will happen, but that’s all part of creating something
+            cool!
           </h4>
         </section>
         <div className="login-actions">
@@ -139,12 +171,13 @@ const LoginPage = ({ navigate }) => {
             Continue with Google
           </button>
         </div>
-        
+
         {(showInstallButton || (isIOS() && !isInStandaloneMode())) && (
           <div className="install-pwa">
             {isIOS() && !isInStandaloneMode() ? (
               <h2 className="login-pwa">
-                For the best experience, tap the <strong>Share</strong> icon and select <strong>"Add to Home Screen"</strong>.
+                For the best experience, tap the <strong>Share</strong> icon and
+                select <strong>"Add to Home Screen"</strong>.
               </h2>
             ) : (
               <button onClick={handleInstallClick} className="install-button">
@@ -156,7 +189,15 @@ const LoginPage = ({ navigate }) => {
       </main>
       <div className="sticky-login-container">
         <h2 className="login-terms">
-          (Beta) By continuing, you agree to our <a href="/terms" className="login-link">Terms</a> and <a href="/privacy" className="login-link">Privacy Policy</a>.
+          (Beta) By continuing, you agree to our{' '}
+          <a href="/terms" className="login-link">
+            Terms
+          </a>{' '}
+          and{' '}
+          <a href="/privacy" className="login-link">
+            Privacy Policy
+          </a>
+          .
         </h2>
       </div>
     </div>
