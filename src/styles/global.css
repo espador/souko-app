@@ -199,7 +199,7 @@
 .create-project-button {
   background-color: transparent;
   border: 1px solid var(--card-background);
-  border-radius: 12px;
+  border-radius: 0px;
   text-align: center;
   font-size: 16px;
   color: var(--text-color);
@@ -257,6 +257,8 @@ h1 {
   line-height: 40px;
   text-align: left;
   color: var(--text-color);
+  font-family: var(--font-commit-mono);
+  font-weight: 400;
 }
 
 .sticky-button {
@@ -273,7 +275,7 @@ h1 {
   background-color: var(--page-background);
   padding-top: 16px;
   padding-bottom: 16px;
-  border-radius: 12px;
+  border-radius: 0px;
 }
 
 /* The icon-button for uploadfile/euro/dollar */
@@ -403,7 +405,7 @@ body.no-scroll {
   padding: 16px;
   background-color: transparent;
   border: 1px solid var(--card-background);
-  border-radius: 12px;
+  border-radius: 0px;
   text-align: center;
   font-family: var(--font-commit-mono);
   font-size: 16px;
@@ -499,7 +501,7 @@ body.no-scroll {
   font-family: var(--font-commit-mono);
   background-color: transparent;
   border: 1px solid var(--card-background);
-  border-radius: 12px;
+  border-radius: 0px;
   text-align: center;
   font-size: 16px;
   color: var(--text-color);
@@ -758,10 +760,6 @@ body.allow-scroll html {
   flex: 0;
 }
 
-.motivational-section h1 {
-  margin: 0;
-}
-
 .motivational-section .word {
   display: inline-block;
   margin-right: 0.1em;
@@ -881,7 +879,7 @@ body.allow-scroll html {
 .track-project-button {
   background-color: transparent;
   border: 1px solid var(--card-background);
-  border-radius: 12px;
+  border-radius: 0px;
   text-align: center;
   font-size: 16px;
   color: var(--text-color);
@@ -1004,7 +1002,7 @@ body.allow-scroll > html {
   padding: 16px;
   background-color: transparent;
   border: 1px solid var(--card-background);
-  border-radius: 12px;
+  border-radius: 0px;
   text-align: center;
   font-family: var(--font-commit-mono);
   font-size: 16px;
@@ -1107,7 +1105,7 @@ body.allow-scroll > html {
 .journal-countdown-button {
   padding: 16px 24px;
   border: 1px solid var(--card-background);
-  border-radius: 12px;
+  border-radius: 0px;
   background-color: transparent;
   color: var(--text-color);
   cursor: pointer;
@@ -1132,7 +1130,7 @@ body.allow-scroll > html {
   background-color: var(--page-background);
   padding-top: 16px;
   padding-bottom: 16px;
-  border-radius: 12px;
+  border-radius: 0px;
   border: 1px solid var(--card-background);
 }
 
@@ -1198,7 +1196,7 @@ body.allow-scroll > html {
   width: 100%;
   background-color: transparent;
   border: none;
-  border-radius: 12px;
+  border-radius: 0px;
   color: var(--text-color);
   font-family: var(--font-commit-mono);
   font-size: 16px;
@@ -1247,7 +1245,7 @@ body.allow-scroll > html {
 .erase-button {
   background-color: transparent;
   border: 1px solid var(--card-background);
-  border-radius: 12px;
+  border-radius: 0px;
   text-align: center;
   font-size: 16px;
   color: var(--text-color);
@@ -1265,12 +1263,12 @@ body.allow-scroll > html {
 }
 
 .save-button {
-  color: var(--text-color); /* Accent color for Save button text */
+  color: var(--accent-color); /* Accent color for Save button text */
   border-color: var(--card-background); /* Accent color for Save button border */
 }
 
 .erase-button {
-  color: var(--text-color); /* Default text color for Erase button */
+  color: red; /* Default text color for Erase button */
   border-color: var(--card-background); /* Match border color to CreateProjectPage button */
 }
 
@@ -1695,7 +1693,7 @@ body.allow-scroll > html {
   box-sizing: border-box;
   background-color: transparent;
   border: none;
-  border-radius: 12px;
+  border-radius: 0px;
   padding: 16px;
   font-size: 14px;
   font-family: var(--font-commit-mono);
@@ -1720,7 +1718,7 @@ body.allow-scroll > html {
   box-sizing: border-box;
   background-color: transparent;
   border: 1px solid var(--card-background);
-  border-radius: 12px;
+  border-radius: 0px;
   padding: 16px;
   font-size: 16px;
   text-align: center;
@@ -1759,10 +1757,9 @@ body.allow-scroll > html {
   box-sizing: border-box;
   background-color: transparent;
   border: 1px solid var(--card-background);
-  border-radius: 12px;
+  border-radius: 0px;
   font-size: 16px;
   text-align: center;
-  color: var(--text-color);
   cursor: pointer;
   display: flex;
   justify-content: center;
@@ -1832,7 +1829,7 @@ body.allow-scroll > html {
   box-sizing: border-box;
   background-color: transparent;
   border: 1px solid var(--card-background);
-  border-radius: 12px;
+  border-radius: 0px;
   padding: 16px;
   font-size: 16px;
   text-align: center;
@@ -2009,7 +2006,7 @@ body.allow-scroll > html {
   background-color: var(--accent-color);
   color: var(--background-color);
   border: none;
-  border-radius: 12px;
+  border-radius: 0px;
   cursor: pointer;
   font-weight: bold;
   font-size: 16px;
@@ -2035,7 +2032,7 @@ body.allow-scroll > html {
   display: flex;
   align-items: center;
   background-color: var(--card-background);
-  border-radius: 12px;
+  border-radius: 0px;
   padding: 16px;
   gap: 16px;
   margin-bottom: 16px; /* Reduced margin */
@@ -2075,7 +2072,6 @@ body.allow-scroll > html {
 
 .project-dropdown,
 .session-label-dropdown,
-.currency-select,
 .hour-rate-input,
 .objective-dropdown {
   flex: 1;
@@ -2151,7 +2147,7 @@ body.allow-scroll > html {
 .time-range-select {
   padding: 8px 32px 8px 16px;
   border: 1px solid var(--border-color);
-  border-radius: 12px;
+  border-radius: 0px;
   background-color: transparent;
   color: var(--text-color);
   font-family: var(--font-primary);
@@ -2182,7 +2178,7 @@ body.allow-scroll > html {
   width: 40px;
   height: 40px;
   border: 1px solid var(--border-color);
-  border-radius: 12px;
+  border-radius: 0px;
   background-color: transparent;
   display: flex;
   justify-content: center;
@@ -2248,7 +2244,7 @@ body.allow-scroll > html {
 .load-more-button {
   background-color: transparent;
   border: 1px solid var(--card-background);
-  border-radius: 12px;
+  border-radius: 0px;
   padding: 12px 24px;
   font-size: 16px;
   color: var(--text-color);
@@ -2431,7 +2427,7 @@ body.allow-scroll > html {
   align-items: center;
   background-color: var(--card-background);
   border: 1px solid var(--border-color);
-  border-radius: 12px;
+  border-radius: 0px;
   padding: 16px;
   margin-top: 16px;
 }
@@ -2453,7 +2449,7 @@ body.allow-scroll > html {
 }
 
 .input-tile {
-  border-radius: 12px;
+  border-radius: 0px;
   margin-top: 16px;
   display: flex;
   justify-content: space-between;
@@ -2489,7 +2485,7 @@ body.allow-scroll > html {
   min-height: 100px;
   padding: 16px;
   border: none;
-  border-radius: 12px;
+  border-radius: 0px;
   background-color: var(--card-background);
   color: var(--text-color);
   font-family: var(--font-commit-mono);
@@ -2568,7 +2564,7 @@ body.allow-scroll > html {
   font-family: inherit; /* Inherit font from body or global styles */
   font-weight: 400;
   padding: 16px;
-  border-radius: 12px;
+  border-radius: 0px;
   text-align: center;
   cursor: pointer;
   width: 100%;
@@ -2658,7 +2654,7 @@ body.allow-scroll > html {
 .signout-button {
   background-color: var(--background-color);
 border: 1px solid var(--border-color);
-border-radius: 12px;
+border-radius: 0px;
 text-align: center;
 /* Removed explicit font-family, will inherit from global styles */
 font-size: 16px;
@@ -2708,7 +2704,7 @@ width: 100%;
   line-height: 64px;
   color: var(--accent-color);
   text-align: center;
-  margin: 0;            /* no extra margin needed now */
+  margin-bottom: 32px;            /* no extra margin needed now */
   transition: color 0.3s ease;
 }
 
@@ -2722,6 +2718,7 @@ width: 100%;
   flex-direction: row;
   justify-content: center;
   gap: 32px;  /* space between reset, stop, pause/resume */
+  margin-bottom: 40px;
 }
 
 /* Reuse or rename your control-button classes as needed */
@@ -2755,7 +2752,7 @@ width: 100%;
 .input-tile-timer {
   min-height: 40px;
   background-color: var(--card-background);
-  border-radius: 12px;
+  border-radius: 0px;
   padding: 16px;
   color: var(--text-color);
   font-weight: 400;
@@ -2795,7 +2792,7 @@ width: 100%;
   display: flex;
   align-items: center;
   background-color: var(--card-background);
-  border-radius: 12px;
+  border-radius: 0px;
   padding: 16px;
   margin-top: 16px;
   cursor: pointer;
@@ -2855,7 +2852,7 @@ width: 100%;
   font-family: var(--font-commit-mono);
   background-color: transparent;
   border: 1px solid var(--card-background);
-  border-radius: 12px;
+  border-radius: 0px;
   text-align: center;
   font-size: 16px;
   color: var(--text-color);
@@ -2884,6 +2881,16 @@ width: 100%;
   font-size: 32px;
   line-height: 40px;
   color: var(--text-color);
+  font-family: var(--font-commit-mono);
+  font-weight: 400;
+}
+
+.motivational-elapsed-time {
+  color: var(--accent-color); /* Assuming you have --accent-color defined */
+}
+
+.motivational-saved-time {
+  color: var(--accent-purple); /* Assuming you have --accent-purple defined */
 }
 
 /* Delete Confirmation Dialog Styles */
@@ -2894,7 +2901,7 @@ width: 100%;
   transform: translate(-50%, -50%);
   background-color: var(--card-background);
   padding: 24px;
-  border-radius: 12px;
+  border-radius: 0px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
   z-index: 1000;
   display: flex;
@@ -2944,7 +2951,7 @@ width: 100%;
   background-color: var(--page-background);
   padding-top: 16px;
   padding-bottom: 16px;
-  border-radius: 12px;
+  border-radius: 0px;
   border: 1px solid var(--card-background);
 }
 
@@ -2955,6 +2962,7 @@ width: 100%;
   bottom: 40px;
   left: 50%;
   transform: translateX(-50%);
+  padding-bottom: env(safe-area-inset-bottom);
   
   width: 224px;
   height: 56px;

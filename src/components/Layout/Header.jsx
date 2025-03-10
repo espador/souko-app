@@ -3,11 +3,14 @@
 import React, { useState, useEffect, memo } from 'react';
 import { ReactComponent as ReturnIcon } from '../../styles/components/assets/return.svg';
 import { ReactComponent as SoukoLogoHeader } from '../../styles/components/assets/Souko-logo-header.svg';
+// 1) Import the new download icon:
+import { ReactComponent as DownloadIcon } from '../../styles/components/assets/download.svg';
+
 import MobileStepper from '@mui/material/MobileStepper';
 import '../../styles/global.css';
 
 const Header = memo(({
-  variant = "home", // "home" | "projectOverview" | "onboarding"
+  variant = "home", 
   title,
   showBackArrow,
   onBack,
@@ -17,7 +20,7 @@ const Header = memo(({
   onProfileClick,
   onActionClick = () => {},
   currentStep = 0,
-  navigate // <-- ADDED 'navigate' prop
+  navigate
 }) => {
   const [currentTime, setCurrentTime] = useState('');
 
@@ -60,14 +63,37 @@ const Header = memo(({
           steps={5}
           activeStep={currentStep}
           position="static"
-          nextButton={<div />} // Hide default next button
-          backButton={<div />} // Hide default back button
+          nextButton={<div />} 
+          backButton={<div />} 
         />
       </div>
     );
   }
 
-  // handle "home", "projectOverview", etc.
+  // 2) If the variant is "sessionDetail", show the new 40x40 download icon
+  if (variant === "sessionDetail") {
+    return (
+      <div className="header">
+        <div className="header-left-section">
+          {showBackArrow && (
+            <button className="back-button" onClick={handleBackNavigation}>
+              <ReturnIcon style={{ width: '40px', height: '40px' }} />
+            </button>
+          )}
+          {title && <h1 className="header-title">{title}</h1>}
+          {showLiveTime && <div className="header-live-time">{currentTime}</div>}
+        </div>
+        <div className="header-right-section">
+          {/* Non-clickable download icon for now */}
+          <DownloadIcon
+            style={{ width: '40px', height: '40px', cursor: 'default' }}
+          />
+        </div>
+      </div>
+    );
+  }
+
+  // "projectOverview", "home", "journalOverview", etc.
   let rightSection = null;
   if (variant === "projectOverview") {
     rightSection = (
@@ -79,6 +105,7 @@ const Header = memo(({
     if (children) {
       rightSection = children;
     } else if (!hideProfile) {
+      // Show spinning Souko logo by default
       rightSection = (
         <SoukoLogoHeader
           className="profile-pic souko-logo-header spinning-logo"

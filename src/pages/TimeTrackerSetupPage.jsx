@@ -307,7 +307,6 @@ const TimeTrackerSetupPage = React.memo(({ navigate }) => {
           <option value="usd">$</option>
           <option value="gbp">£</option>
         </select>
-        <DropdownIcon className="dropdown-arrow" />
       </div>
 
       {/* 4) Session objective dropdown (with optional left icon) */}

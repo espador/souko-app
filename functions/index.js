@@ -1,30 +1,27 @@
 const functions = require("firebase-functions");
 const admin = require("firebase-admin");
 
-// 1) Import main date-fns methods from 'date-fns'
+// date-fns and date-fns-tz
 const {
   parseISO,
   differenceInCalendarDays,
-  isSameDay,
   startOfDay
-} = require('date-fns');
-
-// 2) Import only time-zone helpers from 'date-fns-tz'
-const { utcToZonedTime } = require('date-fns-tz');
+} = require("date-fns");
+const { utcToZonedTime } = require("date-fns-tz");
 
 admin.initializeApp();
 
+/**
+ * Triggered whenever a new journal entry is created.
+ * Increments or resets the user’s streak in their profile.
+ */
 exports.calculateJournalStreak = functions.firestore
   .document("/journalEntries/{journalEntryId}")
-  .onWrite(async (change, context) => {
-    // Skip if doc was deleted
-    if (!change.after.exists) {
-      functions.logger.log("Journal entry deleted; skipping streak calculation.");
-      return null;
-    }
-
-    const newEntry = change.after.data();
+  .onCreate(async (snap, context) => {
+    const newEntry = snap.data();
     const userId = newEntry.userId;
+
+    // Safety check: must have a userId
     if (!userId) {
       functions.logger.error("No userId in journal entry", {
         entryId: context.params.journalEntryId,
@@ -32,10 +29,10 @@ exports.calculateJournalStreak = functions.firestore
       return null;
     }
 
-    const profileRef = admin.firestore().collection("profiles").doc(userId);
-
     try {
+      const profileRef = admin.firestore().collection("profiles").doc(userId);
       const profileSnap = await profileRef.get();
+
       if (!profileSnap.exists) {
         functions.logger.error("No profile for userId", { userId });
         return null;
@@ -43,82 +40,52 @@ exports.calculateJournalStreak = functions.firestore
 
       const profileData = profileSnap.data();
       let streak = profileData.currentStreak || 0;
-      let lastDate = null;
       const userTimezone = profileData.timezone || "UTC";
 
-      // Convert lastJournalDate with parseISO (from date-fns) + utcToZonedTime (from date-fns-tz)
+      // 1) Figure out what date the new entry was created (in user’s local time)
+      //    If there’s no `createdAt`, fallback to the Firestore snapshot’s createTime.
+      const entryTimestamp = newEntry.createdAt
+        ? (newEntry.createdAt.toDate && newEntry.createdAt.toDate()) ||
+          parseISO(newEntry.createdAt)
+        : snap.createTime.toDate();
+
+      const newEntryDate = startOfDay(utcToZonedTime(entryTimestamp, userTimezone));
+
+      // 2) Parse the profile’s lastJournalDate (if it exists)
+      let lastDate = null;
       if (profileData.lastJournalDate) {
-        lastDate = utcToZonedTime(
-          parseISO(profileData.lastJournalDate),
-          userTimezone
-        );
+        const parsedLast = parseISO(profileData.lastJournalDate);
+        lastDate = startOfDay(utcToZonedTime(parsedLast, userTimezone));
       }
 
-      // Query the two most recent journal entries for this user
-      const journalRef = admin.firestore().collection("journalEntries");
-      const entriesSnap = await journalRef
-        .where("userId", "==", userId)
-        .orderBy("createdAt", "desc")
-        .limit(2)
-        .get();
-
-      const entries = [];
-      entriesSnap.forEach((doc) => entries.push(doc.data()));
-
-      // Convert newEntry.createdAt => user's timezone => startOfDay
-      const newDate = startOfDay(
-        utcToZonedTime(newEntry.createdAt.toDate(), userTimezone)
-      );
-
-      if (entries.length <= 1) {
-        // If this is the user’s only journal entry, set streak to 1
+      // 3) Compare newEntryDate vs. lastDate
+      if (!lastDate) {
+        // First ever entry => streak = 1
         streak = 1;
-        lastDate = newDate;
       } else {
-        // Check if it's consecutive
-        const latest = entries[0];
-        const latestDate = startOfDay(
-          utcToZonedTime(latest.createdAt.toDate(), userTimezone)
-        );
-
-        functions.logger.log("📅 Entry Dates:", {
-          latestDate: latestDate.toISOString(),
-          newEntryDate: newDate.toISOString(),
-          userTimezone,
-        });
-
-        const dayDifference = differenceInCalendarDays(newDate, latestDate);
-
-        if (dayDifference === 1) {
-          // Consecutive day => increment streak
-          streak++;
-        } else if (isSameDay(newDate, latestDate)) {
+        const dayDifference = differenceInCalendarDays(newEntryDate, lastDate);
+        if (dayDifference === 0) {
           // Same day => do nothing
-          functions.logger.log(
-            "Journal entry is within the same day, keeping streak."
-          );
+          functions.logger.info("Journal entry is the same day; streak unchanged.");
+        } else if (dayDifference === 1) {
+          // Next consecutive day => increment
+          streak += 1;
         } else {
-          // Not consecutive => reset
-          streak = 0;
-          functions.logger.log(
-            "Journal entry is NOT consecutive, resetting streak to 0."
-          );
+          // Skipped days => reset to 1
+          streak = 1;
         }
-        lastDate = newDate;
       }
 
-      // Finally, update the user's profile with the new streak
-      const update = {
+      // 4) Update user’s profile
+      await profileRef.update({
         currentStreak: streak,
-        lastJournalDate: lastDate.toISOString(),
-      };
+        lastJournalDate: newEntryDate.toISOString(),
+      });
 
-      await profileRef.update(update);
-      functions.logger.log("✅ Streak updated successfully:", {
+      functions.logger.info("✅ Streak updated successfully", {
         userId,
         newStreak: streak,
       });
-
       return null;
     } catch (error) {
       functions.logger.error("❌ Streak calculation error", error, { userId });

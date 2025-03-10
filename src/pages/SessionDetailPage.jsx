@@ -1,401 +1,433 @@
-import React, { useEffect, useState, useCallback, useRef } from 'react';
+// SessionDetailPage.jsx
+import React, { useEffect, useState, useCallback } from 'react';
 import {
-    doc,
-    getDoc,
-    updateDoc,
-    deleteDoc,
-    collection,
-    query,
-    where,
-    getDocs,
+  doc,
+  getDoc,
+  updateDoc,
+  deleteDoc,
+  collection,
+  query,
+  where,
+  getDocs,
 } from 'firebase/firestore';
 import { db, auth } from '../services/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
+
+// Reuse the existing Header with our new "sessionDetail" variant
 import Header from '../components/Layout/Header';
-import '../styles/global.css';
-import { ReactComponent as EditIcon } from '../styles/components/assets/edit.svg';
-import { ReactComponent as DropdownIcon } from '../styles/components/assets/dropdown.svg';
-import { ReactComponent as RadioActiveIcon } from '../styles/components/assets/radio-active.svg';
-import { ReactComponent as RadioMutedIcon } from '../styles/components/assets/radio-muted.svg';
-import { ReactComponent as SaveIcon } from '../styles/components/assets/save.svg';
-import { ReactComponent as EraseIcon } from '../styles/components/assets/erase.svg';
-import { ReactComponent as Spinner } from '../styles/components/assets/spinner.svg';
 import ConfirmModal from '../components/ConfirmModal';
+import Spinner from '../styles/components/assets/spinner.svg'; // or as ReactComponent if you prefer
 
-const CACHE_DURATION_MS = 30000; // 30 seconds - adjust as needed
+// Some example icons used in the input fields, etc.
+import { ReactComponent as DropdownIcon } from '../styles/components/assets/dropdown.svg';
+import { ReactComponent as EditIcon } from '../styles/components/assets/edit.svg';
+import { ReactComponent as LabelIcon } from '../styles/components/assets/label-dropdown.svg';
+import { ReactComponent as HourRateIcon } from '../styles/components/assets/label-hourrate.svg';
+import { ReactComponent as ObjectiveIcon } from '../styles/components/assets/label-objective.svg';
 
-const SessionDetailPage = ({ navigate, sessionId: routeSessionId }) => {
-    const sessionId = routeSessionId;
-    const [user, setUser] = useState(null);
-    const [session, setSession] = useState(null);
-    const [projects, setProjects] = useState([]);
-    const [selectedProject, setSelectedProject] = useState(null);
-    const [sessionNotes, setSessionNotes] = useState('');
-    const [isBillable, setIsBillable] = useState(true);
-    const [loading, setLoading] = useState(true);
-    const [isSaveActive, setIsSaveActive] = useState(false);
-    const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
-    const previousSessionRef = useRef(null);
-    const hasLoaded = useRef(false);
 
-    // Load cached session detail data if available - memoized
-    const loadCachedData = useCallback((uid, sessionId) => {
-        const cachedData = sessionStorage.getItem(`sessionDetail-${uid}-${sessionId}`);
-        if (cachedData) {
-            const { session, projects, selectedProject, sessionNotes, isBillable, timestamp } = JSON.parse(cachedData);
-            if (Date.now() - timestamp < CACHE_DURATION_MS) {
-                setSession(session);
-                setProjects(projects);
-                setSelectedProject(selectedProject);
-                setSessionNotes(sessionNotes);
-                setIsBillable(isBillable);
-                console.log("Session details loaded from cache");
-                return true;
-            } else {
-                sessionStorage.removeItem(`sessionDetail-${uid}-${sessionId}`); //remove outdated cache
-                console.log("Cached data expired, fetching from Firestore");
-                return false;
-            }
+// We'll define some arrays for session labels & objectives
+const SESSION_LABELS = [
+  'Designing',
+  'Coding',
+  'Strategy',
+  'Research',
+  'Meetings',
+  'Writing',
+  'Project Management',
+  'Paperwork',
+  'Learning',
+];
+const SESSION_OBJECTIVES = [
+  'no objective',
+  '1 hour',
+  '2 hours',
+  '3 hours',
+  '4 hours',
+  '6 hours',
+  '8 hours',
+];
+
+export default function SessionDetailPage({ navigate, sessionId }) {
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  // Session data
+  const [session, setSession] = useState(null);
+
+  // All user's projects
+  const [projects, setProjects] = useState([]);
+
+  // Four fields from "TimeTrackerSetupPage"
+  const [selectedProject, setSelectedProject] = useState(null);
+  const [sessionLabel, setSessionLabel] = useState(SESSION_LABELS[0]);
+  const [hourRate, setHourRate] = useState(0);
+  const [currencyId, setCurrencyId] = useState('euro');
+  const [sessionObjective, setSessionObjective] = useState('no objective');
+
+  // For enabling "Save changes" button
+  const [isChanged, setIsChanged] = useState(false);
+
+  // For delete confirm modal
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
+  // Listen for auth
+  useEffect(() => {
+    const unsub = onAuthStateChanged(auth, async (currentUser) => {
+      setUser(currentUser);
+    });
+    return () => unsub();
+  }, []);
+
+  // Load projects & session
+  useEffect(() => {
+    if (!user || !sessionId) return;
+
+    let canceled = false;
+    (async () => {
+      setLoading(true);
+
+      // 1) Fetch user’s projects
+      const projectsSnap = await getDocs(
+        query(collection(db, 'projects'), where('userId', '==', user.uid))
+      );
+      const fetchedProjects = projectsSnap.docs.map((d) => ({
+        id: d.id,
+        ...d.data(),
+      }));
+
+      // 2) Fetch session doc
+      const sessionRef = doc(db, 'sessions', sessionId);
+      const snap = await getDoc(sessionRef);
+
+      if (!snap.exists()) {
+        console.error('Session not found', sessionId);
+        if (!canceled) setSession(null);
+        setLoading(false);
+        return;
+      }
+      const sessionData = snap.data();
+
+      if (!canceled) {
+        setProjects(fetchedProjects);
+        setSession(sessionData);
+
+        // Pre-fill fields
+        setHourRate(sessionData.hourRate ?? 0);
+        setCurrencyId(sessionData.currencyId ?? 'euro');
+        setSessionLabel(sessionData.sessionLabel ?? SESSION_LABELS[0]);
+        setSessionObjective(sessionData.sessionObjective ?? 'no objective');
+
+        // Attempt to match project by ID, fallback to name
+        let prj = null;
+        if (sessionData.projectId) {
+          prj = fetchedProjects.find((p) => p.id === sessionData.projectId);
         }
-        return false;
-    }, []);
-
-    const cacheData = useCallback((uid, sessionId, session, projects, selectedProject, sessionNotes, isBillable) => {
-        const cacheObject = {
-            session,
-            projects,
-            selectedProject,
-            sessionNotes,
-            isBillable,
-            timestamp: Date.now()
-        };
-        sessionStorage.setItem(`sessionDetail-${uid}-${sessionId}`, JSON.stringify(cacheObject));
-        console.log("Session details cached");
-    }, []);
-
-    const fetchProjects = useCallback(async (uid) => {
-        try {
-            const projectsRef = collection(db, 'projects');
-            const q = query(projectsRef, where("userId", "==", uid));
-            const querySnapshot = await getDocs(q);
-            const projectsList = querySnapshot.docs.map(doc => ({
-                id: doc.id,
-                name: doc.data().name,
-                imageUrl: doc.data().imageUrl,
-                ...doc.data()
-            }));
-            setProjects(projectsList);
-            console.log("Projects fetched successfully:", projectsList);
-            return projectsList;
-        } catch (error) {
-            console.error("Error fetching projects:", error);
-            return [];
+        if (!prj && sessionData.project) {
+          prj = fetchedProjects.find((p) => p.name === sessionData.project);
         }
-    }, []);
-
-    const fetchSessionDetails = useCallback(async (sessionIdToFetch) => { // Removed 'projects' argument
-        if (!sessionIdToFetch) return null;
-
-        try {
-            const sessionRef = doc(db, 'sessions', sessionIdToFetch);
-            const sessionSnap = await getDoc(sessionRef);
-            if (sessionSnap.exists()) {
-                const sessionData = sessionSnap.data();
-                return sessionData;
-            } else {
-                console.error("Session not found in Firestore - sessionId:", sessionIdToFetch);
-                return null;
-            }
-        } catch (error) {
-            console.error("Error fetching session details:", error, sessionIdToFetch);
-            return null;
+        // final fallback: pick first project if available
+        if (!prj && fetchedProjects.length > 0) {
+          prj = fetchedProjects[0];
         }
-    }, []);
+        setSelectedProject(prj || null);
 
+        setLoading(false);
+      }
+    })();
 
-    useEffect(() => {
-        console.log("Data Loading useEffect (Fetch Projects) - START - User State:", user, "SessionId Prop:", sessionId);
-        if (user && sessionId && !hasLoaded.current) {
-            hasLoaded.current = true;
-            const cachedDataFound = loadCachedData(user.uid, sessionId);
-            if (cachedDataFound) {
-                setLoading(false);
-            } else {
-                setLoading(true);
-                fetchProjects(user.uid); // Only fetch projects here
-            }
-        } else {
-            console.log("Data Loading useEffect (Fetch Projects) - Skipped: Already loaded or no user/sessionId");
-        }
-        console.log("Data Loading useEffect (Fetch Projects) - END");
-    }, [user, sessionId, fetchProjects, loadCachedData]);
-
-
-    useEffect(() => {
-        console.log("Data Loading useEffect (Fetch Session & Select Project) - START - Projects State Ready:", projects.length > 0, "SessionId:", sessionId);
-        if (projects.length > 0 && sessionId && user) { // Only run this effect when projects are available
-            fetchSessionDetails(sessionId)
-                .then(sessionData => {
-                    if (sessionData) {
-                        setSession(sessionData);
-                        setSessionNotes(sessionData.sessionNotes || '');
-                        setIsBillable(sessionData.isBillable);
-
-                        let projectToSelect = null;
-                        if (sessionData.projectId) {
-                            projectToSelect = projects.find(p => p.id === sessionData.projectId);
-                            if (projectToSelect) {
-                                console.log("Project found by projectId:", projectToSelect.name);
-                            } else {
-                                console.warn("Project ID from session not found in fetched projects. Falling back to project name.");
-                            }
-                        }
-                        if (!projectToSelect && sessionData.project) {
-                            projectToSelect = projects.find(p => p.name === sessionData.project);
-                            if(projectToSelect) {
-                                console.log("Project found by projectName (fallback):", projectToSelect.name);
-                            } else {
-                                console.warn("Project Name from session also not found in fetched projects.");
-                            }
-                        }
-
-
-                        if (projectToSelect) {
-                            setSelectedProject(projectToSelect);
-                            console.log("Data Loading useEffect - Project pre-selected:", projectToSelect.name);
-                        } else {
-                            console.warn("Data Loading useEffect - No project matched from session data. Falling back to first project or null.");
-                            setSelectedProject(projects[0] || null);
-                            if (projects[0]) {
-                                console.log("Data Loading useEffect - Fallback to first project:", projects[0].name);
-                            } else {
-                                console.log("Data Loading useEffect - No projects available to fallback to.");
-                                setSelectedProject(null);
-                            }
-                        }
-                    } else {
-                        setSession(null);
-                    }
-                })
-                .catch(e => {
-                    console.error("Data Loading useEffect (Fetch Session & Select Project) - Error:", e);
-                    setSession(null);
-                })
-                .finally(() => {
-                    setLoading(false);
-                });
-        } else if (projects.length === 0 && sessionId) {
-            console.log("Data Loading useEffect (Fetch Session & Select Project) - No projects available yet.");
-            if (!loading) setLoading(false); // Ensure loading is false if projects are not loaded and we're not already loading.
-        }
-        console.log("Data Loading useEffect (Fetch Session & Select Project) - END");
-    }, [projects, sessionId, user, fetchSessionDetails]); // Depend on 'projects' state
-
-
-    useEffect(() => {
-        const unsubscribeAuth = onAuthStateChanged(auth, (currentUser) => {
-            setUser(currentUser);
-        });
-        return () => unsubscribeAuth();
-    }, []);
-
-
-    useEffect(() => {
-        if (session && user && sessionId && projects.length > 0 && selectedProject) {
-            cacheData(user.uid, sessionId, session, projects, selectedProject, sessionNotes, isBillable);
-        }
-    }, [user, sessionId, session, projects, selectedProject, sessionNotes, isBillable, cacheData]);
-
-
-    useEffect(() => {
-        if (session) {
-            const hasChanged =
-                selectedProject?.name !== session.project ||
-                isBillable !== session.isBillable ||
-                sessionNotes !== session.sessionNotes;
-            setIsSaveActive(hasChanged);
-        }
-    }, [selectedProject?.name, isBillable, sessionNotes, session]);
-
-
-    const handleProjectChange = (e) => {
-        const projectName = e.target.value;
-        const project = projects.find(p => p.name === projectName);
-        setSelectedProject(project);
+    return () => {
+      canceled = true;
     };
+  }, [user, sessionId]);
 
-    const handleBillableToggle = () => {
-        setIsBillable(!isBillable);
-        setIsSaveActive(true);
-    };
+  // Whenever a field changes, set isChanged = true (if it differs from original)
+  useEffect(() => {
+    if (!session) return; // do nothing until session is loaded
+    const somethingChanged =
+      (selectedProject && selectedProject.name) !== session.project ||
+      Number(hourRate) !== Number(session.hourRate ?? 0) ||
+      currencyId !== (session.currencyId ?? 'euro') ||
+      sessionLabel !== (session.sessionLabel ?? SESSION_LABELS[0]) ||
+      sessionObjective !== (session.sessionObjective ?? 'no objective');
+    setIsChanged(somethingChanged);
+  }, [
+    session,
+    selectedProject,
+    hourRate,
+    currencyId,
+    sessionLabel,
+    sessionObjective,
+  ]);
 
-    const handleNotesChange = (e) => {
-        setSessionNotes(e.target.value);
-        setIsSaveActive(true);
-    };
+  // == Handlers ==
 
-    const handleSaveSession = async () => {
-        if (!isSaveActive || !session || !selectedProject) return;
+  const handleProjectChange = useCallback(
+    (e) => {
+      const projName = e.target.value;
+      const found = projects.find((p) => p.name === projName);
+      if (found) {
+        setSelectedProject(found);
+      }
+    },
+    [projects]
+  );
 
-        try {
-            const sessionRef = doc(db, 'sessions', sessionId);
-            await updateDoc(sessionRef, {
-                project: selectedProject.name,
-                projectId: selectedProject.id, // Save projectId as well!
-                isBillable: isBillable,
-                sessionNotes: sessionNotes,
-            });
+  const handleLabelChange = (e) => {
+    setSessionLabel(e.target.value);
+  };
 
-            const updatedSession = { ...session, project: selectedProject.name, projectId: selectedProject.id, isBillable: isBillable, sessionNotes: sessionNotes }; // Update session state with projectId
-            setSession(updatedSession);
-            setIsSaveActive(false);
-            console.log('Session updated successfully!');
+  const handleHourRateChange = (e) => {
+    setHourRate(e.target.value);
+  };
 
-        } catch (error) {
-            console.error('Error updating session:', error);
-        }
-    };
+  const handleCurrencyChange = (e) => {
+    setCurrencyId(e.target.value);
+  };
 
+  const handleObjectiveChange = (e) => {
+    setSessionObjective(e.target.value);
+  };
 
-    const handleDeleteSession = () => {
-        setShowDeleteConfirmModal(true);
-    };
+  const handleClickSave = async () => {
+    if (!session) return;
+    if (!isChanged) return;
 
-    const confirmDeleteSession = async () => {
-        try {
-            // Fetch session details to get projectId before deleting
-            const sessionRef = doc(db, 'sessions', sessionId);
-            const sessionSnap = await getDoc(sessionRef);
-            let projectIdToNavigate = null;
-            if (sessionSnap.exists()) {
-                projectIdToNavigate = sessionSnap.data().projectId;
-            }
+    try {
+      const ref = doc(db, 'sessions', sessionId);
+      await updateDoc(ref, {
+        project: selectedProject?.name ?? '',
+        projectId: selectedProject?.id ?? '',
+        hourRate: Number(hourRate) || 0,
+        currencyId: currencyId || 'euro',
+        sessionLabel,
+        sessionObjective,
+      });
+      console.log('Session updated!');
+      setIsChanged(false);
 
-            await deleteDoc(doc(db, 'sessions', sessionId));
-            console.log('Session deleted successfully!');
-
-            // Navigate to project detail page with projectId
-            if (projectIdToNavigate) {
-                navigate('project-detail', { projectId: projectIdToNavigate });
-            } else {
-                // Fallback navigation if projectId is not found (optional, maybe navigate to projects overview)
-                navigate('projects');
-                console.warn("Project ID not found for deleted session, navigating to projects overview.");
-            }
-
-        } catch (error) {
-            console.error('Error deleting session:', error);
-        } finally {
-            setShowDeleteConfirmModal(false);
-        }
-    };
-
-    const cancelDeleteSession = () => {
-        setShowDeleteConfirmModal(false);
-    };
-
-
-    if (loading) {
-        return (
-            <div className="homepage-loading">
-                <Spinner className="profile-pic souko-logo-header spinning-logo" />
-            </div>
-        );
+      // Return to previous page
+      navigate(-1);
+    } catch (err) {
+      console.error('Error updating session:', err);
     }
+  };
 
+  const handleDeleteSession = () => {
+    setShowDeleteConfirm(true);
+  };
 
-    if (!session) {
-        return <p className="error">Session not found.</p>;
+  const confirmDeleteSession = async () => {
+    if (!session) return;
+    try {
+      await deleteDoc(doc(db, 'sessions', sessionId));
+      console.log('Session deleted!');
+
+      setShowDeleteConfirm(false);
+      navigate('home'); // navigate to homepage after delete
+    } catch (err) {
+      console.error('Error deleting session:', err);
     }
+  };
 
+  const cancelDeleteSession = () => {
+    setShowDeleteConfirm(false);
+  };
 
+  // == Utility: format elapsedTime => "0h 00m"
+  function formatElapsedTime(seconds) {
+    if (!seconds || seconds <= 0) return '0h 00m';
+    const hrs = Math.floor(seconds / 3600);
+    const mins = Math.floor((seconds % 3600) / 60);
+    return `${hrs}h ${String(mins).padStart(2, '0')}m`;
+  }
+
+  // == Utility: parse objective => total objective in seconds
+  // e.g. "6 hours" => 6 * 3600 = 21600
+  function parseObjectiveToSeconds(objectiveStr) {
+    if (!objectiveStr || objectiveStr === 'no objective') return 0;
+    // quick example: split by space => ["6", "hours"]
+    // parse the number, multiply by 3600
+    const parts = objectiveStr.split(' ');
+    const hrs = parseInt(parts[0] || '0', 10);
+    if (hrs > 0) {
+      return hrs * 3600;
+    }
+    return 0;
+  }
+
+  // 1) elapsedTime displayed
+  let elapsedSeconds = session?.elapsedTime ?? 0;
+  const elapsedFormatted = formatElapsedTime(elapsedSeconds);
+
+  // 2) saved time => objective - elapsed, if objective is set
+  const objSeconds = parseObjectiveToSeconds(sessionObjective);
+  const savedSeconds = Math.max(objSeconds - elapsedSeconds, 0); // if negative, use 0
+  const savedFormatted = formatElapsedTime(savedSeconds);
+
+  // 3) Construct the motivational line
+  let motivationalLine = `${elapsedFormatted} logged!`;
+  if (objSeconds > 0 && savedSeconds > 0) {
+    motivationalLine += ` You saved ${savedFormatted}.`;
+  }
+  motivationalLine += ' Efficiency in motion.';
+
+  if (loading) {
     return (
-        <div className="session-detail-page">
-            <Header variant="journalOverview" showBackArrow={true} navigate={navigate} />
-            <div className="timer-quote">This moment was yours</div>
-            <div className="timer">
-                {new Date(session.elapsedTime * 1000).toISOString().substr(11, 8)}
-            </div>
-
-
-            <h2 className="projects-label">Details</h2>
-            <div className="project-dropdown-container">
-                {selectedProject?.imageUrl ? (
-                    <img
-                        src={selectedProject.imageUrl}
-                        alt={selectedProject.name}
-                        className="dropdown-project-image"
-                    />
-                ) : selectedProject?.name ? (
-                    <div className="dropdown-default-image">
-                        {selectedProject.name.charAt(0).toUpperCase()}
-                    </div>
-                ) : null}
-                <select
-                    className="project-dropdown"
-                    value={selectedProject?.name || ''}
-                    onChange={handleProjectChange}
-                >
-                    <option value="" disabled>Select Project</option>
-                    {projects.map((project) => (
-                        <option key={project.id} value={project.name}>
-                            {project.name}
-                        </option>
-                    ))}
-                </select>
-                <DropdownIcon className="dropdown-arrow" />
-            </div>
-
-
-            <div className="input-tile billable-tile" onClick={handleBillableToggle} style={{ cursor: 'pointer' }}>
-                <span className="input-label billable-label">
-                    {isBillable ? 'Billable' : 'Non-billable'}
-                </span>
-                <div className="billable-radio">
-                    {isBillable ? <RadioActiveIcon /> : <RadioMutedIcon />}
-                </div>
-            </div>
-
-
-            <div className="input-tile notes-input-tile">
-                <textarea
-                    id="session-notes"
-                    className="notes-textarea"
-                    placeholder="Add notes for this session"
-                    value={sessionNotes}
-                    onChange={handleNotesChange}
-                />
-                <EditIcon className="notes-edit-icon" />
-            </div>
-
-
-            <button
-                className={`save-button sticky-button-top ${isSaveActive ? 'active' : ''}`}
-                onClick={handleSaveSession}
-                disabled={!isSaveActive}
-            >
-                <SaveIcon className="button-icon" style={{ fill: isSaveActive ? 'var(--text-color)' : 'var(--text-muted)' }} />
-                Save this moment
-            </button>
-
-
-            <button className="erase-button sticky-button" onClick={handleDeleteSession}>
-                <EraseIcon className="button-icon" />
-                Erase your moment
-            </button>
-
-
-            <ConfirmModal
-                show={showDeleteConfirmModal}
-                onHide={cancelDeleteSession}
-                title="Erase this moment?"
-                body="Are you sure you want to delete this session? This action cannot be undone."
-                onConfirm={confirmDeleteSession}
-                confirmText="Yes, Erase"
-                cancelText="Cancel"
-            />
-        </div>
+      <div className="homepage-loading">
+        <img
+          src={Spinner}
+          alt="Loading..."
+          className="profile-pic souko-logo-header spinning-logo"
+        />
+      </div>
     );
-};
+  }
 
-export default SessionDetailPage;
+  if (!session) {
+    return <p className="error">Session not found.</p>;
+  }
+
+  return (
+    <div className="session-detail-page">
+      {/* Use the new variant="sessionDetail" so we see the download icon (non-clickable) */}
+      <Header variant="sessionDetail" showBackArrow={true} navigate={navigate} />
+
+      {/* Motivational section */}
+      <section className="motivational-section">
+        <h1 className="motivational-section">
+          {/* elapsedTime in green, savedTime in purple */}
+          <span className="motivational-elapsed-time">
+            {formatElapsedTime(elapsedSeconds)}
+          </span>{' '}
+          logged!{' '}
+          {objSeconds > 0 && savedSeconds > 0 && (
+            <>
+              You saved{' '}
+              <span className="motivational-saved-time">
+                {formatElapsedTime(savedSeconds)}
+              </span>
+              .{' '}
+            </>
+          )}
+          Efficiency in motion.
+        </h1>
+      </section>
+
+      {/* The 4 input fields from TimeTrackerSetupPage:
+          1) Project
+          2) Session Label
+          3) HourRate + currency (billable if > 0)
+          4) Session Objective
+       */}
+
+      {/* 1) Project dropdown */}
+      <div className="project-dropdown-container" style={{ marginBottom: '16px' }}>
+        {selectedProject?.imageUrl ? (
+          <img
+            src={selectedProject.imageUrl}
+            alt={selectedProject.name}
+            className="dropdown-project-image"
+          />
+        ) : selectedProject?.name ? (
+          <div className="dropdown-default-image">
+            {selectedProject.name.charAt(0).toUpperCase()}
+          </div>
+        ) : null}
+
+        <select
+          className="project-dropdown"
+          value={selectedProject?.name || ''}
+          onChange={handleProjectChange}
+        >
+          {projects.map((proj) => (
+            <option key={proj.id} value={proj.name}>
+              {proj.name}
+            </option>
+          ))}
+        </select>
+        <DropdownIcon className="dropdown-arrow" />
+      </div>
+
+      {/* 2) Session Label dropdown (with optional left icon) */}
+      <div className="project-dropdown-container session-label-container" style={{ marginBottom: '16px' }}>
+        <LabelIcon className="dropdown-icon-left" />
+        <select
+          className="session-label-dropdown"
+          value={sessionLabel}
+          onChange={handleLabelChange}
+        >
+          {SESSION_LABELS.map((label) => (
+            <option key={label} value={label}>
+              {label}
+            </option>
+          ))}
+        </select>
+        <DropdownIcon className="dropdown-arrow" />
+      </div>
+
+      {/* 3) Hour rate & currency (with optional left icon) */}
+      <div className="project-dropdown-container hour-rate-container" style={{ marginBottom: '16px' }}>
+        <HourRateIcon className="dropdown-icon-left" />
+        <input
+          type="number"
+          min="0"
+          className="hour-rate-input"
+          placeholder="Hour Rate (0 = Non-billable)"
+          value={hourRate}
+          onChange={handleHourRateChange}
+        />
+        <select
+          className="currency-select"
+          value={currencyId}
+          onChange={handleCurrencyChange}
+        >
+          <option value="euro">€</option>
+          <option value="usd">$</option>
+          <option value="gbp">£</option>
+        </select>
+      </div>
+
+      {/* 4) Session objective dropdown (with optional left icon) */}
+      <div className="project-dropdown-container objective-container" style={{ marginBottom: '16px' }}>
+        <ObjectiveIcon className="dropdown-icon-left" />
+        <select
+          className="objective-dropdown"
+          value={sessionObjective}
+          onChange={handleObjectiveChange}
+        >
+          {SESSION_OBJECTIVES.map((obj) => (
+            <option key={obj} value={obj}>
+              {obj}
+            </option>
+          ))}
+        </select>
+        <DropdownIcon className="dropdown-arrow" />
+      </div>
+
+      {/* Sticky Buttons at bottom */}
+      <button
+        className={`save-button sticky-button-top ${isChanged ? 'active' : ''}`}
+        onClick={handleClickSave}
+        disabled={!isChanged}
+      >
+        Save changes
+      </button>
+
+      <button className="erase-button sticky-button" onClick={handleDeleteSession}>
+        Erase session
+      </button>
+
+      {/* ConfirmModal for erasing */}
+      <ConfirmModal
+        show={showDeleteConfirm}
+        onHide={cancelDeleteSession}
+        title="Erase this session?"
+        body="Are you sure you want to delete this session? This action cannot be undone."
+        onConfirm={confirmDeleteSession}
+        confirmText="Yes, erase"
+        cancelText="Cancel"
+      />
+    </div>
+  );
+}

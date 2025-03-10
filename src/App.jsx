@@ -15,7 +15,8 @@ import TimeTrackerPage from './pages/TimeTrackerPage';
 import CreateProjectPage from './pages/CreateProjectPage';
 import ProjectDetailPage from './pages/ProjectDetailPage';
 import SessionDetailPage from './pages/SessionDetailPage';
-import SessionOverviewPage from './pages/SessionOverviewPage';
+// *** REMOVE the old SessionOverviewPage ***
+// import SessionOverviewPage from './pages/SessionOverviewPage';  // <--- Deleted
 import ProjectOverviewPage from './pages/ProjectOverviewPage';
 import JournalOverviewPage from './pages/JournalOverviewPage';
 import JournalCountdown from './components/Journal/JournalCountdown';
@@ -93,7 +94,7 @@ const App = memo(() => {
     };
   }, []);
 
-  // A simple state-based navigate function
+  // A simple navigate function
   const navigate = (page, params = {}) => {
     setCurrentPage(page);
     setPageParams(params);
@@ -140,14 +141,9 @@ const App = memo(() => {
             sessionId={pageParams.sessionId}
           />
         );
-      case 'session-overview':
-        return (
-          <SessionOverviewPage
-            navigate={navigate}
-            totalTime={pageParams.totalTime}
-            projectId={pageParams.projectId}
-          />
-        );
+      // REMOVE the old 'session-overview' route:
+      // case 'session-overview':
+      //   return <SessionOverviewPage ... />
       case 'journal-countdown':
         return <JournalCountdown navigate={navigate} />;
       case 'journal-overview':
@@ -183,7 +179,7 @@ const App = memo(() => {
 
   console.log('App - RENDER END');
 
-  // Show floating nav only on home, projects, and journal-overview
+  // Show floating nav only on certain pages
   const showFloatingNav = ['home', 'projects', 'journal-overview'].includes(
     currentPage
   );
