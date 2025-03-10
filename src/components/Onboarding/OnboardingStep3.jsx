@@ -68,10 +68,12 @@ function OnboardingStep3({ navigate }) { // <-- Receive navigate prop
       <main className="onboarding-step3-content">
         <section className="motivational-section">
           <TextGenerateEffect
-            words={`In stillness,\nprogress takes its <span class="accent-text">form</span>.\nReflect on your process\n<span class="accent-text">from 18:00</span> to refine your flow.`}
+            words={`In stillness,\nprogress takes its <span class="accent-text">form</span>.\nReflect on your process to refine your flow.`}
             element="h1"
           />
         </section>
+
+        <div className="divider"></div>
 
         <div className="mood-container">
           <p className="mood-label">
@@ -117,10 +119,6 @@ function OnboardingStep3({ navigate }) { // <-- Receive navigate prop
         </div>
 
         <button className="log-mood-button sticky-button" onClick={handleLogMood}>
-          <SaveIcon
-            className="button-icon"
-            style={{ fill: 'var(--text-color)' }}
-          />
           Log your mood
         </button>
       </main>

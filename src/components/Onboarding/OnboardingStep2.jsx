@@ -185,10 +185,11 @@ function OnboardingStep2({ navigate }) { // <-- Receive navigate prop
       <main className="onboarding-step2-content">
         <section className="motivational-section">
           <TextGenerateEffect
-            words={`Every journey\nbegins with one\nmoment.\nTell me about your project ...`}
+            words={`Every journey\nbegins with one\nmoment.Tell me about your project`}
             element="h1"
           />
         </section>
+        <div className="divider"></div>
         <section className="project-details-section">
           <h2>Project details</h2>
           <div className="project-input-wrapper">
@@ -246,8 +247,7 @@ function OnboardingStep2({ navigate }) { // <-- Receive navigate prop
       <button
         className="create-project-button sticky-button"
         onClick={handleNextStep}
-      >
-        <span className="button-icon">✛</span> Next
+      > Next
       </button>
     </div>
   );

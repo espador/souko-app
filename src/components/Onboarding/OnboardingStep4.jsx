@@ -116,14 +116,16 @@ function OnboardingStep4({ navigate }) { // <-- Receive navigate prop
             words={`The song of your\nroots is the song\nof now. Tap <span class="accent-text">play</span>\nto discover the\ntime tracker.`}
             element="h1"
           />
-          <p className="onboarding-description">
-            You’re all set. Use Souko your way! Track time, refine your flow, enjoy the moments!
-          </p>
         </section>
+
+        <div className="divider"></div>
+        <h2 className="projects-label">
+            You’re all set. Use Souko your way! Track time, refine your flow, enjoy the moments!
+          </h2>
 
         {error && <p className="error-message">{error}</p>}
       </main>
-
+      
       <button className="fab" onClick={handlePlayClick}>
         <StartTimerIcon className="fab-icon" />
       </button>

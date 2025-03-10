@@ -4,7 +4,6 @@ import React from 'react';
 import Header from '../Layout/Header';
 import '../../styles/global.css';
 import { TextGenerateEffect } from '../../styles/components/text-generate-effect.tsx';
-import { ReactComponent as SaveIcon } from '../../styles/components/assets/save.svg';
 
 function OnboardingStep1({ navigate }) { // <-- Receive navigate as prop
   // REMOVED: const navigate = useNavigate(); // <-- REMOVE useNavigate hook
@@ -23,21 +22,19 @@ function OnboardingStep1({ navigate }) { // <-- Receive navigate as prop
             words={`Mastery isn't rushed; it's\n built. Welcome to <span class="accent-text">Souko</span>.Track your\n projects,refine your flow.`}
             element="h1"
           />
-          <p className="onboarding-description">
-            Let’s set up your first project so you can start tracking your time effortlessly.
-          </p>
         </section>
       </main>
+
+      <div className="divider"></div>
+      <h2 className="projects-label">
+            Let’s set up your first project so you can start tracking your time effortlessly.
+          </h2>
 
       <button className="average-onboarding sticky-button-top" disabled>
         Average onboarding in 43.2 seconds
       </button>
 
       <button className="get-started-button sticky-button" onClick={handleGetStarted}>
-        <SaveIcon
-          className="button-icon"
-          style={{ fill: 'var(--text-color)' }}
-        />
         Get started
       </button>
     </div>

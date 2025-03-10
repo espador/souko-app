@@ -128,6 +128,8 @@
   font-weight: 400;
   font-size: 16px;
   line-height: 20px;
+  margin-top: 0px;
+  margin-bottom: 16px;
 }
 
 .project-input-wrapper {
@@ -220,7 +222,7 @@
 .error-message {
   color: red;
   font-size: 14px;
-  margin-top: -8px;
+  margin-top: 16px;
 }
 
 h1 {
@@ -283,7 +285,7 @@ h1 {
   width: 40px;
   height: 40px;
   background-color: transparent;
-  border: 1px solid;
+  border: 0px solid;
   border-color: #43404C;
   cursor: pointer;
   display: flex;
@@ -1167,7 +1169,7 @@ body.allow-scroll > html {
   font-size: 16px;
   color: var(--text-color);
   margin-bottom: 0px;
-  margin-top: 16px; /* Reduced top margin */
+  margin-top: 0px; /* Reduced top margin */
 }
 
 .mood-slider-container {
@@ -1175,7 +1177,6 @@ body.allow-scroll > html {
 }
 
 .journal-form-section {
-  margin-top: 24px; /* Reduced spacing between form sections */
   display: flex; /* Enable flexbox for label + input alignment */
   flex-direction: column; /* Stack label and input vertically */
   gap: 8px; /* Spacing between label and input */
@@ -1199,32 +1200,39 @@ body.allow-scroll > html {
   border-radius: 0px;
   color: var(--text-color);
   font-family: var(--font-commit-mono);
-  font-size: 16px;
+  font-size: 24px;
+  line-height: 32px;
   outline: none;
   box-sizing: border-box;
   vertical-align: top !important; /* ADDED !important - stronger override */
   padding-right: 40px; /* Space for the edit icon */
+  height: auto; /* Ensure it doesn't have a fixed height */
+  min-height: inherit; /* Inherit min-height if set on parent */
+  overflow: hidden; /* Prevent scrollbars */
+  resize: none; /* Optional: Disable textarea resizing */
 }
 
 .journal-input {
-  height: 80px;
+  height: auto;      /* Change to auto */
+  min-height: 60px; /* Set a minimum height */
   resize: none;
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
   align-items: flex-start;
   text-align: left;
-  padding-top: 8px; /* Adjusted padding-top to 8px */
-  padding-bottom: 16px; /* Keeping bottom padding consistent */
+  padding-top: 8px;
+  padding-bottom: 16px;
   line-height: normal;
   width: 100%;
 }
 
 .journal-textarea {
-  min-height: 80px;
-  resize: vertical;
-  vertical-align: top !important; /* ADDED !important - stronger override for textarea as well, just in case */
-  padding-top: 16px;
+  overflow: hidden; /* Ensure no scrollbars - important! */
+  resize: none; /* Optional: Disable manual resizing by the user if you don't want it */
+  height: auto; /* Allow textarea to expand based on content */
+  min-height: 48px;
+  box-sizing: border-box;
 }
 
 .journal-input::placeholder,
@@ -1286,10 +1294,11 @@ body.allow-scroll > html {
 }
 
 .journal-input-tile {
-  position: relative; /* Needed for absolute positioning of the icon */
-    padding: 0;
-    display: block; /* Ensure block display */
-    width: 100%; /* Ensure input tile takes full width */
+  display: flex; /* Ensure it's a flex container if it's not already for layout purposes */
+  flex-direction: column; /* Stack content vertically if needed */
+  overflow: hidden; /* Ensure no scrollbars appear - important! */
+  resize: none; 
+  box-sizing: border-box;
 }
 
 .journal-edit-icon {
@@ -1802,14 +1811,14 @@ body.allow-scroll > html {
 }
 
 .mood-container {
-  margin-top: 24px;
+  margin-top: 0px;
   margin-bottom: 16px; /* Reduced bottom margin */
 }
 
 .mood-label {
   font-family: var(--font-commit-mono);
   font-size: 16px;
-  margin-bottom: 8px;
+  margin-bottom: 0px;
   color: var(--text-muted);
 }
 

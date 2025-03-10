@@ -51,49 +51,48 @@ const reverseMoodScale = (index) => {
 };
 
 
-const JournalForm = React.memo(({ navigate, selectedDate: propSelectedDate }) => { // <-- Receive navigate and selectedDate props
+const JournalForm = React.memo(({ navigate, selectedDate: propSelectedDate }) => {
     const [mood, setMood] = useState('focused');
     const [textField1, setTextField1] = useState('');
     const [textField2, setTextField2] = useState('');
-    const selectedDate = propSelectedDate; // Use propSelectedDate directly as selectedDate
+    const selectedDate = propSelectedDate;
     const [journalEntryId, setJournalEntryId] = useState(null);
     const [showEraseConfirmModal, setShowEraseConfirmModal] = useState(false);
-    const [loadingEntry, setLoadingEntry] = useState(false); // Loading state for entry fetch
+    const [loadingEntry, setLoadingEntry] = useState(false);
 
 
-    // Fetch journal entry - useCallback for memoization
     const fetchJournalEntry = useCallback(async (uid, date) => {
-        setLoadingEntry(true); // Start loading
+        setLoadingEntry(true);
         try {
             return await getJournalEntryByDate(uid, date);
         } catch (error) {
             console.error("Error fetching journal entry:", error);
             return null;
         } finally {
-            setLoadingEntry(false); // End loading
+            setLoadingEntry(false);
         }
     }, []);
 
 
     useEffect(() => {
         const loadEntry = async () => {
-            console.log("JournalForm useEffect triggered, selectedDate:", selectedDate); // ADDED: Log selectedDate on effect trigger
+            console.log("JournalForm useEffect triggered, selectedDate:", selectedDate);
 
             if (selectedDate) {
                 const user = auth.currentUser;
                 if (user) {
-                    setLoadingEntry(true); // Start loading before fetching
-                    const entryData = await fetchJournalEntry(user.uid, selectedDate); // Use memoized fetchJournalEntry
-                    setLoadingEntry(false); // End loading after fetching
+                    setLoadingEntry(true);
+                    const entryData = await fetchJournalEntry(user.uid, selectedDate);
+                    setLoadingEntry(false);
                     if (entryData) {
                         setMood(entryData.mood);
                         setTextField1(entryData.reflection);
                         setTextField2(entryData.futureStep);
                         setJournalEntryId(entryData.id);
-                        console.log("Journal entry loaded successfully for date:", selectedDate); // ADDED: Success log
+                        console.log("Journal entry loaded successfully for date:", selectedDate);
                     } else {
                         console.log(`No journal entry found for ${selectedDate}, creating new.`);
-                        setJournalEntryId(null); // Ensure journalEntryId is null for new entries on same date
+                        setJournalEntryId(null);
                     }
                 }
             } else {
@@ -101,14 +100,13 @@ const JournalForm = React.memo(({ navigate, selectedDate: propSelectedDate }) =>
                 setTextField1('');
                 setTextField2('');
                 setJournalEntryId(null);
-                console.log("No selectedDate prop received, resetting form for new entry."); // Modified log message
+                console.log("No selectedDate prop received, resetting form for new entry.");
             }
         };
         loadEntry();
-    }, [selectedDate, fetchJournalEntry]); // Include memoized fetchJournalEntry in dependencies
+    }, [selectedDate, fetchJournalEntry]);
 
 
-    // Slider change handler - useCallback for memoization
     const handleSliderChange = useCallback((event, newValue) => {
         let moodIndex = moodScale(newValue);
         if (moodIndex >= 0 && moodIndex < moodOptions.length) {
@@ -117,7 +115,6 @@ const JournalForm = React.memo(({ navigate, selectedDate: propSelectedDate }) =>
     }, []);
 
 
-    // Textarea change handlers - useCallback for memoization
     const handleText1Change = useCallback((e) => {
         setTextField1(e.target.value);
     }, []);
@@ -128,7 +125,6 @@ const JournalForm = React.memo(({ navigate, selectedDate: propSelectedDate }) =>
     }, []);
 
 
-    // Submit handler - useCallback for memoization
     const handleSubmit = useCallback(async () => {
         try {
             const user = auth.currentUser;
@@ -149,27 +145,25 @@ const JournalForm = React.memo(({ navigate, selectedDate: propSelectedDate }) =>
 
 
             } else {
-                await addJournalEntry(user.uid, mood, reflectionText, futureStepText, selectedDate); // ADDED: Pass selectedDate when creating new entry
-                console.log('Journal entry saved to Firestore:', { mood, textField1, textField2, selectedDate }); // ADDED: Log selectedDate on save
+                await addJournalEntry(user.uid, mood, reflectionText, futureStepText, selectedDate);
+                console.log('Journal entry saved to Firestore:', { mood, textField1, textField2, selectedDate });
                 logEvent('journal_saved_firestore', { mood: mood, textField1Length: textField1.length, textField2Length: textField2.length });
             }
-            navigate('home'); // <-- Updated navigate call, page name as string
+            navigate('home');
 
 
         } catch (error) {
             console.error("Error saving/updating journal entry to Firestore:", error);
             logEvent('journal_save_failed', { mood: mood, error: error.message });
         }
-    }, [mood, textField1, textField2, navigate, journalEntryId, selectedDate]); // ADDED: selectedDate to dependencies
+    }, [mood, textField1, textField2, navigate, journalEntryId, selectedDate]);
 
 
-    // Erase handler - useCallback for memoization
     const handleErase = useCallback(() => {
         setShowEraseConfirmModal(true);
     }, []);
 
 
-    // Confirm erase action handler - useCallback for memoization
     const confirmEraseAction = useCallback(async () => {
         setShowEraseConfirmModal(false);
         if (journalEntryId) {
@@ -177,7 +171,7 @@ const JournalForm = React.memo(({ navigate, selectedDate: propSelectedDate }) =>
                 await deleteJournalEntry(journalEntryId);
                 console.log('Journal entry deleted from Firestore:', journalEntryId);
                 logEvent('journal_deleted_firestore', { journalEntryId: journalEntryId });
-                navigate('home'); // <-- Updated navigate call, page name as string
+                navigate('home');
             } catch (error) {
                 console.error("Error deleting journal entry:", error);
                 logEvent('journal_delete_failed', { journalEntryId: journalEntryId, error: error.message });
@@ -185,44 +179,39 @@ const JournalForm = React.memo(({ navigate, selectedDate: propSelectedDate }) =>
             }
         } else {
             console.log('No journal entry ID to delete.');
-            navigate('home'); // <-- Updated navigate call, page name as string
+            navigate('home');
         }
-    }, [journalEntryId, navigate]); // Dependencies for useCallback
+    }, [journalEntryId, navigate]);
 
 
-    // Cancel erase action handler - useCallback for memoization
     const cancelEraseAction = useCallback(() => {
         setShowEraseConfirmModal(false);
     }, []);
 
 
-    // Memoized valuetext function
     const valuetext = useCallback((value) => {
         let moodIndex = moodScale(value);
         const moodOption = moodOptions[moodIndex];
         return moodOption ? moodOption.label : '';
-    }, []); // useCallback for memoization
+    }, []);
 
 
-    // Memoized valueLabelFormat function
     const valueLabelFormat = useCallback((value) => {
         let moodIndex = moodScale(value);
         const moodOption = moodOptions[moodIndex];
         return moodOption ? moodOption.label : '';
-    }, []); // useCallback for memoization
+    }, []);
 
 
-    // Memoized currentMoodLabel
     const currentMoodLabel = useMemo(() => {
         return moodOptions.find(option => option.value === mood)?.label || 'Focused';
-    }, [mood]); // useMemo for memoization
+    }, [mood]);
 
 
-    // Memoized marks array
     const marks = useMemo(() => moodOptions.map((option, index) => ({
         value: reverseMoodScale(index),
         label: '',
-    })), []); // useMemo for memoization
+    })), []);
 
 
     return (
@@ -230,15 +219,16 @@ const JournalForm = React.memo(({ navigate, selectedDate: propSelectedDate }) =>
             <Header
                 variant="journalOverview"
                 showBackArrow={true}
-                navigate={navigate} // <-- Pass navigate prop to Header
+                navigate={navigate}
             />
-            <main className="journal-form-content journal-form-single-page">
-                {/* Replace the p tag with TextGenerateEffect */}
+            <main className="motivational-section">
                 <TextGenerateEffect
                     words={"In stillness, \n progress takes \nits form."}
-                    className="journal-form-title" // Keep the same class for styling
                 />
+                </main>
 
+                <div className="divider"></div>
+                <h2 className="projects-label">Journal details</h2>
 
                 <div className="journal-form-section journal-form-section-mood">
                     <div className="mood-header">Mood: {currentMoodLabel}</div>
@@ -289,25 +279,21 @@ const JournalForm = React.memo(({ navigate, selectedDate: propSelectedDate }) =>
                     </div>
                 </div>
 
-
                 <div className="journal-form-section journal-form-section-text1">
-                    <label htmlFor="textField1" className="journal-form-label">Which moment made you feel {`<${currentMoodLabel.toLowerCase()}>`}?</label>
-                    <div className="journal-input-tile">
+                    <div className="journal-input-tile journal-input-tile-text1">
                         <textarea
                             type="text"
                             id="textField1"
-                            placeholder="Find the root of this feeling in your day."
+                            placeholder={`Which moment made you feel ${currentMoodLabel}?`}
                             value={textField1}
                             onChange={handleText1Change}
-                            className="journal-input journal-textarea journal-text-input-style"
+                            className="journal-input journal-textarea journal-text-input-style journal-text-input-placeholder"
+                            maxLength={140}
                         />
-                        <EditIcon className="journal-edit-icon" />
                     </div>
                 </div>
 
-
                 <div className="journal-form-section journal-form-section-text2">
-                    <label htmlFor="textField2" className="journal-form-label">What's one step for tomorrow?</label>
                     <div className="journal-input-tile">
                         <textarea
                             type="text"
@@ -315,24 +301,20 @@ const JournalForm = React.memo(({ navigate, selectedDate: propSelectedDate }) =>
                             placeholder="One small action to shape your path."
                             value={textField2}
                             onChange={handleText2Change}
-                            className="journal-input journal-textarea journal-text-input-style"
+                            className="journal-input journal-textarea journal-text-input-style journal-text-input-placeholder"
+                            maxLength={140}
                         />
-                        <EditIcon className="journal-edit-icon" />
                     </div>
                 </div>
 
-
                 <div className="form-navigation form-navigation-single-page">
-                    <button className="save-button" onClick={handleSubmit} disabled={loadingEntry}> {/* Disable save button while loading entry */}
-                        <SaveIcon className="button-icon" />
+                    <button className="save-button" onClick={handleSubmit} disabled={loadingEntry}>
                         Save this note
                     </button>
-                    <button className="erase-button" onClick={handleErase} disabled={loadingEntry}> {/* Disable erase button while loading entry */}
-                        <EraseIcon className="button-icon" />
+                    <button className="erase-button" onClick={handleErase} disabled={loadingEntry}>
                         Erase your thought
                     </button>
                 </div>
-            </main>
             <ConfirmModal
                 show={showEraseConfirmModal}
                 onHide={cancelEraseAction}
@@ -346,5 +328,5 @@ const JournalForm = React.memo(({ navigate, selectedDate: propSelectedDate }) =>
 });
 
 
-JournalForm.displayName = 'JournalForm'; // displayName for React.memo
+JournalForm.displayName = 'JournalForm';
 export default JournalForm;
