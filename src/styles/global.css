@@ -2955,31 +2955,30 @@ width: 100%;
   border: 1px solid var(--card-background);
 }
 
+/* == Floating Bottom Navigation == */
 .floating-navigation-container {
   position: fixed;
-  bottom: 32px; /* Slightly closer to the bottom than 40px - adjust as needed */
+  /* 40px from the bottom, centered horizontally: */
+  bottom: 40px;
   left: 50%;
   transform: translateX(-50%);
-  padding-bottom: env(safe-area-inset-bottom);
-
-  width: 280px; /* Slightly wider than before - more like Savee.it's width */
-  height: 60px; /* Slightly taller - more vertical space for icons and padding */
-  border-radius: 30px; /* Less rounded corners - soft rounded rectangle */
-
-  background-color: rgba(29, 27, 37, 0.8); /* Slightly less transparent background, adjust alpha value */
-  backdrop-filter: blur(8px); /* Slightly stronger blur - adjust blur radius */
-
+  
+  width: 224px;
+  height: 56px;
+  border-radius: 28px;
+  
+  /* Slightly transparent #1D1B25 at 64%, plus a blur: */
+  background-color: rgba(29, 27, 37, 0.64);
+  backdrop-filter: blur(4px);
+  
   display: flex;
   align-items: center;
-  justify-content: space-between; /* Use space-between for more even distribution */
-  padding-left: 24px; /* Good amount of left/right padding, like Savee.it */
-  padding-right: 24px;
-  z-index: 1000;
+  justify-content: space-around;
+  z-index: 1000; /* So it sits on top of content */
 }
 
 .floating-navigation-button {
-  height: 100%; /* Buttons take full height of container */
-  /* width: auto;  Let width be determined by icon + padding */
+  height: 40px;
   background: transparent;
   border: none;
   outline: none;
@@ -2987,12 +2986,4 @@ width: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
-  flex-shrink: 0;
-}
-
-/* Target SVG icons - smaller size */
-.floating-navigation-button svg {
-  width: 40px; /* Explicitly set SVG icon width to 20px */
-  height: 40px; /* Explicitly set SVG icon height to 20px */
-  display: block;
 }
