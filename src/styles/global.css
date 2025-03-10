@@ -2963,22 +2963,24 @@ width: 100%;
   transform: translateX(-50%);
   padding-bottom: env(safe-area-inset-bottom);
 
-  width: 240px; /* Slightly wider - let's try fixed width */
+  width: 224px; /* Let's keep a slightly wider container for spacing */
   height: 56px;
   border-radius: 28px;
 
   background-color: rgba(29, 27, 37, 0.64);
-  backdrop-filter: blur(4px); /* Keep backdrop-filter for now */
+  backdrop-filter: blur(4px);
 
   display: flex;
   align-items: center;
-  justify-content: space-evenly; /* Changed from space-around to space-evenly */
+  justify-content: space-around; /* Let's go back to space-around for more even spacing */
+  padding-left: 16px; /* Add some padding to the left and right */
+  padding-right: 16px;
   z-index: 1000;
 }
 
 .floating-navigation-button {
   height: 40px;
-  width: 40px; /* Added fixed width to buttons */
+  /* width: auto;  Let the width be determined by content */
   background: transparent;
   border: none;
   outline: none;
@@ -2986,4 +2988,12 @@ width: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0; /* Prevent buttons from shrinking */
+}
+
+/* Directly target the SVG icons within the buttons to control size */
+.floating-navigation-button svg {
+  width: 40px; /* Explicitly set icon width and height */
+  height: 40px;
+  display: block; /* Ensure SVG behaves as a block element */
 }
