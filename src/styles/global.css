@@ -2963,7 +2963,7 @@ width: 100%;
   transform: translateX(-50%);
   padding-bottom: env(safe-area-inset-bottom);
 
-  width: 224px; /* Let's keep a slightly wider container for spacing */
+  width: 224px; /* Keep the width for container size */
   height: 56px;
   border-radius: 28px;
 
@@ -2972,15 +2972,15 @@ width: 100%;
 
   display: flex;
   align-items: center;
-  justify-content: space-around; /* Let's go back to space-around for more even spacing */
-  padding-left: 16px; /* Add some padding to the left and right */
-  padding-right: 16px;
+  justify-content: space-between; /* Using space-between */
+  padding-left: 8px; /* Increased left padding */
+  padding-right: 8px; /* Increased right padding */
   z-index: 1000;
 }
 
 .floating-navigation-button {
   height: 40px;
-  /* width: auto;  Let the width be determined by content */
+  /* width: auto; Let width be determined by content */
   background: transparent;
   border: none;
   outline: none;
@@ -2988,12 +2988,12 @@ width: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
-  flex-shrink: 0; /* Prevent buttons from shrinking */
+  flex-shrink: 0;
 }
 
-/* Directly target the SVG icons within the buttons to control size */
+/* Target SVG icons - smaller size */
 .floating-navigation-button svg {
-  width: 40px; /* Explicitly set icon width and height */
-  height: 40px;
-  display: block; /* Ensure SVG behaves as a block element */
+  width: 40px; /* Explicitly set SVG icon width to 20px */
+  height: 40px; /* Explicitly set SVG icon height to 20px */
+  display: block;
 }
