@@ -2958,28 +2958,27 @@ width: 100%;
 /* == Floating Bottom Navigation == */
 .floating-navigation-container {
   position: fixed;
-  /* 40px from the bottom, centered horizontally: */
   bottom: 40px;
   left: 50%;
   transform: translateX(-50%);
   padding-bottom: env(safe-area-inset-bottom);
-  
-  width: 224px;
+
+  width: 240px; /* Slightly wider - let's try fixed width */
   height: 56px;
   border-radius: 28px;
-  
-  /* Slightly transparent #1D1B25 at 64%, plus a blur: */
+
   background-color: rgba(29, 27, 37, 0.64);
-  backdrop-filter: blur(4px);
-  
+  backdrop-filter: blur(4px); /* Keep backdrop-filter for now */
+
   display: flex;
   align-items: center;
-  justify-content: space-around;
-  z-index: 1000; /* So it sits on top of content */
+  justify-content: space-evenly; /* Changed from space-around to space-evenly */
+  z-index: 1000;
 }
 
 .floating-navigation-button {
   height: 40px;
+  width: 40px; /* Added fixed width to buttons */
   background: transparent;
   border: none;
   outline: none;
