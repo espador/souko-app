@@ -2955,32 +2955,31 @@ width: 100%;
   border: 1px solid var(--card-background);
 }
 
-/* == Floating Bottom Navigation == */
 .floating-navigation-container {
   position: fixed;
-  bottom: 40px;
+  bottom: 32px; /* Slightly closer to the bottom than 40px - adjust as needed */
   left: 50%;
   transform: translateX(-50%);
   padding-bottom: env(safe-area-inset-bottom);
 
-  width: 224px; /* Keep the width for container size */
-  height: 56px;
-  border-radius: 28px;
+  width: 280px; /* Slightly wider than before - more like Savee.it's width */
+  height: 60px; /* Slightly taller - more vertical space for icons and padding */
+  border-radius: 30px; /* Less rounded corners - soft rounded rectangle */
 
-  background-color: rgba(29, 27, 37, 0.64);
-  backdrop-filter: blur(4px);
+  background-color: rgba(29, 27, 37, 0.8); /* Slightly less transparent background, adjust alpha value */
+  backdrop-filter: blur(8px); /* Slightly stronger blur - adjust blur radius */
 
   display: flex;
   align-items: center;
-  justify-content: space-between; /* Using space-between */
-  padding-left: 8px; /* Increased left padding */
-  padding-right: 8px; /* Increased right padding */
+  justify-content: space-between; /* Use space-between for more even distribution */
+  padding-left: 24px; /* Good amount of left/right padding, like Savee.it */
+  padding-right: 24px;
   z-index: 1000;
 }
 
 .floating-navigation-button {
-  height: 40px;
-  /* width: auto; Let width be determined by content */
+  height: 100%; /* Buttons take full height of container */
+  /* width: auto;  Let width be determined by icon + padding */
   background: transparent;
   border: none;
   outline: none;
