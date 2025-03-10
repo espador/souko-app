@@ -12,6 +12,14 @@
   
 }
 
+.accent-pink {
+  color: var(--accent-pink);
+}
+
+.accent-purple {
+  color: var(--accent-purple);
+}
+
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -35,6 +43,12 @@
   border-bottom: 1px solid #312E3C;
   margin-top: 0px;
   margin-bottom: 16px;
+}
+
+.divider-timer {
+  border-bottom: 1px solid #312E3C;
+  margin-top: 68px;
+  margin-bottom: 0px;
 }
 
 .modal-title {
@@ -901,6 +915,15 @@ h2.projects-label, h2.journal-label {
   font-weight: 400;
 }
 
+h2.timer-label {
+  font-size: 16px;
+  color: var(--text-muted);
+  font-family: var(--font-commit-mono);
+  margin-bottom: 16px;
+  margin-top: 16px;
+  font-weight: 400;
+}
+
 body.allow-scroll > html {
   overflow: auto;
   height: auto;
@@ -1528,10 +1551,15 @@ body.allow-scroll > html {
   color: var(--text-muted);
 }
 
+.objective-progress-container {
+  margin-top: 16px; /* or whatever spacing you like */
+}
+
 .progress-bar {
   background-color: #27272a; /* Darker background for the progress bar */
   height: 4px;
   border-radius: 2px;
+  margin-top: 8px;
   overflow: hidden; /* Ensure fill stays within rounded corners */
 }
 

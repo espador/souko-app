@@ -1,3 +1,4 @@
+// TimeTrackerPage.jsx
 import { v4 as uuidv4 } from 'uuid';
 import React, {
   useEffect,
@@ -30,7 +31,9 @@ import '@fontsource/shippori-mincho';
 import ConfirmModal from '../components/ConfirmModal';
 import { ReactComponent as Spinner } from '../styles/components/assets/spinner.svg';
 
-// Helper: Monday-based week start
+// 1) Import our new top component
+import TimeTrackerTop from '../components/TimeTrackerTop';
+
 function getMondayOfCurrentWeek() {
   const now = new Date();
   now.setHours(0, 0, 0, 0);
@@ -39,7 +42,6 @@ function getMondayOfCurrentWeek() {
   return now.getTime();
 }
 
-// Helper: persist instance ID
 const getInstanceId = () => {
   let id = localStorage.getItem('timeTrackerInstanceId');
   if (!id) {
@@ -57,10 +59,13 @@ const TimeTrackerPage = React.memo(({ navigate, sessionId }) => {
 
   // Session data
   const [currentSession, setCurrentSession] = useState(null);
-  const [timer, setTimer] = useState(0);
+  const [timer, setTimer] = useState(0); // This is the real-time seconds
   const [isRunning, setIsRunning] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [pauseEvents, setPauseEvents] = useState([]);
+
+  // This is the "once-per-minute" value we pass to <TimeTrackerTop />
+  const [displayedElapsedTime, setDisplayedElapsedTime] = useState(0);
 
   // Timer sync
   const [baseElapsedTime, setBaseElapsedTime] = useState(0);
@@ -75,11 +80,8 @@ const TimeTrackerPage = React.memo(({ navigate, sessionId }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [showStopConfirmModal, setShowStopConfirmModal] = useState(false);
   const [showResetConfirmModal, setShowResetConfirmModal] = useState(false);
-  const timerRef = useRef(null);
 
-  // -----------------------------
-  // 1) Auth check => load session
-  // -----------------------------
+  // 1) Auth check => load session doc
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (currentUser) => {
       if (!currentUser) {
@@ -107,9 +109,7 @@ const TimeTrackerPage = React.memo(({ navigate, sessionId }) => {
     return () => unsub();
   }, [navigate, sessionId]);
 
-  // ----------------------------
-  // 2) Real-time listener
-  // ----------------------------
+  // 2) Real-time listener for session updates
   useEffect(() => {
     let unsubscribe;
     if (sessionId) {
@@ -162,16 +162,16 @@ const TimeTrackerPage = React.memo(({ navigate, sessionId }) => {
     return () => unsubscribe && unsubscribe();
   }, [sessionId, instanceId]);
 
-  // ----------------------------
-  // 3) Local ticking timer
-  // ----------------------------
+  // 3) Local ticking timer (updates every second in UI)
   useEffect(() => {
     let interval;
     if (sessionClientStartTime) {
       interval = setInterval(() => {
         const now = Date.now();
-        let elapsedSeconds = Math.floor((now - sessionClientStartTime) / 1000);
-        elapsedSeconds = Math.max(0, elapsedSeconds);
+        const elapsedSeconds = Math.max(
+          0,
+          Math.floor((now - sessionClientStartTime) / 1000)
+        );
         setTimer(baseElapsedTime + elapsedSeconds);
       }, 1000);
     }
@@ -180,9 +180,20 @@ const TimeTrackerPage = React.memo(({ navigate, sessionId }) => {
     };
   }, [sessionClientStartTime, baseElapsedTime]);
 
-  // ----------------------------
+  // 3b) Slow updates for displayedElapsedTime => once per minute
+  useEffect(() => {
+    // Immediately set at mount or whenever timer changes
+    setDisplayedElapsedTime(timer);
+
+    // Then set an interval every 300s to re-sync
+    const interval = setInterval(() => {
+      setDisplayedElapsedTime(timer);
+    }, 300000);
+
+    return () => clearInterval(interval);
+  }, [timer]);
+
   // 4) Pause
-  // ----------------------------
   const handlePause = useCallback(async () => {
     setIsPaused(true);
     if (sessionId) {
@@ -202,9 +213,7 @@ const TimeTrackerPage = React.memo(({ navigate, sessionId }) => {
     }
   }, [sessionId, timer, instanceId]);
 
-  // ----------------------------
   // 5) Resume
-  // ----------------------------
   const handleResume = useCallback(async () => {
     setIsPaused(false);
     if (sessionId) {
@@ -227,9 +236,7 @@ const TimeTrackerPage = React.memo(({ navigate, sessionId }) => {
     setIsRunning(true);
   }, [sessionId, instanceId]);
 
-  // ----------------------------
-  // 6) Stop flow
-  // ----------------------------
+  // 6) Stop flow => show modal
   const handleStop = useCallback(() => {
     setShowStopConfirmModal(true);
   }, []);
@@ -330,11 +337,8 @@ const TimeTrackerPage = React.memo(({ navigate, sessionId }) => {
     setPauseEvents([]);
   }, [navigate, sessionId, currentSession, timer, pauseEvents, user]);
 
-  // ----------------------------
-  // 7) Reset Timer
-  // ----------------------------
+  // 7) Reset Timer => show modal
   const handleReset = useCallback(() => {
-    // Only prompt confirm if there's something to reset
     if (isRunning || timer > 0) {
       setShowResetConfirmModal(true);
     }
@@ -363,9 +367,7 @@ const TimeTrackerPage = React.memo(({ navigate, sessionId }) => {
     }
   }, [sessionId]);
 
-  // ----------------------------
   // 8) Take Over if conflict
-  // ----------------------------
   const handleTakeOver = async () => {
     if (sessionId) {
       const sessionRef = doc(db, 'sessions', sessionId);
@@ -400,9 +402,7 @@ const TimeTrackerPage = React.memo(({ navigate, sessionId }) => {
     navigate('home');
   };
 
-  // ----------------------------
   // 9) Sign Out
-  // ----------------------------
   const handleSignOut = useCallback(async () => {
     try {
       if (sessionId) {
@@ -447,7 +447,13 @@ const TimeTrackerPage = React.memo(({ navigate, sessionId }) => {
     );
   }
 
-  const { project, isBillable, hourRate, currencyId } = currentSession;
+  const {
+    project,
+    isBillable,
+    hourRate,
+    currencyId,
+    sessionObjective = 'no objective',
+  } = currentSession;
 
   return (
     <div className="time-tracker-page">
@@ -459,33 +465,30 @@ const TimeTrackerPage = React.memo(({ navigate, sessionId }) => {
         onProfileClick={() => setIsSidebarOpen(true)}
       />
 
-      <div className="motivational-section">
-        The song of your roots is the song of now.
-      </div>
+      {/* TimeTrackerTop: Motivational text + Progress Bar */}
+      <TimeTrackerTop
+        projectName={project}
+        hourRate={hourRate}
+        currencyId={currencyId}
+        elapsedTime={displayedElapsedTime} 
+        sessionObjective={sessionObjective}
+      />
 
-      <h2 className="projects-label">Session details</h2>
-      <div className="input-tile-timer" style={{ marginTop: '16px' }}>
-        <strong>Project: </strong>&nbsp;{project}
-      </div>
-      <div className="input-tile-timer" style={{ marginTop: '8px' }}>
-        <strong>Billable: </strong>&nbsp;{isBillable ? 'Yes' : 'No'}
-      </div>
-      <div className="input-tile-timer" style={{ marginTop: '8px' }}>
-        <strong>Rate: </strong>&nbsp;{hourRate} {currencyId}
-      </div>
+      <div className="divider-timer"></div>
+      <h2 className="timer-label">
+        /Consultancy in progress
+      </h2>
 
-      {/* Bottom bar holding timer + controls */}
+      {/* Timer + Controls */}
       <div className="bottom-sticky-bar">
         <div className={`timer ${isPaused ? 'paused' : ''}`}>
           {new Date(timer * 1000).toISOString().substr(11, 8)}
         </div>
-
         <div className="buttons-row">
-          {/* Reset button */}
+          {/* Reset */}
           <button
             className="control-button small"
             onClick={handleReset}
-            /* Enabled if the session is running or has counted time */
             disabled={!(isRunning || timer > 0)}
           >
             {(isRunning || timer > 0) ? (
@@ -495,7 +498,7 @@ const TimeTrackerPage = React.memo(({ navigate, sessionId }) => {
             )}
           </button>
 
-          {/* Stop button - ALWAYS clickable to confirm stop */}
+          {/* Stop */}
           <button
             className="control-button fab-like"
             onClick={handleStop}
@@ -527,7 +530,7 @@ const TimeTrackerPage = React.memo(({ navigate, sessionId }) => {
         </div>
       </div>
 
-      {/* Confirm modals, sidebar, conflict modal, etc. */}
+      {/* Modals */}
       <ConfirmModal
         show={showStopConfirmModal}
         onHide={() => setShowStopConfirmModal(false)}
