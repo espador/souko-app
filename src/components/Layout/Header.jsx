@@ -1,5 +1,4 @@
 // src/components/Layout/Header.jsx
-
 import React, { useState, useEffect, memo } from 'react';
 import { ReactComponent as ReturnIcon } from '../../styles/components/assets/return.svg';
 import { ReactComponent as SoukoLogoHeader } from '../../styles/components/assets/Souko-logo-header.svg';
@@ -10,7 +9,7 @@ import MobileStepper from '@mui/material/MobileStepper';
 import '../../styles/global.css';
 
 const Header = memo(({
-  variant = "home", 
+  variant = "home",
   title,
   showBackArrow,
   onBack,
@@ -20,7 +19,8 @@ const Header = memo(({
   onProfileClick,
   onActionClick = () => {},
   currentStep = 0,
-  navigate
+  navigate,
+  soukoNumber // Add soukoNumber as a prop
 }) => {
   const [currentTime, setCurrentTime] = useState('');
 
@@ -33,13 +33,15 @@ const Header = memo(({
         const seconds = String(now.getSeconds()).padStart(2, '0');
         const day = String(now.getDate()).padStart(2, '0');
         const month = String(now.getMonth() + 1).padStart(2, '0');
-        setCurrentTime(`${hours}:${minutes}:${seconds}.${day}.${month}`);
+        // Update currentTime format to include Souko number
+        const timeString = `${hours}:${minutes}:${seconds}.${day}.${month}`;
+        setCurrentTime(`S${soukoNumber ? soukoNumber + '.' : ''}${timeString}`);
       };
       tick();
       const intervalId = setInterval(tick, 1000);
       return () => clearInterval(intervalId);
     }
-  }, [showLiveTime]);
+  }, [showLiveTime, soukoNumber]); // Add soukoNumber to dependency array
 
   const handleBackNavigation = () => {
     if (onBack) {
@@ -63,8 +65,8 @@ const Header = memo(({
           steps={5}
           activeStep={currentStep}
           position="static"
-          nextButton={<div />} 
-          backButton={<div />} 
+          nextButton={<div />}
+          backButton={<div />}
         />
       </div>
     );

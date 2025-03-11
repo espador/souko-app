@@ -1,3 +1,4 @@
+// src/pages/HomePage.jsx
 import React, { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import { auth, db } from '../services/firebase';
 import { signOut } from 'firebase/auth';
@@ -273,6 +274,7 @@ const HomePage = React.memo(({ navigate, skipAutoRedirect, currentPage }) => {
         user={userProfile}
         showLiveTime={true}
         onProfileClick={openSidebar}
+        soukoNumber={userProfile?.soukoNumber} // Pass soukoNumber to Header
       />
       <main className="homepage-content">
         <section className="motivational-section">

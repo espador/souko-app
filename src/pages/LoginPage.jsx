@@ -1,9 +1,10 @@
+// src/pages/LoginPage.jsx
 import React, { useEffect, useCallback, useState } from 'react';
 // We import onAuthStateChanged, getRedirectResult, signInWithPopup
-import { 
-  signInWithPopup, 
-  getRedirectResult, 
-  onAuthStateChanged 
+import {
+  signInWithPopup,
+  getRedirectResult,
+  onAuthStateChanged
 } from 'firebase/auth';
 import { auth, googleProvider, db } from '../services/firebase';
 import '../styles/global.css';
@@ -12,7 +13,8 @@ import {
   doc,
   getDoc,
   setDoc,
-  serverTimestamp
+  serverTimestamp,
+  runTransaction // Import runTransaction
 } from 'firebase/firestore';
 import { TextGenerateEffect } from '../styles/components/text-generate-effect.tsx';
 import Header from '../components/Layout/Header';
@@ -49,6 +51,26 @@ const LoginPage = ({ navigate }) => {
       const profileSnap = await getDoc(profileRef);
 
       if (!profileSnap.exists()) {
+        // Get and increment soukoNumber in a transaction
+        let newSoukoNumber = '';
+        try {
+          await runTransaction(db, async (transaction) => {
+            const counterRef = doc(db, 'counters', 'soukoCounter');
+            const counterDoc = await transaction.get(counterRef);
+            if (!counterDoc.exists()) {
+              throw new Error("Counter document does not exist!");
+            }
+            const currentCount = counterDoc.data().count;
+            const nextCount = currentCount + 1;
+            transaction.update(counterRef, { count: nextCount });
+            newSoukoNumber = String(nextCount).padStart(4, '0');
+          });
+          console.log("Transaction successfully committed, new soukoNumber:", newSoukoNumber);
+        } catch (error) {
+          console.error("Transaction failed: ", error);
+          newSoukoNumber = '0000'; // Default soukoNumber in case of error
+        }
+
         await setDoc(profileRef, {
           uid: user.uid,
           email: user.email,
@@ -57,8 +79,10 @@ const LoginPage = ({ navigate }) => {
           featureAccessLevel: 'free',
           createdAt: serverTimestamp(),
           updatedAt: serverTimestamp(),
+          soukoNumber: newSoukoNumber, // Save soukoNumber to profile
+          onboardingComplete: false, // Set onboarding to false for new users
         });
-        console.log('processLoginResult - New profile created for user:', user.uid);
+        console.log('processLoginResult - New profile created for user:', user.uid, 'with soukoNumber:', newSoukoNumber);
       } else {
         console.log('processLoginResult - Profile already exists for user:', user.uid);
       }
