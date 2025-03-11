@@ -2691,7 +2691,7 @@ width: 100%;
 /* The container that holds the timer + buttons at the bottom */
 .bottom-sticky-bar {
   position: fixed;
-  bottom: 64px;            /* pinned to bottom of viewport */
+  bottom: 40px;            /* pinned to bottom of viewport */
   left: 50%;
   transform: translateX(-50%);
   width: 100%;
@@ -2713,7 +2713,7 @@ width: 100%;
   line-height: 64px;
   color: var(--accent-color);
   text-align: center;
-  margin-bottom: 32px;            /* no extra margin needed now */
+  margin-bottom: 16px;            /* no extra margin needed now */
   transition: color 0.3s ease;
 }
 
@@ -2727,7 +2727,7 @@ width: 100%;
   flex-direction: row;
   justify-content: center;
   gap: 32px;  /* space between reset, stop, pause/resume */
-  margin-bottom: 40px;
+  margin-bottom: 0px;
 }
 
 /* Reuse or rename your control-button classes as needed */
@@ -2967,23 +2967,18 @@ width: 100%;
 /* == Floating Bottom Navigation == */
 .floating-navigation-container {
   position: fixed;
-  /* 40px from the bottom, centered horizontally: */
   bottom: 40px;
   left: 50%;
   transform: translateX(-50%);
-  
-  width: 224px;
+  width: 264px;
   height: 56px;
   border-radius: 28px;
-  
-  /* Slightly transparent #1D1B25 at 64%, plus a blur: */
   background-color: rgba(29, 27, 37, 0.64);
   backdrop-filter: blur(4px);
-  
   display: flex;
   align-items: center;
   justify-content: space-around;
-  z-index: 1000; /* So it sits on top of content */
+  z-index: 1000;
 }
 
 .floating-navigation-button {
@@ -2995,4 +2990,159 @@ width: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+/* Additions to global.css for session-section */
+
+.sessions-section {
+  /* Inherits general section styling from projects-section if needed */
+  display: flex;
+  flex-direction: column;
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 20px;
+  margin-top: 0px;
+  margin-bottom: 24px;
+}
+
+.sessions-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0px;
+}
+
+.sessions-label {
+  font-size: 16px;
+  color: var(--text-muted);
+  font-family: var(--font-commit-mono);
+  margin-bottom: 16px;
+  margin-top: 0px;
+}
+
+.sessions-list {
+  list-style: none;
+  color: var(--text-color);
+  font-size: 20px;
+  line-height: 24px;
+  padding: 0;
+  margin: 0;
+}
+
+.session-item {
+  margin-bottom: 16px;
+  cursor: pointer; /* If session items are clickable */
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 20pt;
+}
+
+.session-item-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.session-left-content {
+  display: flex;
+  align-items: center;
+  gap: 16px; /* Space between image and text content */
+}
+
+.session-right-content {
+  display: flex;
+  align-items: center;
+}
+
+.session-image-container {
+  width: 40px;
+  height: 40px;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+}
+
+.session-image {
+  width: 100%;
+  height: auto;
+  object-fit: cover;
+}
+
+.default-session-image {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: var(--text-color);
+  font-weight: 400;
+  font-size: 20px;
+}
+
+
+.session-info {
+  display: flex;
+  flex-direction: column; /* Stack items vertically */
+}
+
+.session-name-time {
+  display: flex;
+  flex-direction: column; /* Stack start time and label below project name */
+  align-items: flex-start; /* Align items to the start of the container */
+  gap: 0px; /* Remove gap between name and time/label */
+}
+
+.session-project-name {
+  font-weight: 400;
+  color: var(--text-color);
+  font-size: 16px;
+  line-height: 20px;
+  margin-right: 8px; /* Add some space after project name */
+}
+
+.session-start-time {
+  font-weight: 400;
+  color: var(--text-muted);
+  font-size: 14px; /* Slightly smaller for start time */
+  line-height: 20px;
+  margin-right: 0px; /* Remove margin right */
+}
+
+.session-label {
+  font-weight: 400;
+  color: var(--text-muted);
+  font-size: 14px;
+  line-height: 20px;
+  margin-left: 0px; /* Remove margin left */
+}
+
+
+.session-elapsed-time {
+  font-weight: 400;
+  color: var(--text-color);
+  font-size: 16px;
+  line-height: 20px;
+  text-align: right; /* Align time to the right */
+  margin-left: auto; /* Push elapsed time to the right */
+}
+
+/* If you had an "All sessions" link, style it similarly to "All projects" */
+.sessions-all-link {
+  font-size: 16px;
+  color: var(--text-muted);
+  font-family: var(--font-commit-mono);
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.sessions-all-link:hover {
+  color: var(--text-color);
+}
+
+.session-details-time-label {
+  display: flex; /* Keep start time and label in one line */
+  align-items: baseline; /* Align them on the same baseline */
+  gap: 8px; /* Add gap between start time and label */
 }

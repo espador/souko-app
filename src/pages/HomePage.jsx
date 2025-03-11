@@ -8,12 +8,12 @@ import {
   where,
   doc,
   getDoc,
+  orderBy, // Import orderBy
+  limit // Import limit
 } from 'firebase/firestore';
 import { formatTime } from '../utils/formatTime';
 import Header from '../components/Layout/Header';
 import '../styles/global.css';
-// Removed: import { ReactComponent as StartTimerIcon } from ...
-// Removed: import { ReactComponent as StopTimerIcon } from ...
 import { ReactComponent as Spinner } from '../styles/components/assets/spinner.svg';
 import '@fontsource/shippori-mincho';
 import Sidebar from '../components/Layout/Sidebar';
@@ -113,12 +113,21 @@ const HomePage = React.memo(({ navigate, skipAutoRedirect, currentPage }) => {
         ...doc.data(),
       }));
 
-      // Sessions
-      const sessionsSnap = await getDocs(
-        query(collection(db, 'sessions'), where('userId', '==', uid))
+      // Sessions - Fetching only 3 most recent sessions with status "stopped"
+      const sessionsQuery = query(
+        collection(db, 'sessions'),
+        where('userId', '==', uid),
+        where('status', '==', 'stopped'), // ADDED: Filter for status "stopped"
+        orderBy('startTime', 'desc'), // Order by startTime descending for recent sessions
+        limit(3) // Limit to 3 sessions
       );
-      const userSessions = sessionsSnap.docs.map((doc) => doc.data());
+      const sessionsSnap = await getDocs(sessionsQuery);
+      const userSessions = sessionsSnap.docs.map((doc) => ({
+        id: doc.id, // Add session id if needed for keys
+        ...doc.data(),
+      }));
       const userHasTrackedEver = userSessions.length > 0;
+
 
       // Journal (last 7 days)
       const sevenDaysAgo = new Date();
@@ -222,19 +231,17 @@ const HomePage = React.memo(({ navigate, skipAutoRedirect, currentPage }) => {
   // -------------------------------------------
   // 4. Computed Values
   // -------------------------------------------
-  const projectsToRender = useMemo(() => {
-    return [...projects]
-      .sort((a, b) => (b.lastTrackedTime || 0) - (a.lastTrackedTime || 0))
-      .slice(0, 3);
-  }, [projects]);
+  const sessionsToRender = useMemo(() => {
+    return [...sessions]; // Already limited to 3 in fetchHomeData and ordered by recent
+  }, [sessions]);
 
-  const totalSessionTime = useMemo(() => {
-    return sessions.reduce((acc, session) => {
-      const pid = session.projectId || 'Unknown Project';
-      acc[pid] = (acc[pid] || 0) + (session.elapsedTime || 0);
+  const projectMap = useMemo(() => {
+    return projects.reduce((acc, project) => {
+      acc[project.id] = project;
       return acc;
     }, {});
-  }, [sessions]);
+  }, [projects]);
+
 
   const weeklyTrackedTime = userProfile?.weeklyTrackedTime || 0;
 
@@ -245,6 +252,19 @@ const HomePage = React.memo(({ navigate, skipAutoRedirect, currentPage }) => {
       </div>
     );
   }
+
+  const formatSessionStartTime = (startTime) => {
+    if (!startTime) return 'N/A';
+    const date = startTime.toDate(); // Convert Firestore Timestamp to JavaScript Date
+    let hours = date.getHours();
+    let minutes = date.getMinutes();
+
+    hours = String(hours).padStart(2, '0'); // Pad with 0 if needed to be 2 digits
+    minutes = String(minutes).padStart(2, '0'); // Pad with 0 if needed to be 2 digits
+
+    return `${hours}:${minutes}`;
+  };
+
 
   return (
     <div className="homepage">
@@ -284,57 +304,74 @@ const HomePage = React.memo(({ navigate, skipAutoRedirect, currentPage }) => {
           loading={false}
         />
 
-        <section className="projects-section">
-          <div className="projects-header">
-            <h2 className="projects-label">Your projects</h2>
-            <div className="projects-actions">
+        <section className="sessions-section">
+          <div className="sessions-header">
+            <h2 className="sessions-label">Recent sessions</h2>
+            {/* <div className="sessions-actions">  // If you want an "All sessions" link in the future
               <button
-                onClick={() => navigate('projects')}
-                className="projects-all-link"
+                onClick={() => navigate('sessions')} // Define sessions page if needed
+                className="sessions-all-link"
               >
                 All
               </button>
-            </div>
+            </div> */}
           </div>
-          {projectsToRender.length > 0 ? (
-            <ul className="projects-list">
-              {projectsToRender.map((project) => (
-                <li
-                  key={project.id}
-                  className="project-item"
-                  onClick={() =>
-                    navigate('project-detail', { projectId: project.id })
-                  }
-                >
-                  <div className="project-image-container">
-                    {project.imageUrl ? (
-                      <img
-                        src={project.imageUrl}
-                        alt={project.name}
-                        className="project-image"
-                      />
-                    ) : (
-                      <div
-                        className="default-project-image"
-                        style={{ backgroundColor: '#FE2F00' }}
-                      >
-                        <span>
-                          {project.name?.charAt(0).toUpperCase() || 'P'}
-                        </span>
+          {sessionsToRender.length > 0 ? (
+            <ul className="sessions-list">
+              {sessionsToRender.map((session) => {
+                const project = projectMap[session.projectId];
+                const projectName = project?.name || 'Unknown Project';
+                const projectImageUrl = project?.imageUrl;
+                const startTimeFormatted = formatSessionStartTime(session.startTime); // NEW CORRECT FORMATTING
+                const elapsedTimeFormatted = formatTime(session.elapsedTime, 'xxh xxm');
+                return (
+                  <li
+                    key={session.id}
+                    className="session-item"
+                    onClick={() =>
+                      navigate('session-detail', { sessionId: session.id }) // Navigate to session detail page if you have one
+                    }
+                  >
+                    <div className="session-item-container">
+                      <div className="session-left-content">
+                        <div className="session-image-container">
+                          {projectImageUrl ? (
+                            <img
+                              src={projectImageUrl}
+                              alt={projectName}
+                              className="session-image"
+                            />
+                          ) : (
+                            <div
+                              className="default-session-image"
+                              style={{ backgroundColor: '#FE2F00' }}
+                            >
+                              <span>
+                                {projectName?.charAt(0).toUpperCase() || 'P'}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                        <div className="session-info">
+                          <div className="session-project-name">{projectName}</div> {/* Project Name */}
+                          <div className="session-details-time-label">
+                            <span className="session-start-time">{startTimeFormatted}</span> {/* Start Time */}
+                            {session.sessionLabel && <span className="session-label"> {session.sessionLabel}</span>} {/* Session Label */}
+                          </div>
+                        </div>
                       </div>
-                    )}
-                  </div>
-                  <div className="project-name">{project.name}</div>
-                  <div className="project-total-time">
-                    {totalSessionTime[project.id]
-                      ? formatTime(totalSessionTime[project.id])
-                      : formatTime(0)}
-                  </div>
-                </li>
-              ))}
+                      <div className="session-right-content">
+                        <div className="session-elapsed-time">
+                          {elapsedTimeFormatted}
+                        </div>
+                      </div>
+                    </div>
+                  </li>
+                );
+              })}
             </ul>
           ) : (
-            <p>No projects found. Start tracking to see results here!</p>
+            <p>No sessions tracked yet. Start tracking to see results here!</p>
           )}
         </section>
       </main>

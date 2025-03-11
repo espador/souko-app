@@ -15,8 +15,6 @@ import TimeTrackerPage from './pages/TimeTrackerPage';
 import CreateProjectPage from './pages/CreateProjectPage';
 import ProjectDetailPage from './pages/ProjectDetailPage';
 import SessionDetailPage from './pages/SessionDetailPage';
-// *** REMOVE the old SessionOverviewPage ***
-// import SessionOverviewPage from './pages/SessionOverviewPage';  // <--- Deleted
 import ProjectOverviewPage from './pages/ProjectOverviewPage';
 import JournalOverviewPage from './pages/JournalOverviewPage';
 import JournalCountdown from './components/Journal/JournalCountdown';

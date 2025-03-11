@@ -6,8 +6,6 @@ import { doc, getDoc } from 'firebase/firestore';
 import JournalUnfilledIcon from '../../styles/components/assets/journal-future.png';
 import JournalLoadingIcon from '../../styles/components/assets/journal-loading.png';
 
-// If you have actual import paths for these mood icons, keep them. 
-// Otherwise, the require statements are fine:
 const moodIcons = {
   neutral: require('../../styles/components/assets/mood-neutral.png'),
   inspired: require('../../styles/components/assets/mood-inspired.png'),
