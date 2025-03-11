@@ -490,7 +490,6 @@ const TimeTrackerPage = React.memo(({ navigate, sessionId }) => {
         onProfileClick={() => setIsSidebarOpen(true)}
       />
 
-      {/* TimeTrackerTop: Motivational text + Progress Bar */}
       <TimeTrackerTop
         projectName={project}
         hourRate={hourRate}
@@ -498,15 +497,7 @@ const TimeTrackerPage = React.memo(({ navigate, sessionId }) => {
         elapsedTime={displayedElapsedTime}
         sessionObjective={sessionObjective}
       />
-
-      {/* Divider */}
       <div className="divider-timer"></div>
-
-      {/*
-         Instead of "/Consultancy in progress",
-         show something like "/Designing in progress"
-         dynamically based on sessionLabel.
-      */}
       <h2 className="timer-label">
         /{sessionLabel} in progress
       </h2>

@@ -12,14 +12,6 @@
   
 }
 
-.accent-pink {
-  color: var(--accent-pink);
-}
-
-.accent-purple {
-  color: var(--accent-purple);
-}
-
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -572,6 +564,14 @@ p {
 
 .accent-text {
   color: var(--accent-color);
+}
+
+.accent-pink {
+  color: var(--accent-pink);
+}
+
+.accent-purple {
+  color: var(--accent-purple);
 }
 
 .app-container {
@@ -1327,10 +1327,6 @@ body.allow-scroll > html {
   color: var(--text-color);
 }
 
-.motivational-section .accent-text {
-  color: var(--accent-color);
-}
-
 .journal-overview-content {
   padding: 0px;
 }
@@ -1679,11 +1675,6 @@ body.allow-scroll > html {
   flex-direction: column;
 }
 
-/* Color only "Souko" in accent color */
-.accent-text {
-  color: var(--accent-color);
-}
-
 .onboarding-description {
   font-size: 16px;
   line-height: 24px;
@@ -1805,11 +1796,6 @@ body.allow-scroll > html {
   /* No need for extra bottom padding because of sticky buttons */
 }
 
-/* Color words in accent color */
-.accent-text {
-  color: var(--accent-color);
-}
-
 .mood-container {
   margin-top: 0px;
   margin-bottom: 16px; /* Reduced bottom margin */
@@ -1864,11 +1850,6 @@ body.allow-scroll > html {
   display: flex;
   flex-direction: column;
   /* No need for extra bottom padding if using FAB */
-}
-
-/* Color only "play" in accent color */
-.accent-text {
-  color: var(--accent-color);
 }
 
 /* Reusing onboarding-description style from OnboardingStep1.css */
@@ -3145,4 +3126,114 @@ width: 100%;
   display: flex; /* Keep start time and label in one line */
   align-items: baseline; /* Align them on the same baseline */
   gap: 8px; /* Add gap between start time and label */
+}
+
+.journal-overview-content {
+  padding: 0px;
+  margin-top: 0px; /* Add some margin below filter section */
+}
+
+.journal-entries-section {
+  margin-top: 0px; /* Adjust as needed */
+}
+
+.journal-entries-list {
+  list-style: none;
+  padding: 0;
+  margin-top: 0px;
+}
+
+.journal-entry-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  border-radius: 8px;
+}
+
+.entry-date {
+  font-size: 16px;
+  line-height: 20px;
+  color: var(--text-color); /* Or var(--text-color) if you want it less muted */
+}
+
+.entry-mood {
+  font-size: 16px;
+  line-height: 20px;
+  color: var(--text-muted);
+  font-weight: bold; /* Make mood text bold */
+}
+
+
+/* Journal Filter Section */
+.journal-filter-section {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px; /* Space below the filter section */
+}
+
+.journal-filter-container {
+    display: flex;
+    justify-content: space-between; /* Align dropdown and streak to edges */
+    align-items: center; /* Vertically align items */
+    width: 100%; /* Take full width of the container */
+}
+
+.month-dropdown-wrapper {
+  position: relative; /* For positioning the dropdown arrow */
+  display: flex; /* To contain select and arrow */
+  align-items: center;
+}
+
+.month-dropdown {
+  background-color: transparent;
+  color: var(--text-color);
+  border: 1px solid var(--border-color);
+  font-family: var(--font-commit-mono);
+  font-size: 16px;
+  cursor: pointer;
+  padding: 8px 32px 8px 16px;
+  border-radius: 0px;
+  appearance: none; /* Remove default dropdown arrow */
+  -webkit-appearance: none; /* For Safari */
+  -moz-appearance: none; /* For Firefox */
+  padding-right: 30px; /* Space for arrow */
+  outline: none; /* Remove default focus outline */
+}
+
+.month-dropdown:focus {
+  border-color: var(--text-muted); /* Highlight on focus if desired */
+}
+
+.month-dropdown::-ms-expand {
+  display: none; /* Hide default arrow in IE */
+}
+
+/* Streak Container */
+.streak-container {
+    display: flex;
+    align-items: center;
+}
+
+.your-streak-text {
+    font-family: var(--font-commit-mono);
+    font-size: 16px;
+    color: var(--text-muted);
+    margin-right: 8px;
+}
+
+.journal-badge {
+    background-color: var(--accent-color);
+    color: var(--card-background);
+    width: 24px;
+    height: 24px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-family: var(--font-commit-mono);
+    font-size: 12px;
+    font-weight: 700;
+    margin-left: 4px;
+    margin-bottom: 0px; /* Adjust to 0 to align with text */
 }

@@ -1,38 +1,52 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { auth, db } from '../services/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
-import { collection, query, where, onSnapshot, orderBy } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, orderBy, getDoc, doc } from 'firebase/firestore';
 import Header from '../components/Layout/Header';
 import '@fontsource/shippori-mincho';
 import { TextGenerateEffect } from '../styles/components/text-generate-effect.tsx';
 import '../styles/global.css';
+import { format } from 'date-fns';
+import { ReactComponent as DropdownIcon } from '../styles/components/assets/dropdown.svg';
 
-const CACHE_DURATION_MS = 30000; // 30 seconds
+const CACHE_DURATION_MS = 30000;
 
+const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
-const JournalOverviewPage = ({ navigate }) => { // <-- Receive navigate prop
+const JournalOverviewPage = ({ navigate }) => {
     const [user, setUser] = useState(null);
     const [journalEntries, setJournalEntries] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [dataLoadCounter, setDataLoadCounter] = useState(0); // Counter for data loading
+    const [loadingJournalEntries, setLoadingJournalEntries] = useState(true);
+    const [loadingProfileData, setLoadingProfileData] = useState(true);
+    const [dataLoadCounter, setDataLoadCounter] = useState(0);
+    const [selectedMonth, setSelectedMonth] = useState(new Date());
+    const [currentStreak, setCurrentStreak] = useState(0);
+    const [totalJournalEntriesCount, setTotalJournalEntriesCount] = useState(0);
+    const [mostFrequentMood, setMostFrequentMood] = useState(null);
 
 
-    // Helper function to convert Firestore Timestamp to Date - memoized
     const convertTimestamp = useCallback((timestamp) => {
-        return timestamp && typeof timestamp.toDate === 'function'
-            ? timestamp.toDate()
-            : null;
+        if (!timestamp) return null; // Handle null or undefined timestamp
+        try {
+            const date = timestamp.toDate();
+            if (date instanceof Date && !isNaN(date)) {
+                return date;
+            } else {
+                console.error("convertTimestamp: Invalid Date object", timestamp);
+                return null;
+            }
+        } catch (e) {
+            console.error("convertTimestamp error:", e, timestamp);
+            return null;
+        }
     }, []);
 
-
-    // Load cached journal data if available - memoized
     const loadCachedData = useCallback((uid) => {
         const cachedStr = localStorage.getItem(`journalOverviewData_${uid}`);
         if (cachedStr) {
             try {
                 const cached = JSON.parse(cachedStr);
                 if (Date.now() - cached.timestamp < CACHE_DURATION_MS) {
-                    setJournalEntries(cached.journalEntries || []);
                     return true;
                 }
             } catch (e) {
@@ -42,8 +56,6 @@ const JournalOverviewPage = ({ navigate }) => { // <-- Receive navigate prop
         return false;
     }, []);
 
-
-    // Cache data function - memoized
     const cacheData = useCallback((uid, journalEntries) => {
         const dataToCache = {
             journalEntries: journalEntries,
@@ -52,132 +64,197 @@ const JournalOverviewPage = ({ navigate }) => { // <-- Receive navigate prop
         localStorage.setItem(`journalOverviewData_${uid}`, JSON.stringify(dataToCache));
     }, []);
 
-
-    // Fetch data and handle real-time updates - useCallback for dependency optimization
-    const fetchData = useCallback(async (uid) => {
-        if (loadCachedData(uid)) {
-            setLoading(false); // If loaded from cache, no need to wait for firebase
-        } else {
-            setLoading(true); // Only set loading to true if not loaded from cache, or before refetching from Firebase
-        }
+    const fetchData = useCallback(async (uid, month) => {
+        setLoadingJournalEntries(true);
+        const startOfMonth = new Date(month.getFullYear(), month.getMonth(), 1);
+        const endOfMonth = new Date(month.getFullYear(), month.getMonth() + 1, 0, 23, 59, 59, 999);
 
         const journalQuery = query(
             collection(db, 'journalEntries'),
             where('userId', '==', uid),
-            orderBy('createdAt', 'desc') // Order by createdAt for initial load and updates
+            where('createdAt', '>=', startOfMonth),
+            where('createdAt', '<=', endOfMonth),
+            orderBy('createdAt', 'desc')
         );
-
 
         let unsubJournal;
 
-
         const handleJournalSnapshot = (snapshot) => {
-            const fetchedEntries = snapshot.docs.map((doc) => ({
-                id: doc.id,
-                ...doc.data(),
-                createdAt: convertTimestamp(doc.data().createdAt), // Use memoized convertTimestamp
-            }));
+            const fetchedEntries = snapshot.docs.map((doc) => {
+                const data = doc.data();
+                return {
+                    id: doc.id,
+                    ...data,
+                    createdAt: convertTimestamp(data.createdAt),
+                };
+            });
             setJournalEntries(fetchedEntries);
-            setDataLoadCounter(prevCounter => prevCounter + 1); // Increment counter when journal entries loaded
+            setDataLoadCounter(prevCounter => prevCounter + 1);
+            setLoadingJournalEntries(false); // Move setLoadingJournalEntries(false) here, after entries are set
         };
 
 
         unsubJournal = onSnapshot(journalQuery, handleJournalSnapshot, error => {
             console.error("Journal entries onSnapshot error:", error);
-            setDataLoadCounter(prevCounter => prevCounter + 1); // Ensure counter is incremented even on error
+            setLoadingJournalEntries(false); // Ensure loading is set to false even on error
+            setDataLoadCounter(prevCounter => prevCounter + 1);
         });
-
 
         return () => {
             if (unsubJournal) unsubJournal();
         };
+    }, [convertTimestamp]);
 
-
-    }, [convertTimestamp, loadCachedData]); // Dependencies array for useCallback
-
-
-    // Set loading to false and cache data after data is loaded
-    useEffect(() => {
-        if (dataLoadCounter >= 1 && user) { // dataLoadCounter >= 1 enough as we only have journal entries loading
-            cacheData(user.uid, journalEntries);
-            setLoading(false);
-            setDataLoadCounter(0); // Reset counter
+    const fetchProfileData = useCallback(async (uid) => {
+        setLoadingProfileData(true);
+        try {
+            const profileRef = doc(db, 'profiles', uid);
+            const profileSnap = await getDoc(profileRef);
+            if (profileSnap.exists()) {
+                const profileData = profileSnap.data();
+                setCurrentStreak(profileData.currentStreak || 0);
+                setTotalJournalEntriesCount(profileData.monthlyJournalCount || 0);
+                setMostFrequentMood(profileData.monthlyMostFrequentMood || null);
+            } else {
+                console.log("No such profile!");
+                setCurrentStreak(0);
+                setTotalJournalEntriesCount(0);
+                setMostFrequentMood(null);
+            }
+        } catch (error) {
+            console.error("Error fetching profile data:", error);
+            setCurrentStreak(0);
+            setTotalJournalEntriesCount(0);
+            setMostFrequentMood(null);
+        } finally {
+            setLoadingProfileData(false);
         }
-    }, [dataLoadCounter, user, journalEntries, cacheData]); // Include cacheData in dependency array
+    }, []);
+
+
+    useEffect(() => {
+        if (dataLoadCounter >= 1 && user) {
+            cacheData(user.uid, journalEntries);
+            setDataLoadCounter(0);
+        }
+    }, [dataLoadCounter, user, journalEntries, cacheData]);
 
 
     useEffect(() => {
         const unsubscribeAuth = onAuthStateChanged(auth, async (currentUser) => {
             if (!currentUser) {
-                navigate('login'); // <-- Use navigate prop, page name as string
+                navigate('login');
             } else {
                 setUser(currentUser);
-                fetchData(currentUser.uid);
+                Promise.all([
+                    fetchData(currentUser.uid, selectedMonth),
+                    fetchProfileData(currentUser.uid)
+                ]).then(() => {
+                    // No need to set loading here, individual loaders handle it.
+                });
             }
         });
         return () => unsubscribeAuth();
-    }, [navigate, fetchData]); // fetchData is useCallback, so safe to include
+    }, [navigate, fetchData, fetchProfileData, selectedMonth]);
 
 
-    const journalEntryCount = useMemo(() => journalEntries.length, [journalEntries]);
+    const handleMonthChange = useCallback((event) => {
+        const monthIndex = monthNames.indexOf(event.target.value);
+        if (monthIndex !== -1) {
+            const newMonth = new Date(selectedMonth.getFullYear(), monthIndex, 1);
+            setSelectedMonth(newMonth);
+            if (user) {
+                fetchData(user.uid, newMonth);
+            }
+        }
+    }, [fetchData, selectedMonth, user]);
 
 
     const renderJournalEntriesByMonth = useMemo(() => {
-        if (loading) {
+        if (loadingJournalEntries) {
             return <p>Loading journal entries...</p>;
         } else if (journalEntries.length > 0) {
-            const entriesByMonth = journalEntries.reduce((acc, entry) => {
-                if (!entry.createdAt) return acc;
-                const monthYear = entry.createdAt.toLocaleString('en-US', { month: 'long', year: 'numeric' });
-                if (!acc[monthYear]) {
-                    acc[monthYear] = [];
-                }
-                acc[monthYear].push(entry);
-                return acc;
-            }, {});
-            return Object.entries(entriesByMonth).map(([monthYear, entries]) => (
-                <section key={monthYear} className="month-section">
-                    <h2 className="month-header">{monthYear}</h2>
-                    <ul className="journal-entries-list">
-                        {entries.map((entry) => (
+            return (
+                <ul className="journal-entries-list">
+                    {journalEntries.map((entry) => {
+                        const date = entry.createdAt; // Already converted to Date object in fetchData
+                        if (!(date instanceof Date) || isNaN(date)) {
+                            console.error("Invalid createdAt Date:", entry.createdAt, entry);
+                            return null; // Skip rendering this entry if date is invalid
+                        }
+                        return (
                             <li key={entry.id} className="journal-entry-item">
                                 <div className="entry-date">
-                                    {entry.createdAt.toLocaleString('en-US', {
-                                        weekday: 'short',
-                                        hour: 'numeric',
-                                        minute: 'numeric',
-                                        second: 'numeric',
-                                        hour12: false,
-                                        day: 'numeric'
-                                    }).replace(/,/g, '.')}
+                                    {format(date, 'd')} {format(date, 'EEE').substring(0, 3)}
                                 </div>
                                 <div className="entry-mood">{entry.mood}</div>
                             </li>
-                        ))}
-                    </ul>
-                </section>
-            ));
+                        );
+                    }).filter(item => item !== null) // Filter out null items from map (invalid dates)
+                    }
+                </ul>
+            );
         } else {
-            return <p>No journal entries found.</p>;
+            return <p>No journal entries found for this month.</p>;
         }
-    }, [loading, journalEntries]); // loading and journalEntries are dependencies
+    }, [loadingJournalEntries, journalEntries]);
+
+
+    const currentMonthName = useMemo(() => {
+        return monthNames[selectedMonth.getMonth()];
+    }, [selectedMonth]);
+
+
+    const monthOptions = useMemo(() => {
+        const options = [];
+        for (let i = 0; i < 12; i++) {
+            const monthDate = new Date(selectedMonth.getFullYear(), i, 1);
+            options.push(<option key={monthNames[i]} value={monthNames[i]}>{monthNames[i]}</option>);
+        }
+        return options;
+    }, [selectedMonth]);
 
 
     return (
         <div className="journal-overview-container">
             <Header
-                navigate={navigate} // <-- Pass navigate prop to Header
+                navigate={navigate}
                 variant="journalOverview"
                 showBackArrow={true}
-                onBack={() => navigate('home')} // <-- Use navigate prop, page name as string
+                onBack={() => navigate('home')}
             />
             <section className="motivational-section">
-                {!loading && (
-                    <TextGenerateEffect
-                        words={`You logged <span class="accent-text">${journalEntryCount} moments</span>. Progress blooms where focus takes root.`}
-                    />
+                {(!loadingProfileData && !loadingJournalEntries && mostFrequentMood) ? (
+                    <>
+                        <TextGenerateEffect
+                            words={`You logged <span class="accent-text">${totalJournalEntriesCount} moments</span> so far. \nThis month you're feeling more <span class="accent-text">${mostFrequentMood}</span>!`}
+                        />
+                    </>
+                ) : (
+                    (loadingProfileData || loadingJournalEntries) ? <p>Loading motivational quote...</p> : <p></p>
                 )}
             </section>
+            <div className="divider"></div>
+
+            <section className="journal-filter-section">
+                <div className="journal-filter-container">
+                    <div className="month-dropdown-wrapper">
+                        <select
+                            className="month-dropdown"
+                            value={currentMonthName}
+                            onChange={handleMonthChange}
+                        >
+                            {monthOptions}
+                        </select>
+                        <DropdownIcon className="dropdown-arrow" />
+                    </div>
+                    <div className="streak-container">
+                        <span className="your-streak-text">Your streak</span>
+                        <div className="journal-badge">{currentStreak}</div>
+                    </div>
+                </div>
+            </section>
+
             <main className="journal-overview-content">
                 <section className="journal-entries-section">
                     {renderJournalEntriesByMonth}
@@ -186,6 +263,5 @@ const JournalOverviewPage = ({ navigate }) => { // <-- Receive navigate prop
         </div>
     );
 };
-
 
 export default JournalOverviewPage;
