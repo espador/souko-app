@@ -206,8 +206,8 @@ export default function SessionDetailPage({ navigate, sessionId }) {
       console.log('Session updated!');
       setIsChanged(false);
 
-      // Return to previous page
-      navigate(-1);
+      // Navigate to homepage after save - **CHANGED HERE**
+      navigate('home');
     } catch (err) {
       console.error('Error updating session:', err);
     }
@@ -314,12 +314,7 @@ export default function SessionDetailPage({ navigate, sessionId }) {
         </h1>
       </section>
 
-      {/* The 4 input fields from TimeTrackerSetupPage:
-          1) Project
-          2) Session Label
-          3) HourRate + currency (billable if > 0)
-          4) Session Objective
-       */}
+      <div className="divider"></div>
 
       {/* 1) Project dropdown */}
       <div className="project-dropdown-container" style={{ marginBottom: '16px' }}>

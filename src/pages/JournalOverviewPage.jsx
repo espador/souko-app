@@ -21,7 +21,7 @@ const JournalOverviewPage = ({ navigate }) => {
     const [dataLoadCounter, setDataLoadCounter] = useState(0);
     const [selectedMonth, setSelectedMonth] = useState(new Date());
     const [currentStreak, setCurrentStreak] = useState(0);
-    const [totalJournalEntriesCount, setTotalJournalEntriesCount] = useState(0);
+    const [totalJournalCount, setTotalJournalCount] = useState(0); // Renamed from monthlyJournalCount
     const [mostFrequentMood, setMostFrequentMood] = useState(null);
 
 
@@ -113,18 +113,18 @@ const JournalOverviewPage = ({ navigate }) => {
             if (profileSnap.exists()) {
                 const profileData = profileSnap.data();
                 setCurrentStreak(profileData.currentStreak || 0);
-                setTotalJournalEntriesCount(profileData.monthlyJournalCount || 0);
+                setTotalJournalCount(profileData.totalJournalCount || 0); // Updated to setTotalJournalCount and fetch totalJournalCount
                 setMostFrequentMood(profileData.monthlyMostFrequentMood || null);
             } else {
                 console.log("No such profile!");
                 setCurrentStreak(0);
-                setTotalJournalEntriesCount(0);
+                setTotalJournalCount(0); // Updated to setTotalJournalCount
                 setMostFrequentMood(null);
             }
         } catch (error) {
             console.error("Error fetching profile data:", error);
             setCurrentStreak(0);
-            setTotalJournalEntriesCount(0);
+            setTotalJournalCount(0); // Updated to setTotalJournalCount
             setMostFrequentMood(null);
         } finally {
             setLoadingProfileData(false);
@@ -227,7 +227,7 @@ const JournalOverviewPage = ({ navigate }) => {
                 {(!loadingProfileData && !loadingJournalEntries && mostFrequentMood) ? (
                     <>
                         <TextGenerateEffect
-                            words={`You logged <span class="accent-text">${totalJournalEntriesCount} moments</span> so far. \nThis month you're feeling more <span class="accent-text">${mostFrequentMood}</span>!`}
+                            words={`You logged <span class="accent-text">${totalJournalCount} moments</span> so far. \nThis month you're feeling more <span class="accent-text">${mostFrequentMood}</span>!`}
                         />
                     </>
                 ) : (

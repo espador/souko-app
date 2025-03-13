@@ -1346,7 +1346,9 @@ body.allow-scroll > html {
 }
 
 .journal-entries-section {
-  margin-top: 40px;
+  margin-top: 0px; 
+  overflow-y: auto;
+    -webkit-overflow-scrolling: touch; 
 }
 
 .month-section {
@@ -2962,7 +2964,7 @@ width: 100%;
 /* == Floating Bottom Navigation == */
 .floating-navigation-container {
   position: fixed;
-  bottom: 40px;
+  bottom: 24px;
   left: 50%;
   transform: translateX(-50%);
   width: 264px;
@@ -3147,9 +3149,6 @@ width: 100%;
   margin-top: 0px; /* Add some margin below filter section */
 }
 
-.journal-entries-section {
-  margin-top: 0px; /* Adjust as needed */
-}
 
 .journal-entries-list {
   list-style: none;
