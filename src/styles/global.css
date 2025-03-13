@@ -1,5 +1,5 @@
 :root {
-  --background-color: ##0C0C0C;
+  --background-color: #0C0C0C;
   --text-color: #ffffff;
   --text-muted: #494750;
   --accent-color: #00FF00;
@@ -7,28 +7,10 @@
   --border-color: #25252d;
   --accent-purple: #7B7BFF;
   --accent-pink: #E682FF;
+  --accent-orange: #FE4B00;
   --font-commit-mono: 'Commit Mono', monospace;
   -webkit-tap-highlight-color: transparent; /* Remove tap highlight */
   
-}
-
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(29, 27, 37, 0.9);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-}
-
-.modal-content {
-  background-color: var(--background-color);
-  margin-bottom:0px;
-  padding: 0px;
 }
 
 .divider {
@@ -43,15 +25,38 @@
   margin-bottom: 0px;
 }
 
+/* Modal */
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(19, 19, 20, 0.9);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  backdrop-filter: blur(4px);
+}
+
+.modal-content {
+  background-color: var(--background-color);
+  margin-bottom:0px;
+  padding: 0px;
+}
+
 .modal-title {
   font-family: var(--font-commit-mono);
-  font-weight: 400;
+  font-weight: 700;
   color: var(--primary-color); /* Ensure your CSS variables are defined or replace with actual colors */
   font-weight: bold;
 }
 
 .modal-body p {
   font-family: var(--font-commit-mono);
+  color: var(--text-color);
   font-weight: 400;
   font-size: 1rem;
 }
@@ -96,7 +101,7 @@
 
 .create-project-page {
   margin: 0 auto;
-  max-width: 600px;
+  max-width: 680px;
   background-color: transparent;
   color: var(--text-color);
   display: flex;
@@ -212,7 +217,7 @@
 }
 
 .error-message {
-  color: red;
+  color: var(--accent-orange);
   font-size: 14px;
   margin-top: 16px;
 }
@@ -262,7 +267,7 @@ h1 {
   left: 24px;
   right: 24px;
   width: calc(100% - 48px);
-  max-width: 600px;
+  max-width: 680px;
   margin-left: auto;
   margin-right: auto;
   box-sizing: border-box;
@@ -381,7 +386,7 @@ body.no-scroll {
 .container {
   margin: 0 auto;
   padding: 24px;
-  max-width: 600px;
+  max-width: 680px;
 }
 
 .card {
@@ -745,7 +750,7 @@ to {
 
 .homepage {
   margin: 0 auto;
-  max-width: 600px;
+  max-width: 680px;
   background-color: transparent;
   display: flex;
   flex-direction: column;
@@ -974,7 +979,7 @@ body.allow-scroll > html {
 
 .journal-confirmation-page {
   display: flex;
-  max-width: 600px;
+  max-width: 680px;
   flex-direction: column;
   height: 100%; /* Ensure it takes full height */
   overflow: hidden; /* Prevent scroll if content is less than viewport */
@@ -1041,7 +1046,7 @@ body.allow-scroll > html {
 /* src/components/Journal/JournalCountdown.css */
 .journal-countdown-page {
   margin: 0 auto;
-  max-width: 600px;
+  max-width: 680px;
   background-color: transparent;
   color: var(--text-color);
   display: flex;
@@ -1125,7 +1130,7 @@ body.allow-scroll > html {
   left: 24px; /* Fixed left margin */
   right: 24px; /* Fixed right margin */
   width: calc(100% - 48px); /* Calculate width to account for 24px left and right margins */
-  max-width: 600px; /* Still respect max-width */
+  max-width: 680px; /* Still respect max-width */
   margin-left: auto; /* Center horizontally if width is less than max-width */
   margin-right: auto; /* Center horizontally if width is less than max-width */
   box-sizing: border-box;
@@ -1139,7 +1144,7 @@ body.allow-scroll > html {
 /* src/components/Journal/JournalForm.css (Updated Buttons to Vertical Stack and Input Tiles) */
 .journal-form-page {
   margin: 0 auto;
-  max-width: 600px;
+  max-width: 680px;
   background-color: transparent;
   color: var(--text-color);
   display: flex;
@@ -1271,12 +1276,12 @@ body.allow-scroll > html {
 }
 
 .save-button {
-  color: var(--accent-color); /* Accent color for Save button text */
+  color: var(--text-color); /* Accent color for Save button text */
   border-color: var(--card-background); /* Accent color for Save button border */
 }
 
 .erase-button {
-  color: red; /* Default text color for Erase button */
+  color: var(--accent-orange); /* Default text color for Erase button */
   border-color: var(--card-background); /* Match border color to CreateProjectPage button */
 }
 
@@ -1320,7 +1325,7 @@ body.allow-scroll > html {
 .journal-overview-container {
   margin: 0 auto;
   display: flex;
-  max-width: 600px;
+  max-width: 680px;
   flex-direction: column;
   min-height: 100vh;
   background-color: transparent;
@@ -1577,7 +1582,7 @@ body.allow-scroll > html {
 /* LoginPage.css */
 .login-page {
   margin: 0 auto;
-  max-width: 600px;
+  max-width: 680px;
   background-color: transparent;
   color: var(--text-color);
   display: flex;
@@ -1645,7 +1650,7 @@ body.allow-scroll > html {
 
 .sticky-login-container {
   /* Removed position: fixed, bottom, left, right, width, calc, box-sizing */
-  max-width: 600px; /* Keep max-width to match page */
+  max-width: 680px; /* Keep max-width to match page */
   margin-left: auto; /* Center horizontally using auto margins */
   margin-right: auto; /* Center horizontally using auto margins */
   margin-bottom: 24px; /* Add some bottom margin */
@@ -1662,7 +1667,7 @@ body.allow-scroll > html {
 
 .onboarding-step1 {
   margin: 0 auto;
-  max-width: 600px;
+  max-width: 680px;
   background-color: transparent;
   color: var(--text-color);
   display: flex;
@@ -1688,7 +1693,7 @@ body.allow-scroll > html {
   left: 24px;
   right: 24px;
   width: calc(100% - 48px);
-  max-width: 600px;
+  max-width: 680px;
   margin: 0 auto;
   box-sizing: border-box;
   background-color: transparent;
@@ -1713,7 +1718,7 @@ body.allow-scroll > html {
   left: 24px;
   right: 24px;
   width: calc(100% - 48px);
-  max-width: 600px;
+  max-width: 680px;
   margin: 0 auto;
   box-sizing: border-box;
   background-color: transparent;
@@ -1732,7 +1737,7 @@ body.allow-scroll > html {
 
 .onboarding-step2 {
   margin: 0 auto;
-  max-width: 600px;
+  max-width: 680px;
   background-color: transparent;
   color: var(--text-color);
   display: flex;
@@ -1752,7 +1757,7 @@ body.allow-scroll > html {
   left: 24px;
   right: 24px;
   width: calc(100% - 48px);
-  max-width: 600px;
+  max-width: 680px;
   margin: 0 auto;
   box-sizing: border-box;
   background-color: transparent;
@@ -1782,7 +1787,7 @@ body.allow-scroll > html {
 
 .onboarding-step3 {
   margin: 0 auto;
-  max-width: 600px;
+  max-width: 680px;
   background-color: transparent;
   color: var(--text-color);
   display: flex;
@@ -1819,7 +1824,7 @@ body.allow-scroll > html {
   left: 24px;
   right: 24px;
   width: calc(100% - 48px);
-  max-width: 600px;
+  max-width: 680px;
   margin: 0 auto;
   box-sizing: border-box;
   background-color: transparent;
@@ -1838,7 +1843,7 @@ body.allow-scroll > html {
 
 .onboarding-step4 {
   margin: 0 auto;
-  max-width: 600px;
+  max-width: 680px;
   background-color: transparent;
   color: var(--text-color);
   display: flex;
@@ -1889,7 +1894,7 @@ body.allow-scroll > html {
 .project-container {
   /* padding: 24px;  Keep padding for content spacing */
   margin: 0 auto;
-  max-width: 600px;
+  max-width: 680px;
   background-color: transparent;
   color: var(--text-color);
   /* min-height: 100vh; Remove this as body should handle the viewport height */
@@ -2212,7 +2217,7 @@ body.allow-scroll > html {
 
 .update-project-container {
   margin: 0 auto;
-  max-width: 600px;
+  max-width: 680px;
   padding: 20px;
   color: var(--text-color);
 }
@@ -2246,7 +2251,7 @@ body.allow-scroll > html {
 /* Container for the entire page */
 .project-container {
   margin: 0 auto;
-  max-width: 600px;
+  max-width: 680px;
   background-color: transparent;
   color: var(--text-color);
   display: flex;
@@ -2362,7 +2367,7 @@ body.allow-scroll > html {
 .session-detail-page {
   /* padding: 24px;  Keep padding for content spacing */
   margin: 0 auto;
-  max-width: 600px;
+  max-width: 680px;
   background-color: transparent;
   color: var(--text-color);
   /* min-height: 100vh; Remove this as body should handle the viewport height */
@@ -2516,7 +2521,7 @@ body.allow-scroll > html {
 .session-overview-page {
   /* padding: 24px;  Keep padding for content spacing */
   margin: 0 auto;
-  max-width: 600px;
+  max-width: 680px;
   background-color: transparent;
   color: var(--text-color);
   /* min-height: 100vh; Remove this as body should handle the viewport height */
@@ -2527,7 +2532,7 @@ body.allow-scroll > html {
 
 .overview-container {
   width: 100%;
-  max-width: 600px;
+  max-width: 680px;
   /* Removed text-align: center; assuming TextGenerateEffect handles it */
   margin-top: 64px; /* Adjust as needed */
   margin-bottom: 24px; /* Add some bottom margin */
@@ -2661,7 +2666,7 @@ width: 100%;
 
 .time-tracker-page {
   margin: 0 auto;
-  max-width: 600px;
+  max-width: 680px;
   background-color: transparent;
   color: var(--text-color);
   display: flex;
@@ -2676,7 +2681,7 @@ width: 100%;
   left: 50%;
   transform: translateX(-50%);
   width: 100%;
-  max-width: 600px;
+  max-width: 680px;
   background-color: var(--background-color); /* Or semi-transparent, if desired */
   padding: 16px 0;      /* top/bottom padding; adjust to taste */
   display: flex;
@@ -2830,7 +2835,7 @@ width: 100%;
 
 .update-project-page {
   margin: 0 auto;
-  max-width: 600px;
+  max-width: 680px;
   background-color: transparent;
   color: var(--text-color);
   display: flex;
@@ -2934,7 +2939,7 @@ width: 100%;
   left: 24px;
   right: 24px;
   width: calc(100% - 48px);
-  max-width: 600px;
+  max-width: 680px;
   margin-left: auto;
   margin-right: auto;
   box-sizing: border-box;

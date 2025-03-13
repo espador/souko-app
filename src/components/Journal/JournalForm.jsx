@@ -321,6 +321,7 @@ const JournalForm = React.memo(({ navigate, selectedDate: propSelectedDate }) =>
                 title="Erase Journal Entry?"
                 body="Are you sure you want to erase this journal entry? This action cannot be undone."
                 onConfirm={confirmEraseAction}
+                confirmText="Yes, erase"
                 cancelText="Cancel"
             />
         </div>
