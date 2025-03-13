@@ -2,8 +2,8 @@
 import React, { useState, useEffect, memo } from 'react';
 import { ReactComponent as ReturnIcon } from '../../styles/components/assets/return.svg';
 import { ReactComponent as SoukoLogoHeader } from '../../styles/components/assets/Souko-logo-header.svg';
-// 1) Import the new download icon:
 import { ReactComponent as DownloadIcon } from '../../styles/components/assets/download.svg';
+import { ReactComponent as AddProjectIcon } from '../../styles/components/assets/add-project.svg';
 
 import MobileStepper from '@mui/material/MobileStepper';
 import '../../styles/global.css';
@@ -20,7 +20,7 @@ const Header = memo(({
   onActionClick = () => {},
   currentStep = 0,
   navigate,
-  soukoNumber // Add soukoNumber as a prop
+  soukoNumber
 }) => {
   const [currentTime, setCurrentTime] = useState('');
 
@@ -33,7 +33,6 @@ const Header = memo(({
         const seconds = String(now.getSeconds()).padStart(2, '0');
         const day = String(now.getDate()).padStart(2, '0');
         const month = String(now.getMonth() + 1).padStart(2, '0');
-        // Update currentTime format to include Souko number
         const timeString = `${hours}:${minutes}:${seconds}.${day}.${month}`;
         setCurrentTime(`S${soukoNumber ? soukoNumber + '.' : ''}${timeString}`);
       };
@@ -41,13 +40,13 @@ const Header = memo(({
       const intervalId = setInterval(tick, 1000);
       return () => clearInterval(intervalId);
     }
-  }, [showLiveTime, soukoNumber]); // Add soukoNumber to dependency array
+  }, [showLiveTime, soukoNumber]);
 
   const handleBackNavigation = () => {
     if (onBack) {
       onBack();
     } else {
-      navigate('home'); // fallback if no custom onBack
+      navigate('home');
     }
   };
 
@@ -72,7 +71,6 @@ const Header = memo(({
     );
   }
 
-  // 2) If the variant is "sessionDetail", show the new 40x40 download icon
   if (variant === "sessionDetail") {
     return (
       <div className="header">
@@ -86,7 +84,6 @@ const Header = memo(({
           {showLiveTime && <div className="header-live-time">{currentTime}</div>}
         </div>
         <div className="header-right-section">
-          {/* Non-clickable download icon for now */}
           <DownloadIcon
             style={{ width: '40px', height: '40px', cursor: 'default' }}
           />
@@ -95,26 +92,32 @@ const Header = memo(({
     );
   }
 
-  // "projectOverview", "home", "journalOverview", etc.
+
   let rightSection = null;
   if (variant === "projectOverview") {
     rightSection = (
-      <span className="header-action" onClick={onActionClick}>
-        Add project
-      </span>
+      <button className="add-project" onClick={onActionClick}>
+        <AddProjectIcon className="add-project-icon" />
+      </button>
     );
   } else {
     if (children) {
       rightSection = children;
-    } else if (!hideProfile) {
-      // Show spinning Souko logo by default
-      rightSection = (
-        <SoukoLogoHeader
-          className="profile-pic souko-logo-header spinning-logo"
-          onClick={onProfileClick}
-          style={{ cursor: 'pointer' }}
-        />
-      );
+    } else if (variant === "home") { // Show SoukoLogoHeader only on homepage
+      if (!hideProfile) {
+        rightSection = (
+          <SoukoLogoHeader
+            className="profile-pic souko-logo-header spinning-logo"
+            onClick={onProfileClick}
+            style={{ cursor: 'pointer' }}
+          />
+        );
+      } else {
+        rightSection = null; // Or <div />;
+      }
+    }
+    else { // For all other variants other than "home", "projectOverview", "onboarding", "sessionDetail"
+      rightSection = null; // Or <div />; if you need it to be rendered in the DOM but empty
     }
   }
 

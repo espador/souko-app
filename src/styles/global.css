@@ -39,12 +39,15 @@
   align-items: center;
   z-index: 1000;
   backdrop-filter: blur(4px);
+  border-radius: 0px;
 }
 
 .modal-content {
   background-color: var(--background-color);
+  max-width: 680px;
   margin-bottom:0px;
   padding: 0px;
+  border-radius: 0px;
 }
 
 .modal-title {
@@ -64,20 +67,20 @@
 .modal-footer {
   display: flex;
   justify-content: flex-end;
-  gap: 10px;
-  margin-top: 20px;
+  gap: 16px;
+  margin-top: 24px;
 }
 
 .modal-footer button {
-  padding: 10px 15px;
-  border-radius: 5px;
+  padding: 8px 16px;
+  border-radius: 0px;
   cursor: pointer;
 }
 
 .modal-footer .btn-primary {
   font-family: var(--font-commit-mono);
   font-weight: 400;
-  color: var(--accent-color);
+  color: var(--text-color);
   background-color: transparent;
   border: 1px solid var(--border-color);
   display: flex;
@@ -667,6 +670,25 @@ p {
   border-radius: 50%;
   object-fit: cover;
   cursor: pointer;
+}
+
+.add-project {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  cursor: pointer;
+  background-color: transparent; /* Make the button background transparent */
+  border: none; /* Remove default button border */
+  padding: 0;      /* Remove default button padding */
+  display: flex;    /* Center the icon inside the button */
+  align-items: center; /* Center vertically */
+  justify-content: center; /* Center horizontally */
+}
+
+.add-project-icon {
+  width: 40px; /* Adjust icon size as needed */
+  height: 40px; /* Adjust icon size as needed */
+  fill: var(--accent-pink);  /* Assuming you want the plus icon to be white */
 }
 
 /* Back button styling */
@@ -3088,7 +3110,7 @@ width: 100%;
   margin-right: 8px; /* Add some space after project name */
 }
 
-.session-start-time {
+.session-start-time-homepage {
   font-weight: 400;
   color: var(--text-muted);
   font-size: 14px; /* Slightly smaller for start time */
@@ -3241,4 +3263,36 @@ width: 100%;
     font-weight: 700;
     margin-left: 4px;
     margin-bottom: 0px; /* Adjust to 0 to align with text */
+}
+
+/* Style for faded pie chart arcs */
+.MuiPieArc-faded {
+  opacity: 0.6; /* Reduce opacity for faded slices */
+  stroke: transparent !important; /* Remove stroke from faded elements */
+  stroke-width: 0 !important; /* Ensure stroke width is 0 */
+}
+
+/* Style for highlighted pie chart arcs */
+.MuiPieArc-highlighted {
+  opacity: 1; /* Ensure highlighted slices are fully opaque */
+  stroke: transparent !important; /* Remove stroke from highlighted elements */
+  stroke-width: 0 !important; /* Ensure stroke width is 0 */
+}
+
+/* Force removal of strokes on all pie chart elements */
+.MuiPieArc-root {
+  stroke: transparent !important;
+  stroke-width: 0 !important;
+}
+
+/* Make sure the chart container is properly centered */
+.chart-container {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+/* Hide the legend completely */
+.MuiChartsLegend-root {
+  display: none !important;
 }

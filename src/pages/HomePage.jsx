@@ -357,7 +357,7 @@ const HomePage = React.memo(({ navigate, skipAutoRedirect, currentPage }) => {
                         <div className="session-info">
                           <div className="session-project-name">{projectName}</div> {/* Project Name */}
                           <div className="session-details-time-label">
-                            <span className="session-start-time">{startTimeFormatted}</span> {/* Start Time */}
+                            <span className="session-start-time-homepage">{startTimeFormatted}</span> {/* Start Time */}
                             {session.sessionLabel && <span className="session-label"> {session.sessionLabel}</span>} {/* Session Label */}
                           </div>
                         </div>

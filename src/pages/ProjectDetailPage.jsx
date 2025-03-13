@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import {
   doc,
@@ -474,10 +475,10 @@ const ProjectDetailPage = React.memo(({ navigate, projectId }) => {
                         {formatStartTime(session)}
                       </span>
                       <span
-                        className="session-time"
+                        className="session-elapsed-time"
                         style={{
                           color: session.isBillable
-                            ? 'var(--accent-color)'
+                            ? 'var(--accent-pink)'
                             : 'var(--text-muted)',
                         }}
                       >

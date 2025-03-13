@@ -15,8 +15,8 @@ const ConfirmModal = ({ show, onHide, title, body, onConfirm, confirmText, cance
         style={{ // Added inline styles for better mobile appearance
           maxWidth: '90vw', // Ensure modal doesn't take full screen width on very small devices
           width: 'fit-content', // Adjust width to content, but max 90vw
-          padding: '20px',      // Add some padding inside the modal content
-          borderRadius: '10px', // Optional: Add rounded corners for better visual appeal
+          padding: '24px',      // Add some padding inside the modal content
+          borderRadius: '0px', // Optional: Add rounded corners for better visual appeal
         }}
       >
         <h2 className="modal-title">{title}</h2>

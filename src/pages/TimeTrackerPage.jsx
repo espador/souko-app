@@ -384,7 +384,9 @@ const TimeTrackerPage = React.memo(({ navigate, sessionId }) => {
         console.error('Error resetting session in database:', error);
       }
     }
-  }, [sessionId]);
+    // Navigate to TimeTrackerSetupPage after reset
+    navigate('time-tracker-setup');
+  }, [sessionId, navigate]); // Added navigate to the dependency array
 
   // -----------------------------
   // 8) Take Over if conflict

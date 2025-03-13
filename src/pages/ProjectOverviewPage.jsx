@@ -5,9 +5,9 @@ import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { formatTime } from '../utils/formatTime';
 import Header from '../components/Layout/Header';
 import '@fontsource/shippori-mincho';
-import { TextGenerateEffect } from '../styles/components/text-generate-effect.tsx';
 import '../styles/global.css';
 import { ReactComponent as Spinner } from '../styles/components/assets/spinner.svg';
+import { PieChart } from '@mui/x-charts/PieChart'; // Import PieChart
 
 // Helper to convert timestamps
 const parseTimestamp = (timestamp, fallbackTimestamp) => {
@@ -80,8 +80,6 @@ const ProjectOverviewPage = ({ navigate }) => {
   const [loading, setLoading] = useState(true);
   const [dataLoadCounter, setDataLoadCounter] = useState(0);
 
-  // We only define sortMode once!
-  const [sortMode, setSortMode] = useState('tracked');
 
   // 1) Auth + attempt cache + Firestore onSnapshot
   useEffect(() => {
@@ -164,44 +162,15 @@ const ProjectOverviewPage = ({ navigate }) => {
       projectTimes[project.id] = sumTime;
     });
     return projectTimes;
-  }, [projects, sessions]);
+   }, [projects, sessions]);
 
   const totalTrackedTimeAcrossProjects = useMemo(() => {
     return sessions.reduce((sum, s) => sum + (s.elapsedTime || 0), 0);
   }, [sessions]);
 
-  const formatTotalTimeForQuote = useCallback((totalTime) => {
-    const formattedTime = formatTime(totalTime);
-    const parts = formattedTime.split(' ');
-    if (parts.length === 2) {
-      return `${parts[0]} ${parts[1]}`;
-    } else if (parts.length === 4 && parts[1] === 'days') {
-      // Example: "2 days 3 hours"
-      return `${parts[0]}d ${parts[2]}h`;
-    }
-    return formattedTime;
-  }, []);
-
-  const formattedTotalTime = useMemo(() => {
-    return formatTotalTimeForQuote(totalTrackedTimeAcrossProjects);
-  }, [totalTrackedTimeAcrossProjects, formatTotalTimeForQuote]);
-
-  // Sorting logic for projects
-  const toggleSortMode = useCallback(() => {
-    setSortMode((prevMode) => (prevMode === 'tracked' ? 'recent' : 'tracked'));
-  }, []);
 
   const sortedProjects = useMemo(() => {
-    if (sortMode === 'tracked') {
-      // Sort by total tracked time desc
-      return [...projects].sort((a, b) => {
-        const aTime = totalSessionTime[a.id] || 0;
-        const bTime = totalSessionTime[b.id] || 0;
-        return bTime - aTime;
-      });
-    } else {
-      // "recent" => sort by latest session date
-      return [...projects].sort((a, b) => {
+    return [...projects].sort((a, b) => {
         const aSessions = sessions.filter(
           (s) => s.projectId === a.id && s.startTime
         );
@@ -226,8 +195,7 @@ const ProjectOverviewPage = ({ navigate }) => {
           : 0;
         return bLatest - aLatest;
       });
-    }
-  }, [projects, sessions, sortMode, totalSessionTime]);
+  }, [projects, sessions]);
 
   const renderProjectImage = useCallback((project) => {
     if (project.imageUrl) {
@@ -274,6 +242,61 @@ const ProjectOverviewPage = ({ navigate }) => {
     );
   }, [projects, sortedProjects, totalSessionTime, navigate, renderProjectImage]);
 
+  const projectChartData = useMemo(() => {
+    const colors = [
+        'var(--accent-color)',     // Greenish accent
+        'var(--accent-purple)',    // Purple accent
+        'var(--accent-pink)',      // Pink accent
+        'var(--accent-orange)',    // Orange accent
+        '#18A2FD',                // Blue from gradient
+        '#533FF5',                // Darker Blue/Purple from gradient
+    ];
+    return sortedProjects.map((project, index) => ({
+      id: project.id,
+      value: totalSessionTime[project.id] || 0,
+      label: project.name,
+      color: colors[index % colors.length], // Assign colors cyclically
+    }));
+  }, [sortedProjects, totalSessionTime]);
+
+  // Create a custom tooltip renderer to match your design
+  const CustomTooltip = (props) => {
+    const { itemData } = props;
+    if (!itemData) return null;
+
+    // Find the project with this ID to show the project name
+    const project = projects.find(p => p.id === itemData.id);
+    if (!project) return null;
+
+    // Create a colored circle with the same color as the pie slice
+    const colorIndicator = (
+      <div style={{
+        width: '10px',
+        height: '10px',
+        borderRadius: '50%',
+        backgroundColor: itemData.color,
+        display: 'inline-block',
+        marginRight: '8px',
+        verticalAlign: 'middle'
+      }}></div>
+    );
+
+    return (
+      <div style={{
+        backgroundColor: '#494750',
+        color: 'white',
+        padding: '10px 15px',
+        border: 'none',
+        boxShadow: '0 2px 10px rgba(0, 0, 0, 0.2)',
+        fontFamily: 'var(--font-commit-mono)',
+        display: 'flex',
+        alignItems: 'center'
+      }}>
+        {colorIndicator} {project.name}
+      </div>
+    );
+  };
+
   // 4) Render
   if (loading) {
     return (
@@ -292,21 +315,77 @@ const ProjectOverviewPage = ({ navigate }) => {
         navigate={navigate}
         onActionClick={() => navigate('create-project')}
       />
-      <section className="motivational-section">
-        <TextGenerateEffect
-          words={`You tracked <span class="accent-text">${formattedTotalTime}</span> hours.\nTime flows where focus leads.`}
-        />
-      </section>
+      <section className="motivational-section" style={{ marginTop: '24px', marginBottom: '24px' }}>
+        <div className="chart-container" style={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
+          <PieChart
+             series={[{
+                data: projectChartData,
+                valueFormatter: (value) => formatTime(value),
+                arcLabelMinAngle: 45,
+                arcLabelStyle: {
+                  fontSize: 14,
+                  fontFamily: 'var(--font-commit-mono)',
+                  fill: 'var(--text-color)',
+                },
+                highlightScope: { fade: 'global', highlight: 'item' },
+                faded: {
+                  additionalRadius: -20,
+                  color: 'var(--border-color)',
+                },
+                innerRadius: 64, // Add inner radius for donut effect
+                cornerRadius: 0, // Straight corners (no rounding)
+                paddingAngle: 1, // Add small padding between slices
+                startAngle: -90, // Start from top
+                endAngle: 270, // Full circle
+              }]}
+            height={220}
+            width={220}
+            margin={{ top: 10, bottom: 10, left: 0, right: 0 }}
+            legend={{ hidden: true }}
+            slots={{
+              tooltip: CustomTooltip, // Use our custom tooltip component
+            }}
+            slotProps={{
+              legend: {
+                hidden: true,
+                direction: 'column',
+                position: { vertical: 'middle', horizontal: 'right' },
+                padding: 0,
+                itemMarkWidth: 10,
+                itemMarkHeight: 10,
+                markGap: 3,
+                itemGap: 10,
+              },
+            }}
+            sx={{
+              color: 'var(--text-color)',
+              '& .MuiChartsLegend-root': {
+                display: 'none',
+              },
+              '& .MuiPieArc-series-0': {
+                stroke: 'transparent', // Remove the white stroke
+                strokeWidth: 0,
+              },
+              // Remove white strokes from all pie arcs
+              '& .MuiPieArc-root': {
+                stroke: 'transparent',
+                strokeWidth: 0,
+              },
+              // Make sure highlighted items also don't have the white stroke
+              '& .MuiPieArc-highlighted': {
+                stroke: 'transparent',
+                strokeWidth: 0,
+              },
+            }}
+          />
+        </div>
+
+        </section>
 
       <main className="homepage-content">
         <section className="projects-section">
           <div className="projects-header">
             <h2 className="projects-label">All Projects</h2>
-            <div className="projects-actions">
-              <span onClick={toggleSortMode} className="projects-label sort-toggle-label">
-                {sortMode === 'tracked' ? 'Most recent' : 'Most tracked'}
-              </span>
-            </div>
           </div>
           {renderProjects}
         </section>
