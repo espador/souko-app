@@ -3,7 +3,7 @@ import '../../styles/global.css';
 import { formatTimeFromMinutes } from '../../utils/formatTime';
 
 
-const LevelProfile = React.memo(({ projectName, totalTrackedTimeMinutes, levelProgressionData }) => { // <-- Receive props
+const LevelProfile = React.memo(({ totalTrackedTimeMinutes, levelProgressionData }) => { // <-- Receive props
 
 
     // Memoize currentLevel calculation
@@ -71,21 +71,30 @@ const LevelProfile = React.memo(({ projectName, totalTrackedTimeMinutes, levelPr
 
     return (
         <div className="level-profile-container">
-            <div className="level-header">
-                <span className="project-label">{projectName}</span>
+            <div className="journal-header">
+            <h2 className="journal-label">Souko Experience</h2>
                 <div className="level-badge">
                     {currentLevel}
                 </div>
             </div>
             <div className="level-stats">
                 <span className="total-lvl-time">{formattedTotalTrackedTime}</span> {/* Use memoized formatted time */}
-                <span className="time-to-level-up">{formattedTimeToLevelUp} to next lvl</span> {/* Use memoized formatted time */}
+                <span className="time-to-level-up">Lvl up in {formattedTimeToLevelUp}</span> {/* Use memoized formatted time */}
             </div>
             <div className="progress-bar">
                 <div className="progress-bar-fill" style={{ width: `${progressPercentage}%` }}></div>
             </div>
         </div>
     );
+
+    <section className="journal-section">
+    <div className="journal-header">
+      <h2 className="journal-label">Journal streak</h2>
+      {/* We display the user’s currentStreak in a “badge” */}
+      <div className="journal-badge">{currentStreak}</div>
+    </div>
+    <div className="journal-days">{renderDayButtons()}</div>
+  </section>
 });
 
 

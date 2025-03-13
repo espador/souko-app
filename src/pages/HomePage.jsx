@@ -29,6 +29,7 @@ export const cn = (...inputs) => twMerge(clsx(inputs));
 
 const CACHE_DURATION_MS = 30000; // 30 seconds
 
+
 // --------------
 // CACHE HELPERS
 // --------------
@@ -69,6 +70,7 @@ const cacheHomePageData = (
   localStorage.setItem(`homePageData_${uid}`, JSON.stringify(cache));
 };
 
+
 const HomePage = React.memo(({ navigate, skipAutoRedirect, currentPage }) => {
   const [user, setUser] = useState(null);
   const [projects, setProjects] = useState([]);
@@ -85,6 +87,7 @@ const HomePage = React.memo(({ navigate, skipAutoRedirect, currentPage }) => {
 
   const [totalTrackedTimeMinutes, setTotalTrackedTimeMinutes] = useState(0);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
 
   // -----------------------------------------------------
   // 1. On Auth - Load Cache Immediately, Then Fetch Fresh
@@ -283,9 +286,9 @@ const HomePage = React.memo(({ navigate, skipAutoRedirect, currentPage }) => {
               !hasTrackedEver
                 ? `Every journey begins with one moment.\nStart tracking yours.`
                 : weeklyTrackedTime > 0
-                ? `This moment is\n progress. You\n tracked <span class="accent-text">${formatTime(
+                ? `This moment is progress. You\n tracked <span class="accent-text">${formatTime(
                     weeklyTrackedTime
-                  )}</span>\n this week.`
+                  )}</span>\ this week.`
                 : `Momentum begins with a single tracked hour. Let’s go.`
             }
           />
@@ -293,18 +296,21 @@ const HomePage = React.memo(({ navigate, skipAutoRedirect, currentPage }) => {
 
         <div className="divider"></div>
 
-        {/* Level system display */}
-        <LevelProfile
-          projectName="Souko"
-          totalTrackedTimeMinutes={totalTrackedTimeMinutes}
-          levelProgressionData={levelConfig}
-        />
+        <div className="level-journal-container"> {/* NEW CONTAINER */}
+          {/* Level system display */}
+          <LevelProfile
+            projectName="Souko"
+            totalTrackedTimeMinutes={totalTrackedTimeMinutes}
+            levelProgressionData={levelConfig}
+          />
 
-        <JournalSection
-          navigate={navigate}
-          journalEntries={journalEntries}
-          loading={false}
-        />
+          <JournalSection
+            navigate={navigate}
+            journalEntries={journalEntries}
+            loading={false}
+          />
+        </div> {/* END NEW CONTAINER */}
+
 
         <section className="sessions-section">
           <div className="sessions-header">

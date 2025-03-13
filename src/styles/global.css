@@ -833,27 +833,14 @@ body.allow-scroll html {
   margin-bottom: 24px;
 }
 
-.journal-badge {
-  background-color: var(--accent-color);
-  color: var(--background-color);
-  width: 24px;
-  height: 24px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  font-family: var(--font-commit-mono);
-  font-size: 12px;
-  font-weight: 700;
-  margin-left: 4px; 
-  margin-bottom: 16px;
-}
-
 .projects-header, .journal-header {
   display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 16px;
 }
+
+
 
 .projects-all-link, .journal-all-link {
   font-size: 16px;
@@ -1548,7 +1535,7 @@ body.allow-scroll > html {
 }
 
 .level-badge {
-  background-color: #FE4B00;
+  background-color:var(--accent-orange);
   color: var(--background-color);
   width: 24px;
   height: 24px;
@@ -2310,7 +2297,7 @@ body.allow-scroll > html {
 .journal-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   margin-bottom: 0px;
 }
 
@@ -3251,7 +3238,7 @@ width: 100%;
 }
 
 .journal-badge {
-    background-color: var(--accent-color);
+    background-color: var(--accent-orange);
     color: var(--card-background);
     width: 24px;
     height: 24px;
@@ -3263,6 +3250,7 @@ width: 100%;
     font-weight: 700;
     margin-left: 4px;
     margin-bottom: 0px; /* Adjust to 0 to align with text */
+    align-content: top;
 }
 
 /* Style for faded pie chart arcs */
@@ -3295,4 +3283,30 @@ width: 100%;
 /* Hide the legend completely */
 .MuiChartsLegend-root {
   display: none !important;
+}
+
+/* desktop vibe */
+.level-journal-container {
+  display: flex;
+  flex-direction: column; /* Default to vertical stacking for mobile */
+}
+
+@media (min-width: 768px) { /* Example breakpoint for desktop */
+  .level-journal-container {
+    flex-direction: row; /* Display side-by-side on desktop */
+    align-items: flex-start; /* Align items to the start of each section */
+    justify-content: space-between; /* Optional: Distribute space between sections */
+  }
+
+  .level-journal-container > * {
+    flex: 1; /* Allow both sections to take equal width */
+    min-width: 0; /* Prevent flex items from overflowing */
+  }
+
+  .level-profile-container {
+    margin-right: 24px; /* Add some space between LevelProfile and JournalSection */
+  }
+  .journal-section {
+    margin-top: 0px; /* Reset top margin for journal section on desktop */
+  }
 }

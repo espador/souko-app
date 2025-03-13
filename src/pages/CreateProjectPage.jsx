@@ -247,7 +247,7 @@ const CreateProjectPage = React.memo(({ navigate }) => { // <-- Receive navigate
             <main className="create-project-content">
                 <section className="motivational-section">
                     <TextGenerateEffect
-                        words={`Every journey \nbegins with one\n moment. Tell me \nabout your project ...`}
+                        words={`Every journey begins with one\n moment. Tell me about your project`}
                         element="h1"
                     />
                 </section>
