@@ -21,6 +21,7 @@ import JournalCountdown from './components/Journal/JournalCountdown';
 import JournalForm from './components/Journal/JournalForm';
 import JournalConfirmation from './components/Journal/JournalConfirmation';
 import UpdateProjectPage from './pages/UpdateProjectPage';
+import TimeTrackerManualPage from './pages/TimeTrackerManualPage';
 
 // Onboarding components
 import OnboardingStep1 from './components/Onboarding/OnboardingStep1';
@@ -116,6 +117,8 @@ const App = memo(() => {
         return <ProjectOverviewPage navigate={navigate} />;
       case 'time-tracker-setup':
         return <TimeTrackerSetupPage navigate={navigate} />;
+      case 'time-tracker-manual':
+        return <TimeTrackerManualPage navigate={navigate} />;
       case 'time-tracker':
         return (
           <TimeTrackerPage

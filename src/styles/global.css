@@ -3309,3 +3309,134 @@ width: 100%;
     margin-top: 0px; /* Reset top margin for journal section on desktop */
   }
 }
+
+.datetime-picker {
+  width: 100%;
+  background-color: var(--card-background);
+  border-radius: 0px;
+  padding: 16px;
+  margin-bottom: 16px;
+  color: var(--text-color);
+}
+
+.duration-input {
+  width: 100%;
+  background-color: var(--card-background);
+  border-radius: 0px;
+  padding: 16px;
+  margin-bottom: 16px;
+  color: var(--text-color);
+  border: none;
+  font-family: var(--font-commit-mono);
+  font-size: 16px;
+}
+
+/* DateTimePicker Custom Styling */
+.MuiOutlinedInput-root {
+  background-color: var(--card-background) !important;
+  border-radius: 0px !important;
+  color: var(--text-color) !important;
+  font-family: var(--font-commit-mono) !important;
+  font-size: 16px !important;
+}
+
+.MuiOutlinedInput-notchedOutline {
+  border: none !important;
+}
+
+.MuiInputBase-input {
+  padding: 16px !important;
+  color: var(--text-color) !important;
+}
+
+.MuiSvgIcon-root {
+  color: var(--text-color) !important;
+}
+
+/* DateTimePicker Popup Styling */
+.MuiPickersPopper-root .MuiPaper-root {
+  background-color: var(--card-background) !important;
+  color: var(--text-color) !important;
+  border-radius: 0px !important;
+}
+
+/* Calendar Days */
+.MuiPickersDay-root {
+  color: var(--text-color) !important;
+  font-family: var(--font-commit-mono) !important;
+}
+
+.MuiPickersDay-root.Mui-selected {
+  background-color: var(--accent-color) !important;
+  color: var(--background-color) !important;
+}
+
+/* Month/Year Selection */
+.MuiPickersCalendarHeader-label {
+  color: var(--text-color) !important;
+  font-family: var(--font-commit-mono) !important;
+}
+
+.MuiPickersArrowSwitcher-button {
+  color: var(--text-color) !important;
+}
+
+/* Time Picker */
+.MuiClock-pin, 
+.MuiClockPointer-root {
+  background-color: var(--accent-color) !important;
+}
+
+.MuiClockPointer-thumb {
+  border-color: var(--accent-color) !important;
+  background-color: var(--accent-color) !important;
+}
+
+.MuiClockNumber-root {
+  color: var(--text-color) !important;
+  font-family: var(--font-commit-mono) !important;
+}
+
+/* Action Buttons */
+.MuiDialogActions-root .MuiButton-root {
+  color: var(--text-color) !important;
+  font-family: var(--font-commit-mono) !important;
+}
+
+/* Tabs in DateTimePicker */
+.MuiTabs-root {
+  background-color: var(--card-background) !important;
+}
+
+.MuiTab-root {
+  color: var(--text-muted) !important;
+  font-family: var(--font-commit-mono) !important;
+}
+
+.MuiTab-root.Mui-selected {
+  color: var(--text-color) !important;
+}
+
+.MuiTabs-indicator {
+  background-color: var(--accent-color) !important;
+}
+
+/* Year selection view */
+.MuiPickersYear-root {
+  color: var(--text-muted) !important;
+  font-family: var(--font-commit-mono) !important;
+}
+
+.MuiPickersYear-yearButton.Mui-selected {
+  color: var(--accent-color) !important;
+}
+
+/* Month selection view */
+.MuiPickersMonth-root {
+  color: var(--text-muted) !important;
+  font-family: var(--font-commit-mono) !important;
+}
+
+.MuiPickersMonth-monthButton.Mui-selected {
+  color: var(--accent-color) !important;
+}

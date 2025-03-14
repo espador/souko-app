@@ -226,14 +226,14 @@ const TimeTrackerSetupPage = React.memo(({ navigate }) => {
   }
 
   return (
-    <div className="time-tracker-page">
-      <Header
-        variant="journalOverview"
-        showBackArrow={true}
-        onBack={() => navigate('home', { skipAutoRedirect: true })}
-        navigate={navigate}
-        onProfileClick={() => setIsSidebarOpen(true)}
-      />
+     <div className="project-container">
+         <Header
+           variant="timeTrackerSetup"
+           showBackArrow={true}
+           onBack={() => navigate('home')}
+           navigate={navigate}
+           onActionClick={() => navigate('time-tracker-manual')}
+         />
 
       {/* Motivational quote */}
       <div className="motivational-section">
@@ -330,25 +330,12 @@ const TimeTrackerSetupPage = React.memo(({ navigate }) => {
         <DropdownIcon className="dropdown-arrow" />
       </div>
 
-      {/* Sticky buttons (replacing the FAB) */}
-      <div className="sticky-buttons-container">
-        {/* START SESSION BUTTON */}
         <button
-          className="save-button sticky-button-top"
+          className="save-button sticky-button"
           onClick={handleStartSession}
         >
           Start Session
         </button>
-
-        {/* CREATE MANUAL ENTRY BUTTON (disabled for now) */}
-        <button
-          className="erase-button sticky-button disabled"
-          onClick={() => {}}
-          disabled
-        >
-          Create manual entry
-        </button>
-      </div>
 
       {/* Sidebar & modal */}
       <Sidebar

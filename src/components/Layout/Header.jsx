@@ -92,9 +92,14 @@ const Header = memo(({
     );
   }
 
-
   let rightSection = null;
   if (variant === "projectOverview") {
+    rightSection = (
+      <button className="add-project" onClick={onActionClick}>
+        <AddProjectIcon className="add-project-icon" />
+      </button>
+    );
+  } else if (variant === "timeTrackerSetup") {
     rightSection = (
       <button className="add-project" onClick={onActionClick}>
         <AddProjectIcon className="add-project-icon" />

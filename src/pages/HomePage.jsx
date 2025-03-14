@@ -1,4 +1,3 @@
-// src/pages/HomePage.jsx
 import React, { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import { auth, db } from '../services/firebase';
 import { signOut } from 'firebase/auth';
@@ -9,8 +8,8 @@ import {
   where,
   doc,
   getDoc,
-  orderBy, // Import orderBy
-  limit // Import limit
+  orderBy,
+  limit
 } from 'firebase/firestore';
 import { formatTime } from '../utils/formatTime';
 import Header from '../components/Layout/Header';
@@ -24,15 +23,10 @@ import { TextGenerateEffect } from '../styles/components/text-generate-effect.ts
 import JournalSection from '../components/Journal/JournalSection';
 import LevelProfile from '../components/Level/LevelProfile';
 
-// We'll keep your cn() utility
 export const cn = (...inputs) => twMerge(clsx(inputs));
 
-const CACHE_DURATION_MS = 30000; // 30 seconds
+const CACHE_DURATION_MS = 30000;
 
-
-// --------------
-// CACHE HELPERS
-// --------------
 const loadCachedHomePageData = (uid) => {
   const cacheKey = `homePageData_${uid}`;
   const cachedStr = localStorage.getItem(cacheKey);
@@ -70,7 +64,6 @@ const cacheHomePageData = (
   localStorage.setItem(`homePageData_${uid}`, JSON.stringify(cache));
 };
 
-
 const HomePage = React.memo(({ navigate, skipAutoRedirect, currentPage }) => {
   const [user, setUser] = useState(null);
   const [projects, setProjects] = useState([]);
@@ -79,19 +72,10 @@ const HomePage = React.memo(({ navigate, skipAutoRedirect, currentPage }) => {
   const [userProfile, setUserProfile] = useState(null);
   const [levelConfig, setLevelConfig] = useState(null);
   const [hasTrackedEver, setHasTrackedEver] = useState(false);
-
   const [loading, setLoading] = useState(true);
-
-  // We no longer track activeSession here for FAB usage,
-  // since we are using the floating nav in App.jsx
-
   const [totalTrackedTimeMinutes, setTotalTrackedTimeMinutes] = useState(0);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
-
-  // -----------------------------------------------------
-  // 1. On Auth - Load Cache Immediately, Then Fetch Fresh
-  // -----------------------------------------------------
   const fetchHomeData = React.useCallback(async (uid) => {
     const cachedData = loadCachedHomePageData(uid);
     if (cachedData) {
@@ -108,7 +92,6 @@ const HomePage = React.memo(({ navigate, skipAutoRedirect, currentPage }) => {
     }
 
     try {
-      // Projects
       const projectsSnap = await getDocs(
         query(collection(db, 'projects'), where('userId', '==', uid))
       );
@@ -117,23 +100,20 @@ const HomePage = React.memo(({ navigate, skipAutoRedirect, currentPage }) => {
         ...doc.data(),
       }));
 
-      // Sessions - Fetching only 3 most recent sessions with status "stopped"
       const sessionsQuery = query(
         collection(db, 'sessions'),
         where('userId', '==', uid),
-        where('status', '==', 'stopped'), // ADDED: Filter for status "stopped"
-        orderBy('startTime', 'desc'), // Order by startTime descending for recent sessions
-        limit(3) // Limit to 3 sessions
+        where('status', '==', 'stopped'),
+        orderBy('startTime', 'desc'),
+        limit(3)
       );
       const sessionsSnap = await getDocs(sessionsQuery);
       const userSessions = sessionsSnap.docs.map((doc) => ({
-        id: doc.id, // Add session id if needed for keys
+        id: doc.id,
         ...doc.data(),
       }));
       const userHasTrackedEver = userSessions.length > 0;
 
-
-      // Journal (last 7 days)
       const sevenDaysAgo = new Date();
       sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
       const journalSnap = await getDocs(
@@ -148,7 +128,6 @@ const HomePage = React.memo(({ navigate, skipAutoRedirect, currentPage }) => {
         ...doc.data(),
       }));
 
-      // User profile
       const profileRef = doc(db, 'profiles', uid);
       const profileSnap = await getDoc(profileRef);
 
@@ -159,7 +138,6 @@ const HomePage = React.memo(({ navigate, skipAutoRedirect, currentPage }) => {
         totalMinutes = profileData.totalTrackedTime || 0;
       }
 
-      // Level config
       const levelConfigRef = doc(db, 'config', 'level_config');
       const levelConfigSnap = await getDoc(levelConfigRef);
       let lvlCfg = null;
@@ -203,9 +181,6 @@ const HomePage = React.memo(({ navigate, skipAutoRedirect, currentPage }) => {
     return unsubscribeAuth;
   }, [navigate, fetchHomeData]);
 
-  // -------------------------------------------
-  // 2. Onboarding Logic: Skip if Not Complete
-  // -------------------------------------------
   useEffect(() => {
     if (!loading) {
       if (
@@ -217,9 +192,6 @@ const HomePage = React.memo(({ navigate, skipAutoRedirect, currentPage }) => {
     }
   }, [loading, userProfile, currentPage, navigate]);
 
-  // -------------------------------------------
-  // 3. Sidebar & Logout
-  // -------------------------------------------
   const handleLogout = useCallback(async () => {
     try {
       await signOut(auth);
@@ -232,11 +204,8 @@ const HomePage = React.memo(({ navigate, skipAutoRedirect, currentPage }) => {
   const openSidebar = useCallback(() => setIsSidebarOpen(true), []);
   const closeSidebar = useCallback(() => setIsSidebarOpen(false), []);
 
-  // -------------------------------------------
-  // 4. Computed Values
-  // -------------------------------------------
   const sessionsToRender = useMemo(() => {
-    return [...sessions]; // Already limited to 3 in fetchHomeData and ordered by recent
+    return [...sessions];
   }, [sessions]);
 
   const projectMap = useMemo(() => {
@@ -245,7 +214,6 @@ const HomePage = React.memo(({ navigate, skipAutoRedirect, currentPage }) => {
       return acc;
     }, {});
   }, [projects]);
-
 
   const weeklyTrackedTime = userProfile?.weeklyTrackedTime || 0;
 
@@ -259,16 +227,15 @@ const HomePage = React.memo(({ navigate, skipAutoRedirect, currentPage }) => {
 
   const formatSessionStartTime = (startTime) => {
     if (!startTime) return 'N/A';
-    const date = startTime.toDate(); // Convert Firestore Timestamp to JavaScript Date
+    const date = startTime.toDate();
     let hours = date.getHours();
     let minutes = date.getMinutes();
 
-    hours = String(hours).padStart(2, '0'); // Pad with 0 if needed to be 2 digits
-    minutes = String(minutes).padStart(2, '0'); // Pad with 0 if needed to be 2 digits
+    hours = String(hours).padStart(2, '0');
+    minutes = String(minutes).padStart(2, '0');
 
     return `${hours}:${minutes}`;
   };
-
 
   return (
     <div className="homepage">
@@ -277,7 +244,7 @@ const HomePage = React.memo(({ navigate, skipAutoRedirect, currentPage }) => {
         user={userProfile}
         showLiveTime={true}
         onProfileClick={openSidebar}
-        soukoNumber={userProfile?.soukoNumber} // Pass soukoNumber to Header
+        soukoNumber={userProfile?.soukoNumber}
       />
       <main className="homepage-content">
         <section className="motivational-section">
@@ -289,15 +256,14 @@ const HomePage = React.memo(({ navigate, skipAutoRedirect, currentPage }) => {
                 ? `This moment is progress. You\n tracked <span class="accent-text">${formatTime(
                     weeklyTrackedTime
                   )}</span>\ this week.`
-                : `Momentum begins with a single tracked hour. Let’s go.`
+                : `Momentum begins with a single tracked hour. Let's go.`
             }
           />
         </section>
 
         <div className="divider"></div>
 
-        <div className="level-journal-container"> {/* NEW CONTAINER */}
-          {/* Level system display */}
+        <div className="level-journal-container">
           <LevelProfile
             projectName="Souko"
             totalTrackedTimeMinutes={totalTrackedTimeMinutes}
@@ -309,20 +275,11 @@ const HomePage = React.memo(({ navigate, skipAutoRedirect, currentPage }) => {
             journalEntries={journalEntries}
             loading={false}
           />
-        </div> {/* END NEW CONTAINER */}
-
+        </div>
 
         <section className="sessions-section">
           <div className="sessions-header">
             <h2 className="sessions-label">Recent sessions</h2>
-            {/* <div className="sessions-actions">  // If you want an "All sessions" link in the future
-              <button
-                onClick={() => navigate('sessions')} // Define sessions page if needed
-                className="sessions-all-link"
-              >
-                All
-              </button>
-            </div> */}
           </div>
           {sessionsToRender.length > 0 ? (
             <ul className="sessions-list">
@@ -330,14 +287,14 @@ const HomePage = React.memo(({ navigate, skipAutoRedirect, currentPage }) => {
                 const project = projectMap[session.projectId];
                 const projectName = project?.name || 'Unknown Project';
                 const projectImageUrl = project?.imageUrl;
-                const startTimeFormatted = formatSessionStartTime(session.startTime); // NEW CORRECT FORMATTING
+                const startTimeFormatted = formatSessionStartTime(session.startTime);
                 const elapsedTimeFormatted = formatTime(session.elapsedTime, 'xxh xxm');
                 return (
                   <li
                     key={session.id}
                     className="session-item"
                     onClick={() =>
-                      navigate('session-detail', { sessionId: session.id }) // Navigate to session detail page if you have one
+                      navigate('session-detail', { sessionId: session.id })
                     }
                   >
                     <div className="session-item-container">
@@ -361,10 +318,10 @@ const HomePage = React.memo(({ navigate, skipAutoRedirect, currentPage }) => {
                           )}
                         </div>
                         <div className="session-info">
-                          <div className="session-project-name">{projectName}</div> {/* Project Name */}
+                          <div className="session-project-name">{projectName}</div>
                           <div className="session-details-time-label">
-                            <span className="session-start-time-homepage">{startTimeFormatted}</span> {/* Start Time */}
-                            {session.sessionLabel && <span className="session-label"> {session.sessionLabel}</span>} {/* Session Label */}
+                            <span className="session-start-time-homepage">{startTimeFormatted}</span>
+                            {session.sessionLabel && <span className="session-label"> {session.sessionLabel}</span>}
                           </div>
                         </div>
                       </div>
