@@ -27,6 +27,8 @@ import { ReactComponent as EuroIcon } from '../styles/components/assets/euro.svg
 import { ReactComponent as DollarIcon } from '../styles/components/assets/dollar.svg';
 import { TextGenerateEffect } from '../styles/components/text-generate-effect.tsx';
 import { ReactComponent as SpinnerLogo } from '../styles/components/assets/spinner.svg';
+import ConfirmModal from '../components/ConfirmModal';
+
 
 const MAX_FILE_SIZE_KB = 2048;
 const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_KB * 2048;
@@ -421,7 +423,6 @@ const UpdateProjectPage = React.memo(({ navigate, projectId: routeProjectId }) =
             <div className="spinner"></div>
         ) : (
             <>
-                <UpdateButtonIcon className="button-icon" />
                 Update Project
             </>
         )
@@ -533,27 +534,19 @@ const UpdateProjectPage = React.memo(({ navigate, projectId: routeProjectId }) =
                 {/* DELETE BUTTON */}
                 <button
                     className="erase-button sticky-button"
-                    onClick={handleDeleteProject}
-                >
-                    <EraseIcon className="button-icon" />
-                    Delete Project
-                </button>
+                    onClick={handleDeleteProject} >Delete Project</button>
 
+                {/* ConfirmModal for erasing */}
+                    <ConfirmModal
+                    show={isDeleteDialogOpen}
+                    onHide={cancelDeleteProject}
+                    title="Erase this project?"
+                    body="Are you sure you want to delete this project and all its sessions? This action cannot be undone."
+                    onConfirm={confirmDeleteProject}
+                    confirmText="Yes, erase"
+                    cancelText="Cancel"
+                    />
 
-                {/* Delete Confirmation Dialog */}
-                {isDeleteDialogOpen && (
-                    <div className="delete-confirmation-dialog">
-                        <p>Are you sure you want to delete this project and all its sessions?</p>
-                        <div className="dialog-buttons">
-                            <button onClick={confirmDeleteProject} className="confirm-delete">
-                                Yes, Delete
-                            </button>
-                            <button onClick={cancelDeleteProject} className="cancel-delete">
-                                Cancel
-                            </button>
-                        </div>
-                    </div>
-                )}
             </main>
         </div>
     );

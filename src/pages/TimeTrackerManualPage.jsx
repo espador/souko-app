@@ -162,7 +162,7 @@ const TimeTrackerManualPage = ({ navigate }) => {
       {/* Project Selection */}
       {projects.length > 0 ? (
         <>
-          <h2 className="projects-label">Project</h2>
+          <h2 className="projects-label">Session details</h2>
           <div className="project-dropdown-container">
             {selectedProject?.imageUrl ? (
               <img

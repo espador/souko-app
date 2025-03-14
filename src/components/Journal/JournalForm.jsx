@@ -308,10 +308,10 @@ const JournalForm = React.memo(({ navigate, selectedDate: propSelectedDate }) =>
                 </div>
 
                 <div className="form-navigation form-navigation-single-page">
-                    <button className="save-button" onClick={handleSubmit} disabled={loadingEntry}>
+                    <button className="save-button sticky-button-top" onClick={handleSubmit} disabled={loadingEntry}>
                         Save this note
                     </button>
-                    <button className="erase-button" onClick={handleErase} disabled={loadingEntry}>
+                    <button className="erase-button sticky-button" onClick={handleErase} disabled={loadingEntry}>
                         Erase your thought
                     </button>
                 </div>

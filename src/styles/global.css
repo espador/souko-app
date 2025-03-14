@@ -1132,24 +1132,6 @@ body.allow-scroll > html {
   box-sizing: border-box;
 }
 
-/* Sticky button styles added here */
-.sticky-button-top {
-  position: fixed;
-  bottom: 132px; /* Adjust bottom margin as needed */
-  left: 24px; /* Fixed left margin */
-  right: 24px; /* Fixed right margin */
-  width: calc(100% - 48px); /* Calculate width to account for 24px left and right margins */
-  max-width: 680px; /* Still respect max-width */
-  margin-left: auto; /* Center horizontally if width is less than max-width */
-  margin-right: auto; /* Center horizontally if width is less than max-width */
-  box-sizing: border-box;
-  background-color: var(--page-background);
-  padding-top: 16px;
-  padding-bottom: 16px;
-  border-radius: 0px;
-  border: 1px solid var(--card-background);
-}
-
 /* src/components/Journal/JournalForm.css (Updated Buttons to Vertical Stack and Input Tiles) */
 .journal-form-page {
   margin: 0 auto;
@@ -1764,7 +1746,7 @@ body.allow-scroll > html {
 
 .sticky-button {
   position: fixed;
-  bottom: 64px;
+  bottom: 24px;
   left: 24px;
   right: 24px;
   width: calc(100% - 48px);
@@ -1831,7 +1813,7 @@ body.allow-scroll > html {
 
 .log-mood-button.sticky-button {
   position: fixed;
-  bottom: 64px;
+  bottom: 24px;
   left: 24px;
   right: 24px;
   width: calc(100% - 48px);
@@ -2946,7 +2928,7 @@ width: 100%;
 
 .sticky-button-top {
   position: fixed;
-  bottom: 132px;
+  bottom: 88px;
   left: 24px;
   right: 24px;
   width: calc(100% - 48px);
