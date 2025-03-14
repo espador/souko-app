@@ -3089,9 +3089,17 @@ width: 100%;
   margin-right: 0px; /* Remove margin right */
 }
 
-.session-label {
+.session-home-label {
   font-weight: 400;
-  color: var(--text-muted);
+  color: var(--accent-purple);
+  font-size: 14px;
+  line-height: 20px;
+  margin-left: 0px; /* Remove margin left */
+}
+
+.session-manual-label {
+  font-weight: 400;
+  color: var(--accent-orange);
   font-size: 14px;
   line-height: 20px;
   margin-left: 0px; /* Remove margin left */

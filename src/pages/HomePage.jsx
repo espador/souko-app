@@ -103,7 +103,7 @@ const HomePage = React.memo(({ navigate, skipAutoRedirect, currentPage }) => {
       const sessionsQuery = query(
         collection(db, 'sessions'),
         where('userId', '==', uid),
-        where('status', '==', 'stopped'),
+        where('status', 'in', ['stopped', 'completed']), // Include both stopped and completed (manual) sessions
         orderBy('startTime', 'desc'),
         limit(3)
       );
@@ -227,15 +227,26 @@ const HomePage = React.memo(({ navigate, skipAutoRedirect, currentPage }) => {
 
   const formatSessionStartTime = (startTime) => {
     if (!startTime) return 'N/A';
-    const date = startTime.toDate();
+    
+    // Handle both Firestore Timestamp and regular Date objects
+    let date;
+    if (startTime.toDate) {
+      // It's a Firestore Timestamp
+      date = startTime.toDate();
+    } else {
+      // It's already a Date object or timestamp
+      date = new Date(startTime);
+    }
+  
     let hours = date.getHours();
     let minutes = date.getMinutes();
-
+  
     hours = String(hours).padStart(2, '0');
     minutes = String(minutes).padStart(2, '0');
-
+  
     return `${hours}:${minutes}`;
   };
+  
 
   return (
     <div className="homepage">
@@ -321,7 +332,8 @@ const HomePage = React.memo(({ navigate, skipAutoRedirect, currentPage }) => {
                           <div className="session-project-name">{projectName}</div>
                           <div className="session-details-time-label">
                             <span className="session-start-time-homepage">{startTimeFormatted}</span>
-                            {session.sessionLabel && <span className="session-label"> {session.sessionLabel}</span>}
+                            {session.isManual && <span className="session-manual-label"> Manual</span>}
+                            {session.sessionLabel && <span className="session-home-label"> {session.sessionLabel}</span>}
                           </div>
                         </div>
                       </div>
