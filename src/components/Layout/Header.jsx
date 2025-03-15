@@ -2,6 +2,7 @@
 import React, { useState, useEffect, memo } from 'react';
 import { ReactComponent as ReturnIcon } from '../../styles/components/assets/return.svg';
 import { ReactComponent as SoukoLogoHeader } from '../../styles/components/assets/Souko-logo-header.svg';
+import { ReactComponent as SoukoLogoHeaderLogin } from '../../styles/components/assets/Souko-logo-header-login.svg';
 import { ReactComponent as DownloadIcon } from '../../styles/components/assets/download.svg';
 import { ReactComponent as AddProjectIcon } from '../../styles/components/assets/add-project.svg';
 
@@ -33,14 +34,21 @@ const Header = memo(({
         const seconds = String(now.getSeconds()).padStart(2, '0');
         const day = String(now.getDate()).padStart(2, '0');
         const month = String(now.getMonth() + 1).padStart(2, '0');
-        const timeString = `${hours}:${minutes}:${seconds}.${day}.${month}`;
-        setCurrentTime(`S${soukoNumber ? soukoNumber + '.' : ''}${timeString}`);
+        
+        // For login variant, only show time without soukoNumber
+        if (variant === "login") {
+          const timeString = `${hours}:${minutes}:${seconds}.${day}.${month}`;
+          setCurrentTime(timeString);
+        } else {
+          const timeString = `${hours}:${minutes}:${seconds}.${day}.${month}`;
+          setCurrentTime(`S${soukoNumber ? soukoNumber + '.' : ''}${timeString}`);
+        }
       };
       tick();
       const intervalId = setInterval(tick, 1000);
       return () => clearInterval(intervalId);
     }
-  }, [showLiveTime, soukoNumber]);
+  }, [showLiveTime, soukoNumber, variant]);
 
   const handleBackNavigation = () => {
     if (onBack) {
@@ -50,6 +58,23 @@ const Header = memo(({
     }
   };
 
+  if (variant === "login") {
+    return (
+      <div className="header">
+        <div className="header-left-section">
+          {showLiveTime && <div className="header-live-time">{currentTime}</div>}
+        </div>
+        <div className="header-right-section">
+          {!hideProfile && (
+            <SoukoLogoHeaderLogin
+              className="profile-pic souko-logo-header spinning-logo"
+            />
+          )}
+        </div>
+      </div>
+    );
+  }
+  
   if (variant === "onboarding") {
     return (
       <div className="header header-onboarding">

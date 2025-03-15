@@ -10,6 +10,7 @@ const {
 const { utcToZonedTime } = require("date-fns-tz");
 
 admin.initializeApp();
+const db = admin.firestore(); // Get Firestore instance once
 
 /**
  * Triggered whenever a new journal entry is created.
@@ -18,6 +19,7 @@ admin.initializeApp();
 exports.calculateJournalStreak = functions.firestore
   .document("/journalEntries/{journalEntryId}")
   .onCreate(async (snap, context) => {
+    // ... (Your existing calculateJournalStreak function code here) ...
     const newEntry = snap.data();
     const userId = newEntry.userId;
 
@@ -89,6 +91,44 @@ exports.calculateJournalStreak = functions.firestore
       return null;
     } catch (error) {
       functions.logger.error("❌ Streak calculation error", error, { userId });
+      return null;
+    }
+  });
+
+
+/**
+ * Scheduled function that runs daily at midnight to update total tracked time.
+ */
+exports.dailyTotalTrackedTimeUpdate = functions.pubsub.schedule('0 0 * * *') // Runs daily at midnight (00:00)
+  .timeZone('Europe/Berlin')
+  .onRun(async (context) => {
+    console.log('Cloud Function dailyTotalTrackedTimeUpdate started at:', new Date().toISOString());
+
+    try {
+      const sessionsSnapshot = await db.collection('sessions').get(); // Use the Firestore instance 'db'
+      let totalElapsedTime = 0;
+
+      sessionsSnapshot.forEach(doc => {
+        const sessionData = doc.data();
+        if (sessionData.elapsedTime) {
+          totalElapsedTime += sessionData.elapsedTime;
+        }
+      });
+
+      console.log(`Calculated total elapsed time: ${totalElapsedTime} seconds`);
+
+      // Write to counters > SoukoTime document, field "TotalSoukoTime"
+      const totalTimeRef = db.collection('counters').doc('SoukoTime'); // Use 'db'
+      await totalTimeRef.set({
+        TotalSoukoTime: totalElapsedTime,
+        updatedAt: admin.firestore.FieldValue.serverTimestamp()
+      }, { merge: true });
+
+      console.log('Total tracked time updated in Firestore under counters > SoukoTime.');
+      return null;
+
+    } catch (error) {
+      console.error('Error in dailyTotalTrackedTimeUpdate Cloud Function:', error);
       return null;
     }
   });

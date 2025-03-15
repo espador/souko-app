@@ -1,38 +1,39 @@
 // src/pages/LoginPage.jsx
 import React, { useEffect, useCallback, useState } from 'react';
-// We import onAuthStateChanged, getRedirectResult, signInWithPopup
 import {
   signInWithPopup,
   getRedirectResult,
   onAuthStateChanged
 } from 'firebase/auth';
 import { auth, googleProvider, db } from '../services/firebase';
-import '../styles/global.css';
+import '../styles/loginpage.css';
 import googleIcon from '../styles/components/assets/google-icon.svg';
+import scrollIcon from '../styles/components/assets/scroll-icon.svg';
+import threadsIcon from '../styles/components/assets/threads.svg';
+import greenSmiley from '../styles/components/assets/greensmiley.png';
+
 import {
   doc,
   getDoc,
   setDoc,
   serverTimestamp,
-  runTransaction // Import runTransaction
+  runTransaction
 } from 'firebase/firestore';
 import { TextGenerateEffect } from '../styles/components/text-generate-effect.tsx';
 import Header from '../components/Layout/Header';
 
+// Import additional images for feature highlights
+import featureImage0 from '../styles/components/assets/feature-0.png';
+import featureImage1 from '../styles/components/assets/feature-1.png';
+import featureImage2 from '../styles/components/assets/feature-2.png';
+import featureImage3 from '../styles/components/assets/feature-3.png';
+
 const LoginPage = ({ navigate }) => {
   const [loading, setLoading] = useState(false);
-  const [deferredPrompt, setDeferredPrompt] = useState(null);
-  const [showInstallButton, setShowInstallButton] = useState(false);
-
-  // Detect iOS + standalone (if you still want to show “Add to Home Screen” instructions)
-  const isIOS = () =>
-    /iphone|ipad|ipod/.test(window.navigator.userAgent.toLowerCase());
-  const isInStandaloneMode = () =>
-    'standalone' in window.navigator && window.navigator.standalone;
+  const [totalTime, setTotalTime] = useState('0h 0m');
 
   /**
-   * processLoginResult => Called once we have a user object (from popup or redirect).
-   * Writes the user profile doc, then navigates to 'home'.
+   * Process login result
    */
   const processLoginResult = useCallback(async (result) => {
     console.log('processLoginResult - START');
@@ -79,15 +80,14 @@ const LoginPage = ({ navigate }) => {
           featureAccessLevel: 'free',
           createdAt: serverTimestamp(),
           updatedAt: serverTimestamp(),
-          soukoNumber: newSoukoNumber, // Save soukoNumber to profile
-          onboardingComplete: false, // Set onboarding to false for new users
+          soukoNumber: newSoukoNumber,
+          onboardingComplete: false,
         });
         console.log('processLoginResult - New profile created for user:', user.uid, 'with soukoNumber:', newSoukoNumber);
       } else {
         console.log('processLoginResult - Profile already exists for user:', user.uid);
       }
 
-      // Immediately navigate to home (just like your old code did with navigate('/home'))
       console.log('processLoginResult - Navigating to home...');
       navigate('home');
     } catch (error) {
@@ -99,16 +99,38 @@ const LoginPage = ({ navigate }) => {
     }
   }, [navigate]);
 
+  // Fetch total time
+  useEffect(() => {
+    const fetchTotalTime = async () => {
+      try {
+        const soukoTimeDoc = await getDoc(doc(db, 'counters', 'SoukoTime'));
+        if (soukoTimeDoc.exists()) {
+          const totalSeconds = soukoTimeDoc.data().TotalSoukoTime;
+          const hours = Math.floor(totalSeconds / 3600);
+          const minutes = Math.floor((totalSeconds % 3600) / 60);
+          setTotalTime(`${hours}h ${minutes}m`);
+        }
+      } catch (error) {
+        console.error('Error fetching total time:', error);
+        setTotalTime('0h 0m'); // Fallback value
+      }
+    };
+  
+    fetchTotalTime();
+  }, []);
+  
   /**
-   * useEffect #1 => Runs once on mount
-   * 1) Checks if there's a pending redirect result (like your old code).
-   * 2) Subscribes to onAuthStateChanged so if the user is already logged in, we go to home.
+   * useEffect for auth handling
    */
   useEffect(() => {
     console.log('LoginPage useEffect - START');
-    document.body.classList.add('no-scroll');
+    document.body.classList.add('allow-scroll'); // Enable scrolling on landing page
+    
+    // Add login-root class to #root element
+    const rootElement = document.getElementById('root');
+    rootElement.classList.add('login-root');
 
-    // 1) Check redirect result
+    // Check redirect result
     const checkRedirect = async () => {
       console.log('checkRedirect - START');
       setLoading(true);
@@ -130,7 +152,7 @@ const LoginPage = ({ navigate }) => {
     };
     checkRedirect();
 
-    // 2) Listen for auth changes => If user is already logged in, navigate home
+    // Listen for auth changes
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       console.log('onAuthStateChanged - Auth state changed:', user);
       if (user) {
@@ -139,25 +161,18 @@ const LoginPage = ({ navigate }) => {
       }
     });
 
-    // 3) “beforeinstallprompt” for Android
-    const handleBeforeInstallPrompt = (e) => {
-      e.preventDefault();
-      console.log('beforeinstallprompt event captured');
-      setDeferredPrompt(e);
-      setShowInstallButton(true);
-    };
-    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-
     return () => {
-      document.body.classList.remove('no-scroll');
-      unsubscribe(); // stop listening to onAuthStateChanged
-      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+      unsubscribe();
+      
+      // Cleanup function to remove the class when component unmounts
+      rootElement.classList.remove('login-root');
+      
       console.log('LoginPage useEffect - CLEANUP');
     };
   }, [processLoginResult, navigate]);
 
   /**
-   * handleLogin => your old code used signInWithPopup always.
+   * Handle login
    */
   const handleLogin = async () => {
     console.log('handleLogin - START');
@@ -176,64 +191,162 @@ const LoginPage = ({ navigate }) => {
     }
   };
 
-  /**
-   * If the user chooses to "Add to Home Screen" on Android
-   */
-  const handleInstallClick = async () => {
-    if (deferredPrompt) {
-      deferredPrompt.prompt();
-      const choiceResult = await deferredPrompt.userChoice;
-      console.log('User response to the install prompt:', choiceResult.outcome);
-      if (choiceResult.outcome === 'accepted') {
-        console.log('User accepted the install prompt');
-      } else {
-        console.log('User dismissed the install prompt');
-      }
-      setDeferredPrompt(null);
-      setShowInstallButton(false);
-    }
-  };
-
   return (
-    <div className="login-page">
-      <Header showLiveTime={true} />
-      <main className="login-content">
-        {loading && <div className="loading-indicator">Loading...</div>}
-        <section className="motivational-section">
-          <TextGenerateEffect words="The song of your roots is the song of now" />
-          <h4>
-            Master your time, shape your craft, and let progress flow. Mastery isn’t rushed, it’s built.
-          </h4>
-        </section>
-        <div className="login-actions">
-          <button
-            className="login-button"
-            onClick={handleLogin}
-            disabled={loading}
-          >
-            <img src={googleIcon} alt="Google Icon" className="google-icon" />
-            Continue with Google
-          </button>
-        </div>
-        {(showInstallButton || (isIOS() && !isInStandaloneMode())) && (
-          <div className="install-pwa">
-            {isIOS() && !isInStandaloneMode() ? (
-              <h2 className="login-pwa">
-                For the best experience, tap the <strong>Share</strong> icon and select <strong>"Add to Home Screen"</strong>.
-              </h2>
-            ) : (
-              <button onClick={handleInstallClick} className="install-button">
-                Add to Home Screen
-              </button>
-            )}
-          </div>
-        )}
-      </main>
-      <div className="sticky-login-container">
-        <h2 className="login-terms">
-          (Beta) By continuing, you agree to our <a href="/terms" className="login-link">Terms</a> and <a href="/privacy" className="login-link">Privacy Policy</a>.
-        </h2>
+    <div className="landing-page">
+      {/* Fixed Background Image */}
+      <div className="background-gradient">
       </div>
+
+      {/* Header */}
+      <div className="landing-header">
+        <Header showLiveTime={true} variant="login" />
+      </div>
+
+      {/* Total Time Banner */}
+      <div className="total-time-banner">
+        <div className="total-time-content">
+          <span className="total-time-label">(beta) Total tracked time</span>
+          <span className="total-time-value">{totalTime}</span>
+        </div>
+      </div>
+
+      {/* Hero Section */}
+      <section className="hero-section">
+        <div className="hero-content">
+          <p className="hero-appname">
+            Souko
+          </p>
+          <h1 className="hero-title">
+            <TextGenerateEffect words={`Designed to\n track your time, \nbuilt to inspire.`} />
+          </h1>
+          <p className="hero-subtitle">
+            Souko merges time tracking with reflection, shaping each moment into meaningful progress.
+          </p>
+          <div className="hero-cta">
+            <button
+              className={`login-button ${loading ? 'login-button-loading' : ''}`}
+              onClick={handleLogin}
+              disabled={loading}
+            >
+              <img src={googleIcon} alt="Google Icon" className="google-icon" />
+              {loading ? 'Connecting...' : 'Continue with Google'}
+            </button>
+          </div>
+          <div className="scroll-icon-container">
+            <img src={scrollIcon} alt="Scroll down" className="scroll-icon" />
+          </div>
+        </div>
+      </section>
+
+      {/* Main Feature Section */}
+      <section className="main-feature-section">
+        <div className="feature-content">
+          <div className="feature-image-container">
+            <img src={featureImage1} alt="Souko Main Feature" className="feature-card-image" />
+          </div>
+          <div className="feature-text">
+            <h2 className="feature-title">Souko merges time tracking with reflection, shaping each moment into meaningful progress.</h2>
+            <p className="feature-description">
+              Track your projects, stay in the moment, and gain insights to refine your creative process.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* Feature Highlights Section */}
+      <section className="feature-highlights-section">
+        <h2 className="highlights-title">Why Souko Works</h2>
+        
+        <div className="feature-cards">
+          <div className="feature-card">
+            <div className="feature-card-image-container">
+              <img src={featureImage1} alt="Project Tracking" className="feature-card-image" />
+            </div>
+            <h3 className="feature-card-title">Project Tracking</h3>
+            <p className="feature-card-description">
+              Organize your work by projects and track time with a simple, distraction-free interface.
+            </p>
+          </div>
+          
+          <div className="feature-card">
+            <div className="feature-card-image-container">
+              <img src={featureImage2} alt="Daily Reflections" className="feature-card-image" />
+            </div>
+            <h3 className="feature-card-title">Daily Reflections</h3>
+            <p className="feature-card-description">
+              Build a habit of reflection with our guided journaling system that adapts to your workflow.
+            </p>
+          </div>
+          
+          <div className="feature-card">
+            <div className="feature-card-image-container">
+              <img src={featureImage3} alt="Progress Insights" className="feature-card-image" />
+            </div>
+            <h3 className="feature-card-title">Progress Insights</h3>
+            <p className="feature-card-description">
+              Gain valuable insights about your productivity patterns and creative rhythms over time.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+<section className="cta-section">
+  <div className="cta-container">
+    <div className="cta-image-container">
+    <div className="cta-image-container">
+  <img src={greenSmiley} alt="Green Smiley" className="cta-image rotating-smiley" />
+</div>
+    </div>
+    <div className="cta-content">
+      <h2 className="cta-title">Ready to transform your creative process?</h2>
+      <p className="cta-text">
+        Join thousands of creators who use Souko to track their time, reflect on their work, 
+        and build sustainable creative habits that lead to meaningful progress.
+      </p>
+      <div className="cta-buttons">
+        <div className="social-buttons">
+          <a 
+            href="https://madebybram.com/" 
+            target="_blank" 
+            rel="noopener noreferrer" 
+            className="social-button"
+          >
+            MadeByBram.com
+          </a>
+          <a 
+            href="https://www.threads.net/@bramvanhaeren" 
+            target="_blank" 
+            rel="noopener noreferrer" 
+            className="social-button"
+          >
+            <img src={threadsIcon} alt="Threads" className="social-icon" />
+            Threads
+          </a>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+
+      {/* Footer */}
+      <footer className="landing-footer">
+        <div className="footer-content">
+          <div className="footer-logo">
+            <span className="footer-logo-text">Souko</span>
+          </div>
+          
+          <div className="footer-legal">
+            <p className="footer-copyright">© 2025 Souko. All rights reserved.</p>
+            <p className="footer-terms">
+              By continuing, you agree to our <a href="/terms" className="footer-terms-link">Terms</a> and <a href="/privacy" className="footer-terms-link">Privacy Policy</a>.
+            </p>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 };
