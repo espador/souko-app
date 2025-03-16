@@ -20,7 +20,7 @@
   position: absolute;
   background: linear-gradient(to bottom, #FE4B00, #97569C, #2C4168, #141C2E,  #121216);
   width: 100%;
-  height: 80vh;
+  height: 90%;
   z-index: 0;
   overflow: hidden;
 }
@@ -47,7 +47,7 @@
   display: flex;
   flex-direction: column;
   text-align: left;
-  min-height: 64vh;
+  min-height: 68vh;
   margin-top: 80px;
 }
 
@@ -252,7 +252,7 @@
 
 .feature-card-image {
   width: 100%;
-  height: 100%;
+  height: 460px;
   object-fit: cover;
   margin: 0px;
   padding: 0px;
@@ -587,7 +587,7 @@ background-color: var(--background-color);
     position: absolute;
     background: linear-gradient(to bottom, #FE4B00, #97569C, #2C4168, #141C2E,  #121216);
     width: 100%;
-    height: 84vh;
+    height: 80%;
     z-index: 0;
     overflow: hidden;
   }
@@ -607,7 +607,7 @@ background-color: var(--background-color);
     display: flex;
     flex-direction: column;
     text-align: left;
-    min-height: 64vh;
+    min-height: 72vh;
     margin-top: 40px;
     padding: 0 164px;
   }
@@ -649,7 +649,7 @@ background-color: var(--background-color);
   }
 
   .hero-content {
-    max-width: 800px;
+    max-width: 100%;
     margin: 0 24px;
     margin-right: 0px;
     margin-left: 0px;
@@ -660,6 +660,7 @@ background-color: var(--background-color);
     line-height: 1.6;
     margin-bottom: 40px;
     margin-top: 16px;
+    max-width: 80%;
     color: var(--text-color);
     margin-left: 0;
     margin-right: 0;
@@ -725,7 +726,9 @@ background-color: var(--background-color);
 
   .feature-content {
     flex-direction: row;
-    align-items: center;
+    align-items: end;
+    margin-top: 24px;
+    background-color: transparent;
   }
   
   .feature-text {
@@ -765,7 +768,7 @@ background-color: var(--background-color);
   }
 
   .main-feature-section {
-    padding-top: 64px;
+    padding-top: 24px;
     padding-left: 164px;
     padding-right: 164px;
     padding-bottom: 64px;
@@ -775,6 +778,7 @@ background-color: var(--background-color);
   .feature-highlights-section {
     margin-top: 0px;
     padding: 0 164px;
+    margin-bottom: 64px;
     background-color: var(--text-color);
   }
 

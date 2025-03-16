@@ -217,10 +217,10 @@ const LoginPage = ({ navigate }) => {
             Souko
           </p>
           <h1 className="hero-title">
-            <TextGenerateEffect words={`Designed to\n track your time, \nbuilt to inspire.`} />
+            <TextGenerateEffect words={`Designed to track your time, \nbuilt to inspire.`} />
           </h1>
           <p className="hero-subtitle">
-            Souko merges time tracking with reflection, shaping each moment into meaningful progress.
+          Mastery isn’t rushed — it’s refined. Souko helps you master your craft, one session at a time. No teams, no noise, just you and your moments.
           </p>
           <div className="hero-cta">
             <button
@@ -242,12 +242,13 @@ const LoginPage = ({ navigate }) => {
       <section className="main-feature-section">
         <div className="feature-content">
           <div className="feature-image-container">
-            <img src={featureImage1} alt="Souko Main Feature" className="feature-card-image" />
+            <img src={featureImage0} alt="Souko Main Feature" className="feature-card-image" />
           </div>
           <div className="feature-text">
-            <h2 className="feature-title">Souko merges time tracking with reflection, shaping each moment into meaningful progress.</h2>
+            <h2 className="feature-title">Your space, your moments</h2>
             <p className="feature-description">
-              Track your projects, stay in the moment, and gain insights to refine your creative process.
+            Souko helps you connect your time to your purpose, turning moments into meaningful progress. This isn’t your team’s tool — it’s your personal space to master your craft.
+            Your time, your space, your moments.
             </p>
           </div>
         </div>
@@ -255,16 +256,16 @@ const LoginPage = ({ navigate }) => {
 
       {/* Feature Highlights Section */}
       <section className="feature-highlights-section">
-        <h2 className="highlights-title">Why Souko Works</h2>
+        <h2 className="highlights-title">Features</h2>
         
         <div className="feature-cards">
           <div className="feature-card">
             <div className="feature-card-image-container">
               <img src={featureImage1} alt="Project Tracking" className="feature-card-image" />
             </div>
-            <h3 className="feature-card-title">Project Tracking</h3>
+            <h3 className="feature-card-title">Time Tracking</h3>
             <p className="feature-card-description">
-              Organize your work by projects and track time with a simple, distraction-free interface.
+            Track your sessions with purpose. Set clear objectives, label your work, and stay focused. All your sessions, tracked seamlessly across devices.
             </p>
           </div>
           
@@ -272,9 +273,9 @@ const LoginPage = ({ navigate }) => {
             <div className="feature-card-image-container">
               <img src={featureImage2} alt="Daily Reflections" className="feature-card-image" />
             </div>
-            <h3 className="feature-card-title">Daily Reflections</h3>
+            <h3 className="feature-card-title">Project insights</h3>
             <p className="feature-card-description">
-              Build a habit of reflection with our guided journaling system that adapts to your workflow.
+            Know what’s working — and what’s not. See your earnings, track progress by project, and understand how your time shapes results. Clear insights, sharper focus.
             </p>
           </div>
           
@@ -282,9 +283,9 @@ const LoginPage = ({ navigate }) => {
             <div className="feature-card-image-container">
               <img src={featureImage3} alt="Progress Insights" className="feature-card-image" />
             </div>
-            <h3 className="feature-card-title">Progress Insights</h3>
+            <h3 className="feature-card-title">Kaizen journal</h3>
             <p className="feature-card-description">
-              Gain valuable insights about your productivity patterns and creative rhythms over time.
+              In just seconds, capture your mood, reflect on what shaped it, and define actions to improve tomorrow. Build streaks that build momentum — one moment at a time.
             </p>
           </div>
         </div>
@@ -299,10 +300,9 @@ const LoginPage = ({ navigate }) => {
 </div>
     </div>
     <div className="cta-content">
-      <h2 className="cta-title">Ready to transform your creative process?</h2>
+      <h2 className="cta-title">This project was built in public by Bram Vanhaeren</h2>
       <p className="cta-text">
-        Join thousands of creators who use Souko to track their time, reflect on their work, 
-        and build sustainable creative habits that lead to meaningful progress.
+      A designer with no coding experience, learning to build digital products end-to-end with the power of AI and 10+ years of design expertise. Every insight, mistake, and breakthrough fuels my talks and consultancy. Curious about the journey? Let's chat.
       </p>
       <div className="cta-buttons">
         <div className="social-buttons">
