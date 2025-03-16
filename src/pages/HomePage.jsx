@@ -12,6 +12,7 @@ import {
   limit
 } from 'firebase/firestore';
 import { formatTime } from '../utils/formatTime';
+import { format } from 'date-fns';
 import Header from '../components/Layout/Header';
 import '../styles/global.css';
 import { ReactComponent as Spinner } from '../styles/components/assets/spinner.svg';
@@ -20,7 +21,6 @@ import Sidebar from '../components/Layout/Sidebar';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { TextGenerateEffect } from '../styles/components/text-generate-effect.tsx';
-import JournalSection from '../components/Journal/JournalSection';
 import LevelProfile from '../components/Level/LevelProfile';
 
 export const cn = (...inputs) => twMerge(clsx(inputs));
@@ -47,7 +47,6 @@ const cacheHomePageData = (
   uid,
   projects,
   sessions,
-  journalEntries,
   userProfile,
   levelConfig,
   hasTrackedEver
@@ -55,7 +54,6 @@ const cacheHomePageData = (
   const cache = {
     projects,
     sessions,
-    journalEntries,
     userProfile,
     levelConfig,
     hasTrackedEver,
@@ -68,13 +66,14 @@ const HomePage = React.memo(({ navigate, skipAutoRedirect, currentPage }) => {
   const [user, setUser] = useState(null);
   const [projects, setProjects] = useState([]);
   const [sessions, setSessions] = useState([]);
-  const [journalEntries, setJournalEntries] = useState([]);
   const [userProfile, setUserProfile] = useState(null);
   const [levelConfig, setLevelConfig] = useState(null);
   const [hasTrackedEver, setHasTrackedEver] = useState(false);
   const [loading, setLoading] = useState(true);
   const [totalTrackedTimeMinutes, setTotalTrackedTimeMinutes] = useState(0);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [needsJournalEntry, setNeedsJournalEntry] = useState(true);
+  const today = useMemo(() => new Date(), []);
 
   const fetchHomeData = React.useCallback(async (uid) => {
     const cachedData = loadCachedHomePageData(uid);
@@ -82,7 +81,6 @@ const HomePage = React.memo(({ navigate, skipAutoRedirect, currentPage }) => {
       console.log('HomePage: Loaded data from cache');
       setProjects(cachedData.projects || []);
       setSessions(cachedData.sessions || []);
-      setJournalEntries(cachedData.journalEntries || []);
       setUserProfile(cachedData.userProfile || null);
       setLevelConfig(cachedData.levelConfig || null);
       setHasTrackedEver(cachedData.hasTrackedEver || false);
@@ -114,20 +112,6 @@ const HomePage = React.memo(({ navigate, skipAutoRedirect, currentPage }) => {
       }));
       const userHasTrackedEver = userSessions.length > 0;
 
-      const sevenDaysAgo = new Date();
-      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-      const journalSnap = await getDocs(
-        query(
-          collection(db, 'journalEntries'),
-          where('userId', '==', uid),
-          where('createdAt', '>=', sevenDaysAgo)
-        )
-      );
-      const userJournalEntries = journalSnap.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-
       const profileRef = doc(db, 'profiles', uid);
       const profileSnap = await getDoc(profileRef);
 
@@ -136,6 +120,30 @@ const HomePage = React.memo(({ navigate, skipAutoRedirect, currentPage }) => {
       if (profileSnap.exists()) {
         profileData = profileSnap.data();
         totalMinutes = profileData.totalTrackedTime || 0;
+        
+        // Check if user has logged a journal entry today
+        const lastJournalDate = profileData.lastJournalDate;
+        
+        if (lastJournalDate) {
+          // Convert Firestore timestamp to Date if needed
+          const lastDate = lastJournalDate.toDate ? lastJournalDate.toDate() : new Date(lastJournalDate);
+          
+          // Get today's date (reset to midnight for comparison)
+          const todayDate = new Date();
+          todayDate.setHours(0, 0, 0, 0);
+          
+          // Reset lastDate to midnight for comparison
+          const lastDateMidnight = new Date(lastDate);
+          lastDateMidnight.setHours(0, 0, 0, 0);
+          
+          // If lastJournalDate is today, user has already logged a journal entry
+          setNeedsJournalEntry(lastDateMidnight < todayDate);
+        } else {
+          // No lastJournalDate means user has never logged a journal entry
+          setNeedsJournalEntry(true);
+        }
+      } else {
+        setNeedsJournalEntry(true);
       }
 
       const levelConfigRef = doc(db, 'config', 'level_config');
@@ -147,7 +155,6 @@ const HomePage = React.memo(({ navigate, skipAutoRedirect, currentPage }) => {
 
       setProjects(userProjects);
       setSessions(userSessions);
-      setJournalEntries(userJournalEntries);
       setUserProfile(profileData);
       setLevelConfig(lvlCfg);
       setHasTrackedEver(userHasTrackedEver);
@@ -157,13 +164,13 @@ const HomePage = React.memo(({ navigate, skipAutoRedirect, currentPage }) => {
         uid,
         userProjects,
         userSessions,
-        userJournalEntries,
         profileData,
         lvlCfg,
         userHasTrackedEver
       );
     } catch (err) {
       console.error('HomePage: Error fetching fresh data:', err);
+      setNeedsJournalEntry(true);
     } finally {
       setLoading(false);
     }
@@ -200,6 +207,12 @@ const HomePage = React.memo(({ navigate, skipAutoRedirect, currentPage }) => {
       console.error('Logout Error:', error.message);
     }
   }, [navigate]);
+
+  // Handle click on "How did you feel today?" button
+  const handleTodayJournalClick = useCallback(() => {
+    const todayFormatted = format(today, 'yyyy-MM-dd');
+    navigate('journal-form', { selectedDate: todayFormatted });
+  }, [today, navigate]);
 
   const openSidebar = useCallback(() => setIsSidebarOpen(true), []);
   const closeSidebar = useCallback(() => setIsSidebarOpen(false), []);
@@ -280,13 +293,17 @@ const HomePage = React.memo(({ navigate, skipAutoRedirect, currentPage }) => {
             totalTrackedTimeMinutes={totalTrackedTimeMinutes}
             levelProgressionData={levelConfig}
           />
-
-          <JournalSection
-            navigate={navigate}
-            journalEntries={journalEntries}
-            loading={false}
-          />
         </div>
+        
+        {/* Add the journal button below the level-journal-container */}
+        {needsJournalEntry && (
+          <button 
+            className="home-today-button" 
+            onClick={handleTodayJournalClick}
+          >
+            How do you feel today?
+          </button>
+        )}
 
         <section className="sessions-section">
           <div className="sessions-header">

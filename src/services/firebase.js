@@ -1,6 +1,20 @@
 // src/services/firebase.js
 import { initializeApp } from 'firebase/app';
-import { getFirestore, collection, query, where, getDocs, addDoc, doc, updateDoc, deleteDoc, getDoc, serverTimestamp, orderBy } from 'firebase/firestore'; // Import necessary Firestore functions
+import { 
+  getFirestore, 
+  collection, 
+  query, 
+  where, 
+  getDocs, 
+  addDoc, 
+  doc, 
+  updateDoc, 
+  deleteDoc, 
+  getDoc, 
+  serverTimestamp, 
+  orderBy,
+  runTransaction 
+} from 'firebase/firestore'; // Added runTransaction
 import { getAuth, GoogleAuthProvider } from 'firebase/auth';
 
 // Firebase configuration
@@ -140,21 +154,43 @@ const refreshUserProjects = async (userId) => {
 // -------------------- Journal Entry Functions --------------------
 
 // Function to add a new journal entry
-const addJournalEntry = async (userId, mood, reflection, futureStep) => { // Renamed 'future' to 'futureStep' to match JournalForm
-  if (!userId || !mood) {
-    throw new Error('User ID and mood are required for a journal entry.');
-  }
-
+const addJournalEntry = async (userId, mood, reflection, futureStep, selectedDate) => {
   try {
-    const docRef = await addDoc(collection(db, 'journalEntries'), {
+    const entryDate = selectedDate ? new Date(selectedDate) : new Date();
+    
+    // Create the journal entry
+    const journalEntryRef = await addDoc(collection(db, 'journalEntries'), {
       userId,
-      mood: mood,
-      reflection: reflection || '',
-      futureStep: futureStep || '', // Use 'futureStep' consistently
-      createdAt: serverTimestamp(), // Renamed timestamp to createdAt and set serverTimestamp
+      mood,
+      reflection,
+      futureStep,
+      createdAt: entryDate,
+      updatedAt: new Date()
     });
-    console.log('Journal entry added with ID:', docRef.id);
-    return docRef.id;
+    
+    // Update the user's profile with lastJournalDate and increment totalJournalCount
+    const profileRef = doc(db, 'profiles', userId);
+    
+    // Use a transaction to safely update the counter
+    await runTransaction(db, async (transaction) => {
+      const profileDoc = await transaction.get(profileRef);
+      if (!profileDoc.exists()) {
+        // Create profile if it doesn't exist
+        transaction.set(profileRef, {
+          lastJournalDate: entryDate,
+          totalJournalCount: 1
+        });
+      } else {
+        // Update existing profile
+        const profileData = profileDoc.data();
+        transaction.update(profileRef, {
+          lastJournalDate: entryDate,
+          totalJournalCount: (profileData.totalJournalCount || 0) + 1
+        });
+      }
+    });
+    
+    return journalEntryRef.id;
   } catch (error) {
     console.error("Error adding journal entry:", error);
     throw error;
@@ -184,14 +220,35 @@ const updateJournalEntry = async (journalEntryId, mood, reflection, futureStep) 
 
 // Function to delete a journal entry
 const deleteJournalEntry = async (journalEntryId) => {
-  if (!journalEntryId) {
-    throw new Error('Journal entry ID is required to delete.');
-  }
-
   try {
-    const journalEntryRef = doc(db, 'journalEntries', journalEntryId);
-    await deleteDoc(journalEntryRef);
-    console.log('Journal entry deleted with ID:', journalEntryId);
+    // First get the entry to find the userId
+    const entryRef = doc(db, 'journalEntries', journalEntryId);
+    const entrySnap = await getDoc(entryRef);
+    
+    if (entrySnap.exists()) {
+      const entryData = entrySnap.data();
+      const userId = entryData.userId;
+      
+      // Delete the entry
+      await deleteDoc(entryRef);
+      
+      // Update the user's profile to decrement totalJournalCount
+      const profileRef = doc(db, 'profiles', userId);
+      
+      // Use a transaction to safely update the counter
+      await runTransaction(db, async (transaction) => {
+        const profileDoc = await transaction.get(profileRef);
+        if (profileDoc.exists()) {
+          const profileData = profileDoc.data();
+          const currentCount = profileData.totalJournalCount || 0;
+          
+          // Ensure we don't go below 0
+          transaction.update(profileRef, {
+            totalJournalCount: Math.max(0, currentCount - 1)
+          });
+        }
+      });
+    }
   } catch (error) {
     console.error("Error deleting journal entry:", error);
     throw error;

@@ -207,6 +207,7 @@ const App = memo(() => {
             navigate={navigate}
             hasActiveSession={Boolean(activeSession)}
             activeSession={activeSession}
+            currentUser={currentUser} // Add this line to pass the current user
           />
         )}
       </div>

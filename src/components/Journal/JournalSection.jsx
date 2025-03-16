@@ -17,6 +17,7 @@ const moodIcons = {
 const JournalSection = React.memo(({ journalEntries = [], loading, navigate }) => {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [currentStreak, setCurrentStreak] = useState(0);
+  const [needsJournalEntry, setNeedsJournalEntry] = useState(true);
 
   // We no longer rely on 'isJournalAvailable' or time-of-day checks. 
   const today = useMemo(() => new Date(), []);
@@ -42,13 +43,37 @@ const JournalSection = React.memo(({ journalEntries = [], loading, navigate }) =
             const profileData = profileSnap.data();
             // Make sure your Cloud Function writes 'currentStreak' to the same doc:
             setCurrentStreak(profileData.currentStreak || 0);
+            
+            // Check if user has logged a journal entry today
+            const lastJournalDate = profileData.lastJournalDate;
+            
+            if (lastJournalDate) {
+              // Convert Firestore timestamp to Date if needed
+              const lastDate = lastJournalDate.toDate ? lastJournalDate.toDate() : new Date(lastJournalDate);
+              
+              // Get today's date (reset to midnight for comparison)
+              const todayDate = new Date();
+              todayDate.setHours(0, 0, 0, 0);
+              
+              // Reset lastDate to midnight for comparison
+              const lastDateMidnight = new Date(lastDate);
+              lastDateMidnight.setHours(0, 0, 0, 0);
+              
+              // If lastJournalDate is today, user has already logged a journal entry
+              setNeedsJournalEntry(lastDateMidnight < todayDate);
+            } else {
+              // No lastJournalDate means user has never logged a journal entry
+              setNeedsJournalEntry(true);
+            }
           } else {
             setCurrentStreak(0);
+            setNeedsJournalEntry(true);
           }
         }
       } catch (error) {
         console.error('Error fetching streak:', error);
         setCurrentStreak(0);
+        setNeedsJournalEntry(true);
       }
     };
     fetchStreak();
@@ -101,6 +126,12 @@ const JournalSection = React.memo(({ journalEntries = [], loading, navigate }) =
     },
     [startOfCurrentWeek, navigate, journalEntries, parseDateForJournal]
   );
+
+  // Handle click on "How did you feel today?" button
+  const handleTodayJournalClick = useCallback(() => {
+    const todayFormatted = format(today, 'yyyy-MM-dd');
+    navigate('journal-form', { selectedDate: todayFormatted });
+  }, [today, navigate]);
 
   // Generate an array of the 7 days in the current week
   const weekDays = useMemo(() => {
@@ -167,11 +198,23 @@ const JournalSection = React.memo(({ journalEntries = [], loading, navigate }) =
   return (
     <section className="journal-section">
       <div className="journal-header">
-        <h2 className="journal-label">Journal streak</h2>
-        {/* We display the user’s currentStreak in a “badge” */}
-        <div className="journal-badge">{currentStreak}</div>
+        <h2 className="journal-label">Your journal</h2>
+        <div className="streak-container">
+          <span className="your-streak-text">Streak</span>
+          <div className="journal-badge">{currentStreak}</div>
+        </div>
       </div>
+
       <div className="journal-days">{renderDayButtons()}</div>
+      
+      {needsJournalEntry && (
+        <button 
+          className="journal-today-button" 
+          onClick={handleTodayJournalClick}
+        >
+          How did you feel today?
+        </button>
+      )}
     </section>
   );
 });

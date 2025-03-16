@@ -1,11 +1,11 @@
 {
   "files": {
-    "main.css": "/static/css/main.0fc436df.css",
-    "main.js": "/static/js/main.198f4bc9.js",
+    "main.css": "/static/css/main.6bd13369.css",
+    "main.js": "/static/js/main.c794b218.js",
     "static/media/CommitMono-700-Regular.ttf": "/static/media/CommitMono-700-Regular.abaf71e816dc70e8de48.ttf",
     "static/media/CommitMono-400-Regular.ttf": "/static/media/CommitMono-400-Regular.7acda3e77ae620cd8a41.ttf",
     "static/media/feature-0.png": "/static/media/feature-0.ee30229c9f40f932ecc4.png",
-    "static/media/feature-3.png": "/static/media/feature-3.429a0ce8c85258dd705a.png",
+    "static/media/feature-3.png": "/static/media/feature-3.9a86ee402138c498d716.png",
     "static/media/feature-2.png": "/static/media/feature-2.a8b7b833640b6211d058.png",
     "static/media/feature-1.png": "/static/media/feature-1.b03c6fa426ba3d031e4c.png",
     "static/media/shippori-mincho-5-400-normal.woff": "/static/media/shippori-mincho-5-400-normal.21d9a20d3996449ccd3a.woff",
@@ -242,6 +242,8 @@
     "static/media/shippori-mincho-54-400-normal.woff": "/static/media/shippori-mincho-54-400-normal.f4c1f57c437eab1910f3.woff",
     "static/media/shippori-mincho-54-400-normal.woff2": "/static/media/shippori-mincho-54-400-normal.59ca270bf4c825bac2b2.woff2",
     "static/media/shippori-mincho-53-400-normal.woff2": "/static/media/shippori-mincho-53-400-normal.82d782e7d81cdf12ca05.woff2",
+    "static/media/journal-inactive-notification.svg": "/static/media/journal-inactive-notification.c3dd930a5e6f21119c3cc5635ebdabde.svg",
+    "static/media/journal-active-notification.svg": "/static/media/journal-active-notification.2bd60fca08f07079dbb3bd237f3a797b.svg",
     "static/media/label-objective.svg": "/static/media/label-objective.8494e34bfe2459d29369d6fee14308d8.svg",
     "static/media/journal-inactive.svg": "/static/media/journal-inactive.805fef1a9024dfdcb8e050f6b4f77ece.svg",
     "static/media/journal-active.svg": "/static/media/journal-active.8f4f6f55e0f4a1a8aad94f023a3d252f.svg",
@@ -293,11 +295,11 @@
     "static/media/dropdown.svg": "/static/media/dropdown.ced35e66ac1e1549923b942eb468f607.svg",
     "static/media/play.svg": "/static/media/play.96fdd671041bba56eb630fd86c378b13.svg",
     "static/media/pause.svg": "/static/media/pause.6b572bc836f29e47ed6ef737423bb7cd.svg",
-    "main.0fc436df.css.map": "/static/css/main.0fc436df.css.map",
-    "main.198f4bc9.js.map": "/static/js/main.198f4bc9.js.map"
+    "main.6bd13369.css.map": "/static/css/main.6bd13369.css.map",
+    "main.c794b218.js.map": "/static/js/main.c794b218.js.map"
   },
   "entrypoints": [
-    "static/css/main.0fc436df.css",
-    "static/js/main.198f4bc9.js"
+    "static/css/main.6bd13369.css",
+    "static/js/main.c794b218.js"
   ]
 }

@@ -2,6 +2,7 @@
   --background-color: #0C0C0C;
   --text-color: #ffffff;
   --text-muted: #494750;
+  --button-border:#312E3C;
   --accent-color: #00FF00;
   --card-background: #131314;
   --border-color: #25252d;
@@ -205,7 +206,7 @@
 
 .create-project-button {
   background-color: transparent;
-  border: 1px solid var(--card-background);
+  border: 1px solid var(--button-border);
   border-radius: 0px;
   text-align: center;
   font-size: 16px;
@@ -231,10 +232,23 @@
 }
 
 h1 {
+  text-align: left;
+  margin-bottom: 0px;
   font-size: 32px;
   line-height: 40px;
-  text-align: left;
   color: var(--text-color);
+  font-family: var(--font-commit-mono);
+  font-weight: 400;
+}
+
+.sidebar-title {
+  text-align: left;
+  margin-bottom: 40px;
+  font-size: 32px;
+  line-height: 40px;
+  color: var(--text-color);
+  font-family: var(--font-commit-mono);
+  font-weight: 400;
 }
 
 .button-icon {
@@ -359,7 +373,7 @@ body {
   width: 100%;
   height: 100vh;
   font-family: var(--font-commit-mono), monospace;
-  line-height: 1.5;
+  line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overflow-x: hidden; /* Keep horizontal overflow hidden */
@@ -411,7 +425,7 @@ body.no-scroll {
   display: block;
   padding: 16px;
   background-color: transparent;
-  border: 1px solid var(--card-background);
+  border: 1px solid var(--button-border);
   border-radius: 0px;
   text-align: center;
   font-family: var(--font-commit-mono);
@@ -508,7 +522,7 @@ body.no-scroll {
 .login-button {
   font-family: var(--font-commit-mono);
   background-color: transparent;
-  border: 1px solid var(--card-background);
+  border: 0px solid var(--button-border);
   border-radius: 0px;
   text-align: center;
   font-size: 16px;
@@ -900,7 +914,7 @@ body.allow-scroll html {
 
 .track-project-button {
   background-color: transparent;
-  border: 1px solid var(--card-background);
+  border: 1px solid var(--button-border);
   border-radius: 0px;
   text-align: center;
   font-size: 16px;
@@ -1023,7 +1037,7 @@ body.allow-scroll > html {
   display: block;
   padding: 16px;
   background-color: transparent;
-  border: 1px solid var(--card-background);
+  border: 1px solid var(--button-border);
   border-radius: 0px;
   text-align: center;
   font-family: var(--font-commit-mono);
@@ -1126,7 +1140,7 @@ body.allow-scroll > html {
 
 .journal-countdown-button {
   padding: 16px 24px;
-  border: 1px solid var(--card-background);
+  border: 1px solid var(--button-border);
   border-radius: 0px;
   background-color: transparent;
   color: var(--text-color);
@@ -1203,11 +1217,11 @@ body.allow-scroll > html {
   color: var(--text-color);
   font-family: var(--font-commit-mono);
   font-size: 24px;
-  line-height: 32px;
+  line-height: 40px;
   outline: none;
   box-sizing: border-box;
   vertical-align: top !important; /* ADDED !important - stronger override */
-  padding-right: 40px; /* Space for the edit icon */
+  padding-right: 0px; /* Space for the edit icon */
   height: auto; /* Ensure it doesn't have a fixed height */
   min-height: inherit; /* Inherit min-height if set on parent */
   overflow: hidden; /* Prevent scrollbars */
@@ -1225,7 +1239,7 @@ body.allow-scroll > html {
   text-align: left;
   padding-top: 8px;
   padding-bottom: 16px;
-  line-height: normal;
+  line-height: 1.4;
   width: 100%;
 }
 
@@ -1254,7 +1268,7 @@ body.allow-scroll > html {
 .save-button,
 .erase-button {
   background-color: transparent;
-  border: 1px solid var(--card-background);
+  border: 1px solid var(--button-border);
   border-radius: 0px;
   text-align: center;
   font-size: 16px;
@@ -1272,14 +1286,9 @@ body.allow-scroll > html {
   margin-bottom: 0; /* Remove bottom margin to rely on form-navigation-single-page gap */
 }
 
-.save-button {
-  color: var(--text-color); /* Accent color for Save button text */
-  border-color: var(--card-background); /* Accent color for Save button border */
-}
-
 .erase-button {
+  margin-top: 16px;
   color: var(--accent-orange); /* Default text color for Erase button */
-  border-color: var(--card-background); /* Match border color to CreateProjectPage button */
 }
 
 .erase-button .button-icon {
@@ -1293,6 +1302,7 @@ body.allow-scroll > html {
 .journal-form-section-text2 {
   position: relative; /* needed for absolute positioning of the icon */
     width: 100%; /* Ensure sections take full width */
+  margin-bottom: 24px;
 }
 
 .journal-input-tile {
@@ -1301,6 +1311,7 @@ body.allow-scroll > html {
   overflow: hidden; /* Ensure no scrollbars appear - important! */
   resize: none; 
   box-sizing: border-box;
+  line-height: 2;
 }
 
 .journal-edit-icon {
@@ -1720,7 +1731,7 @@ body.allow-scroll > html {
   margin: 0 auto;
   box-sizing: border-box;
   background-color: transparent;
-  border: 1px solid var(--card-background);
+  border: 1px solid var(--button-border);
   border-radius: 0px;
   padding: 16px;
   font-size: 16px;
@@ -1759,7 +1770,7 @@ body.allow-scroll > html {
   margin: 0 auto;
   box-sizing: border-box;
   background-color: transparent;
-  border: 1px solid var(--card-background);
+  border: 1px solid var(--button-border);
   border-radius: 0px;
   font-size: 16px;
   text-align: center;
@@ -1826,7 +1837,7 @@ body.allow-scroll > html {
   margin: 0 auto;
   box-sizing: border-box;
   background-color: transparent;
-  border: 1px solid var(--card-background);
+  border: 1px solid var(--button-border);
   border-radius: 0px;
   padding: 16px;
   font-size: 16px;
@@ -2236,7 +2247,7 @@ body.allow-scroll > html {
 
 .load-more-button {
   background-color: transparent;
-  border: 1px solid var(--card-background);
+  border: 1px solid var(--button-border);
   border-radius: 0px;
   padding: 12px 24px;
   font-size: 16px;
@@ -2595,8 +2606,8 @@ body.allow-scroll > html {
   background-color: #0C0C0C;
   box-shadow: -2px 0 5px rgba(0, 0, 0, 0.2);
   transform: translateX(100%); /* Initially hidden off-screen */
-  transition: transform 0.2s ease-in-out;
-  z-index: 1000; /* Ensure it's above other content */
+  transition: transform 0.4s ease-in-out;
+  z-index: 1100; /* Ensure it's above other content */
 }
 
 .sidebar.open {
@@ -2844,7 +2855,7 @@ width: 100%;
 .delete-project-button {
   font-family: var(--font-commit-mono);
   background-color: transparent;
-  border: 1px solid var(--card-background);
+  border: 1px solid var(--button-border);
   border-radius: 0px;
   text-align: center;
   font-size: 16px;
@@ -2945,7 +2956,7 @@ width: 100%;
   padding-top: 16px;
   padding-bottom: 16px;
   border-radius: 0px;
-  border: 1px solid var(--card-background);
+  border: 1px solid var(--button-border);
 }
 
 /* == Floating Bottom Navigation == */
@@ -3081,6 +3092,14 @@ width: 100%;
 .session-project-name {
   font-weight: 400;
   color: var(--text-color);
+  font-size: 16px;
+  line-height: 20px;
+  margin-right: 8px; /* Add some space after project name */
+}
+
+.session-feedback {
+  font-weight: 400;
+  color: var(--accent-pink);
   font-size: 16px;
   line-height: 20px;
   margin-right: 8px; /* Add some space after project name */
@@ -3477,4 +3496,62 @@ width: 100%;
   font-size: 16px;
   line-height: 24px;
   margin-top: 0px;
+}
+
+.journal-today-button {
+  background-color: transparent;
+  border: 1px solid #312E3C;
+  border-radius: 0px;
+  text-align: center;
+  font-size: 16px;
+  color: var(--text-color);
+  padding: 16px; /* Padding to match CreateProjectPage button */
+  cursor: pointer;
+  width: 100%; /* Make buttons full width */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px; /* Icon spacing */
+  font-family: var(--font-commit-mono); /* Font family to match button text */
+  font-weight: 400; /* Font weight to match button text */
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease; /* Smooth transitions */
+  margin-bottom: 24px;
+  margin-top: 16px;
+}
+
+.journal-today-button:hover {
+  background-color: var(--background-color);
+}
+
+.journal-today-button:active {
+  background-color: var(--background-color);
+}
+
+.home-today-button {
+  background-color: transparent;
+  border: 1px solid #312E3C;
+  border-radius: 0px;
+  text-align: center;
+  font-size: 16px;
+  color: var(--text-color);
+  padding: 16px; /* Padding to match CreateProjectPage button */
+  cursor: pointer;
+  width: 100%; /* Make buttons full width */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px; /* Icon spacing */
+  font-family: var(--font-commit-mono); /* Font family to match button text */
+  font-weight: 400; /* Font weight to match button text */
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease; /* Smooth transitions */
+  margin-bottom: 24px;
+  margin-top: 0px;
+}
+
+.home-today-button:hover {
+  background-color: var(--background-color);
+}
+
+.home-today-button:active {
+  background-color: var(--background-color);
 }

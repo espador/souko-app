@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { auth, db } from '../services/firebase';
-import { onAuthStateChanged } from 'firebase/auth';
+import { getAuth, onAuthStateChanged } from 'firebase/auth'; // Import getAuth
 import { collection, query, where, onSnapshot, orderBy, getDoc, doc } from 'firebase/firestore';
 import Header from '../components/Layout/Header';
 import '@fontsource/shippori-mincho';
@@ -8,6 +8,7 @@ import { TextGenerateEffect } from '../styles/components/text-generate-effect.ts
 import '../styles/global.css';
 import { format } from 'date-fns';
 import { ReactComponent as DropdownIcon } from '../styles/components/assets/dropdown.svg';
+import JournalSection from '../components/Journal/JournalSection';
 
 const CACHE_DURATION_MS = 30000;
 
@@ -23,7 +24,7 @@ const JournalOverviewPage = ({ navigate }) => {
     const [currentStreak, setCurrentStreak] = useState(0);
     const [totalJournalCount, setTotalJournalCount] = useState(0); // Renamed from monthlyJournalCount
     const [mostFrequentMood, setMostFrequentMood] = useState(null);
-
+    const [recentJournalEntries, setRecentJournalEntries] = useState([]); // For JournalSection
 
     const convertTimestamp = useCallback((timestamp) => {
         if (!timestamp) return null; // Handle null or undefined timestamp
@@ -77,7 +78,18 @@ const JournalOverviewPage = ({ navigate }) => {
             orderBy('createdAt', 'desc')
         );
 
+        // Query for recent entries (for JournalSection)
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+        const recentJournalQuery = query(
+            collection(db, 'journalEntries'),
+            where('userId', '==', uid),
+            where('createdAt', '>=', sevenDaysAgo),
+            orderBy('createdAt', 'desc')
+        );
+
         let unsubJournal;
+        let unsubRecentJournal;
 
         const handleJournalSnapshot = (snapshot) => {
             const fetchedEntries = snapshot.docs.map((doc) => {
@@ -93,6 +105,17 @@ const JournalOverviewPage = ({ navigate }) => {
             setLoadingJournalEntries(false); // Move setLoadingJournalEntries(false) here, after entries are set
         };
 
+        const handleRecentJournalSnapshot = (snapshot) => {
+            const fetchedEntries = snapshot.docs.map((doc) => {
+                const data = doc.data();
+                return {
+                    id: doc.id,
+                    ...data,
+                    createdAt: convertTimestamp(data.createdAt),
+                };
+            });
+            setRecentJournalEntries(fetchedEntries);
+        };
 
         unsubJournal = onSnapshot(journalQuery, handleJournalSnapshot, error => {
             console.error("Journal entries onSnapshot error:", error);
@@ -100,8 +123,13 @@ const JournalOverviewPage = ({ navigate }) => {
             setDataLoadCounter(prevCounter => prevCounter + 1);
         });
 
+        unsubRecentJournal = onSnapshot(recentJournalQuery, handleRecentJournalSnapshot, error => {
+            console.error("Recent journal entries onSnapshot error:", error);
+        });
+
         return () => {
             if (unsubJournal) unsubJournal();
+            if (unsubRecentJournal) unsubRecentJournal();
         };
     }, [convertTimestamp]);
 
@@ -141,6 +169,7 @@ const JournalOverviewPage = ({ navigate }) => {
 
 
     useEffect(() => {
+        // Use the imported onAuthStateChanged function directly
         const unsubscribeAuth = onAuthStateChanged(auth, async (currentUser) => {
             if (!currentUser) {
                 navigate('login');
@@ -227,7 +256,7 @@ const JournalOverviewPage = ({ navigate }) => {
                 {(!loadingProfileData && !loadingJournalEntries && mostFrequentMood) ? (
                     <>
                         <TextGenerateEffect
-                            words={`You logged <span class="accent-text">${totalJournalCount} moments</span> so far. \nThis month you're feeling more <span class="accent-text">${mostFrequentMood}</span>!`}
+                            words={`This month you're\\n feeling more <span class="accent-text">${mostFrequentMood}</span>!`}
                         />
                     </>
                 ) : (
@@ -236,24 +265,33 @@ const JournalOverviewPage = ({ navigate }) => {
             </section>
             <div className="divider"></div>
 
+            {/* Add JournalSection component here */}
+            <JournalSection
+                navigate={navigate}
+                journalEntries={recentJournalEntries}
+                loading={loadingJournalEntries}
+            />
+            <div className="divider"></div>
+
             <section className="journal-filter-section">
-                <div className="journal-filter-container">
-                    <div className="month-dropdown-wrapper">
-                        <select
-                            className="month-dropdown"
-                            value={currentMonthName}
-                            onChange={handleMonthChange}
-                        >
-                            {monthOptions}
-                        </select>
-                        <DropdownIcon className="dropdown-arrow" />
-                    </div>
-                    <div className="streak-container">
-                        <span className="your-streak-text">Your streak</span>
-                        <div className="journal-badge">{currentStreak}</div>
-                    </div>
-                </div>
-            </section>
+            <div className="journal-filter-container">
+  <div className="month-dropdown-wrapper">
+    <select
+      className="month-dropdown"
+      value={currentMonthName}
+      onChange={handleMonthChange}
+    >
+      {monthOptions}
+    </select>
+    <DropdownIcon className="dropdown-arrow" />
+  </div>
+  <div className="streak-container">
+    <span className="your-streak-text">Total logs</span>
+    <div className="journal-badge">{totalJournalCount}</div>
+  </div>
+</div>
+
+                </section>
 
             <main className="journal-overview-content">
                 <section className="journal-entries-section">
