@@ -135,13 +135,15 @@ const App = memo(() => {
             projectId={pageParams.projectId}
           />
         );
-      case 'session-detail':
-        return (
-          <SessionDetailPage
-            navigate={navigate}
-            sessionId={pageParams.sessionId}
-          />
-        );
+        case 'session-detail':
+          return (
+            <SessionDetailPage
+              navigate={navigate}
+              sessionId={pageParams.sessionId}
+              referrer={pageParams.referrer}
+              projectId={pageParams.projectId}
+            />
+          );
       // REMOVE the old 'session-overview' route:
       // case 'session-overview':
       //   return <SessionOverviewPage ... />

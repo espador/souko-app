@@ -1,7 +1,7 @@
 {
   "files": {
-    "main.css": "/static/css/main.6bd13369.css",
-    "main.js": "/static/js/main.c794b218.js",
+    "main.css": "/static/css/main.2a20024e.css",
+    "main.js": "/static/js/main.e4aa07b1.js",
     "static/media/CommitMono-700-Regular.ttf": "/static/media/CommitMono-700-Regular.abaf71e816dc70e8de48.ttf",
     "static/media/CommitMono-400-Regular.ttf": "/static/media/CommitMono-400-Regular.7acda3e77ae620cd8a41.ttf",
     "static/media/feature-0.png": "/static/media/feature-0.ee30229c9f40f932ecc4.png",
@@ -253,7 +253,6 @@
     "static/media/shippori-mincho-latin-ext-400-normal.woff": "/static/media/shippori-mincho-latin-ext-400-normal.086e317b740913212824.woff",
     "static/media/threads.svg": "/static/media/threads.1af3c6d468d354ff2b3898e645da4fd8.svg",
     "static/media/shippori-mincho-52-400-normal.woff": "/static/media/shippori-mincho-52-400-normal.b2639dcaba34b986aee9.woff",
-    "static/media/close.svg": "/static/media/close.47d4d8dc060c3a1c44378c0560cffeda.svg",
     "static/media/shippori-mincho-2-400-normal.woff": "/static/media/shippori-mincho-2-400-normal.fdaf19a428a385df83c3.woff",
     "static/media/shippori-mincho-52-400-normal.woff2": "/static/media/shippori-mincho-52-400-normal.866502d1dd7d9579a8ae.woff2",
     "static/media/shippori-mincho-57-400-normal.woff": "/static/media/shippori-mincho-57-400-normal.7a25ae84bba68134252a.woff",
@@ -265,7 +264,9 @@
     "static/media/label-dropdown.svg": "/static/media/label-dropdown.2a07c3d4d0ab12ae43485b042cf9e039.svg",
     "static/media/shippori-mincho-2-400-normal.woff2": "/static/media/shippori-mincho-2-400-normal.9f42e0bdfe389a68566f.woff2",
     "static/media/label-hourrate.svg": "/static/media/label-hourrate.d505c2cb09ec00bb5a277f525f4637b4.svg",
+    "static/media/logout.svg": "/static/media/logout.a876ea1d0b89c4af6a13df724f78c9b2.svg",
     "static/media/billable.svg": "/static/media/billable.e25b0f2c8af183550f64a7e40c9019e4.svg",
+    "static/media/close.svg": "/static/media/close.04603de37d1a87e137ce638b7a5f622d.svg",
     "static/media/home-inactive.svg": "/static/media/home-inactive.73a3cc8089b0839d32000c7e9d8bfb77.svg",
     "static/media/home-active.svg": "/static/media/home-active.e74c373443d164e7abd8806165763ff9.svg",
     "static/media/shippori-mincho-57-400-normal.woff2": "/static/media/shippori-mincho-57-400-normal.30a207c65652ba163bd7.woff2",
@@ -276,6 +277,7 @@
     "index.html": "/index.html",
     "static/media/Souko-logo-header.svg": "/static/media/Souko-logo-header.6ec43a5b07dba366e31f607b66a861aa.svg",
     "static/media/Souko-logo-header-login.svg": "/static/media/Souko-logo-header-login.31613e66f5e96cd2276c17c5739b977d.svg",
+    "static/media/download.svg": "/static/media/download.e5a6be25dd8e8d748d2fa2291281d088.svg",
     "static/media/return.svg": "/static/media/return.a3b655a1817f13c46d53028ad362a6eb.svg",
     "static/media/scroll-icon.svg": "/static/media/scroll-icon.063344e4a2123dcd4ce433cca5d5b887.svg",
     "static/media/edit.svg": "/static/media/edit.f17a19aa934da39bad77b391bc6c9227.svg",
@@ -291,15 +293,14 @@
     "static/media/mood-unmotivated.svg": "/static/media/mood-unmotivated.7a1b06653a0aa1e529f30bfffc5f4cde.svg",
     "static/media/mood-focused.svg": "/static/media/mood-focused.9998fdcc52defdf80d4c495b39f49ef4.svg",
     "static/media/mood-frustrated.svg": "/static/media/mood-frustrated.0eaffbf08bb20b6923fa3fbdc752529d.svg",
-    "static/media/download.svg": "/static/media/download.9be0d69e4666c7b9dfd250931bb04883.svg",
     "static/media/dropdown.svg": "/static/media/dropdown.ced35e66ac1e1549923b942eb468f607.svg",
     "static/media/play.svg": "/static/media/play.96fdd671041bba56eb630fd86c378b13.svg",
     "static/media/pause.svg": "/static/media/pause.6b572bc836f29e47ed6ef737423bb7cd.svg",
-    "main.6bd13369.css.map": "/static/css/main.6bd13369.css.map",
-    "main.c794b218.js.map": "/static/js/main.c794b218.js.map"
+    "main.2a20024e.css.map": "/static/css/main.2a20024e.css.map",
+    "main.e4aa07b1.js.map": "/static/js/main.e4aa07b1.js.map"
   },
   "entrypoints": [
-    "static/css/main.6bd13369.css",
-    "static/js/main.c794b218.js"
+    "static/css/main.2a20024e.css",
+    "static/js/main.e4aa07b1.js"
   ]
 }

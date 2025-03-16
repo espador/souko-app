@@ -48,7 +48,7 @@ const SESSION_OBJECTIVES = [
   '8 hours',
 ];
 
-export default function SessionDetailPage({ navigate, sessionId }) {
+export default function SessionDetailPage({ navigate, sessionId, referrer = 'home', projectId }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -87,7 +87,7 @@ export default function SessionDetailPage({ navigate, sessionId }) {
     (async () => {
       setLoading(true);
 
-      // 1) Fetch user’s projects
+      // 1) Fetch user's projects
       const projectsSnap = await getDocs(
         query(collection(db, 'projects'), where('userId', '==', user.uid))
       );
@@ -189,6 +189,16 @@ export default function SessionDetailPage({ navigate, sessionId }) {
     setSessionObjective(e.target.value);
   };
 
+  // Smart back navigation handler
+  const handleBackNavigation = () => {
+    console.log('Back navigation triggered with referrer:', referrer, 'projectId:', projectId);
+    if (referrer === 'project-detail' && projectId) {
+      navigate('project-detail', { projectId });
+    } else {
+      navigate('home');
+    }
+  };
+
   const handleClickSave = async () => {
     if (!session) return;
     if (!isChanged) return;
@@ -206,8 +216,8 @@ export default function SessionDetailPage({ navigate, sessionId }) {
       console.log('Session updated!');
       setIsChanged(false);
 
-      // Navigate to homepage after save - **CHANGED HERE**
-      navigate('home');
+      // Use smart navigation after save
+      handleBackNavigation();
     } catch (err) {
       console.error('Error updating session:', err);
     }
@@ -224,7 +234,8 @@ export default function SessionDetailPage({ navigate, sessionId }) {
       console.log('Session deleted!');
 
       setShowDeleteConfirm(false);
-      navigate('home'); // navigate to homepage after delete
+      // Use smart navigation after delete
+      handleBackNavigation();
     } catch (err) {
       console.error('Error deleting session:', err);
     }
@@ -290,8 +301,13 @@ export default function SessionDetailPage({ navigate, sessionId }) {
 
   return (
     <div className="session-detail-page">
-      {/* Use the new variant="sessionDetail" so we see the download icon (non-clickable) */}
-      <Header variant="sessionDetail" showBackArrow={true} navigate={navigate} />
+      {/* FIXED: Changed onBackClick to onBack */}
+      <Header 
+        variant="sessionDetail" 
+        showBackArrow={true} 
+        navigate={navigate}
+        onBack={handleBackNavigation} 
+      />
 
       {/* Motivational section */}
       <section className="motivational-section">

@@ -166,6 +166,15 @@ const ProjectDetailPage = React.memo(({ navigate, projectId }) => {
     }
   }, [project]);
 
+  // When navigating to session detail from a project page:
+const handleSessionClick = (session) => {
+  navigate('session-detail', { 
+    sessionId: session.id, 
+    referrer: 'project-detail',
+    projectId: projectId // Pass the current project ID
+  });
+};
+
   const handleLoadMore = useCallback(async () => {
     if (!currentUser || !routeProjectId || !hasMoreSessions || sessionsLoading) return;
     setSessionsLoading(true);
@@ -465,12 +474,10 @@ const ProjectDetailPage = React.memo(({ navigate, projectId }) => {
                 <ul className="sessions-list">
                   {sessionsByDate[date].map((session) => (
                     <li
-                      key={session.id}
-                      className="session-item input-tile"
-                      onClick={() =>
-                        navigate('session-detail', { sessionId: session.id })
-                      }
-                    >
+                    key={session.id}
+                    className="session-item input-tile"
+                    onClick={() => handleSessionClick(session)} 
+                  >
                       <span className="session-start-time">
                         {formatStartTime(session)}
                       </span>

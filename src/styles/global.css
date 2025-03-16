@@ -2600,14 +2600,16 @@ body.allow-scroll > html {
   position: fixed;
   top: 0;
   right: 0;
-  background-origin: 1;
-  height: 100vh;
-  width: 100%; /* Adjust width as needed */
-  background-color: #0C0C0C;
+  height: 100%;
+  width: 100%;
+  background-color: var(--background-color);
   box-shadow: -2px 0 5px rgba(0, 0, 0, 0.2);
-  transform: translateX(100%); /* Initially hidden off-screen */
+  transform: translateX(100%);
   transition: transform 0.4s ease-in-out;
-  z-index: 1100; /* Ensure it's above other content */
+  z-index: 1100;
+  padding-top: env(safe-area-inset-top, 0); /* iOS safe area support */
+  padding-bottom: env(safe-area-inset-bottom, 0);
+  box-sizing: border-box;
 }
 
 .sidebar.open {
@@ -2616,24 +2618,79 @@ body.allow-scroll > html {
 
 .sidebar-content {
   padding: 24px;
+  height: 100%;
+  overflow-y: auto; /* Enable scrolling */
+  -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+  box-sizing: border-box;
 }
 
 .close-button {
-  /* Removed explicit font-family, will inherit from global styles */
+  width: 40px;
+  height: 40px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
   font-weight: 400;
-  color: var(--text-muted);
-  font-size: 16px;
-  line-height: 20px;
+  color: var(--accent-pink);
   border: none;
   background: none;
   cursor: pointer;
-  padding: 0px;
+  padding: 0;
+}
+
+.close-icon {
+  width: 40px;
+  height: 40px;
+}
+
+.sidebar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  height: 40px;
+  margin-bottom: 24px;
+  position: sticky;
+  top: 0;
+  background-color: var(--background-color);
+  z-index: 10;
+  padding-top: env(safe-area-inset-top, 12px);
+}
+
+.sidebar-header-left, 
+.sidebar-header-right {
+  display: flex;
+  align-items: center;
+}
+
+.sidebar-logout-button {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--accent-orange);
+  padding: 0;
+}
+
+.sidebar-logout-icon {
+  width: 40px;
+  height: 40px;
+  fill: var(--accent-orange);
 }
 
 .close-button-container {
-  display: flex; /* Or other layout method */
-  justify-content: flex-start; /* Example: Align to the right */
-  margin-bottom: 20px; /* Add margin below the close button */
+  position: sticky;
+  top: 0;
+  background-color: #0C0C0C;
+  z-index: 1;
+  padding-top: 12px;
+  margin-bottom: 20px;
+  display: flex;
+  justify-content: flex-start;
 }
 
 /* Optional: Add styling for the overlay */

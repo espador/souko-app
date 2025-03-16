@@ -208,6 +208,14 @@ const HomePage = React.memo(({ navigate, skipAutoRedirect, currentPage }) => {
     }
   }, [navigate]);
 
+  // When navigating to session detail from the home page:
+const handleSessionClick = (session) => {
+  navigate('session-detail', { 
+    sessionId: session.id, 
+    referrer: 'home'
+  });
+};
+
   // Handle click on "How did you feel today?" button
   const handleTodayJournalClick = useCallback(() => {
     const todayFormatted = format(today, 'yyyy-MM-dd');
@@ -321,9 +329,7 @@ const HomePage = React.memo(({ navigate, skipAutoRedirect, currentPage }) => {
                   <li
                     key={session.id}
                     className="session-item"
-                    onClick={() =>
-                      navigate('session-detail', { sessionId: session.id })
-                    }
+                    onClick={() => handleSessionClick(session)}
                   >
                     <div className="session-item-container">
                       <div className="session-left-content">
