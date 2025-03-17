@@ -18,6 +18,7 @@ import '../styles/global.css';
 import { ReactComponent as Spinner } from '../styles/components/assets/spinner.svg';
 import '@fontsource/shippori-mincho';
 import Sidebar from '../components/Layout/Sidebar';
+import MobileSnackbar from '../components/MobileSnackbar';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { TextGenerateEffect } from '../styles/components/text-generate-effect.tsx';
@@ -74,6 +75,9 @@ const HomePage = React.memo(({ navigate, skipAutoRedirect, currentPage }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [needsJournalEntry, setNeedsJournalEntry] = useState(true);
   const today = useMemo(() => new Date(), []);
+  
+  // Check if today is Monday
+  const isMonday = useMemo(() => today.getDay() === 1, [today]);
 
   const fetchHomeData = React.useCallback(async (uid) => {
     const cachedData = loadCachedHomePageData(uid);
@@ -282,13 +286,16 @@ const handleSessionClick = (session) => {
         <section className="motivational-section">
           <TextGenerateEffect
             words={
-              !hasTrackedEver
-                ? `Every journey begins with one moment.\nStart tracking yours.`
-                : weeklyTrackedTime > 0
-                ? `This moment is progress. You\n tracked <span class="accent-text">${formatTime(
-                    weeklyTrackedTime
-                  )}</span>\ this week.`
-                : `Momentum begins with a single tracked hour. Let's go.`
+              // If it's Monday, always show the motivational quote to start the week
+              isMonday && weeklyTrackedTime === 0
+                ? `Momentum begins with a single tracked hour. Let's go.`
+                : !hasTrackedEver
+                  ? `Every journey begins with one moment.\nStart tracking yours.`
+                  : weeklyTrackedTime > 0
+                    ? `This moment is progress. You\n tracked <span class="accent-text">${formatTime(
+                        weeklyTrackedTime
+                      )}</span>\ this week.`
+                    : `Momentum begins with a single tracked hour. Let's go.`
             }
           />
         </section>
@@ -384,6 +391,7 @@ const handleSessionClick = (session) => {
       {isSidebarOpen && (
         <div className="sidebar-overlay" onClick={closeSidebar}></div>
       )}
+      <MobileSnackbar />
     </div>
   );
 });

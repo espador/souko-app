@@ -256,7 +256,7 @@ const JournalOverviewPage = ({ navigate }) => {
                 {(!loadingProfileData && !loadingJournalEntries && mostFrequentMood) ? (
                     <>
                         <TextGenerateEffect
-                            words={`This month you're\\n feeling more <span class="accent-text">${mostFrequentMood}</span>!`}
+                            words={`This month you're\n feeling more <span class="accent-text">${mostFrequentMood}</span>!`}
                         />
                     </>
                 ) : (

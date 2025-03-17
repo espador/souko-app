@@ -1,4 +1,4 @@
-// src/components/Sidebar.jsx
+// src/components/Layout/Sidebar.jsx
 import React, { useState } from 'react';
 import '../../styles/global.css';
 import { ReactComponent as CloseIcon } from '../../styles/components/assets/close.svg';
@@ -50,20 +50,20 @@ const Sidebar = ({ isOpen, onClose, onLogout }) => {
 
   return (
     <div className={`sidebar ${isOpen ? 'open' : ''}`}>
-      <div className="sidebar-content">
-        <div className="sidebar-header">
-          <div className="sidebar-43404C-left">
-            <button className="close-button" onClick={onClose}>
-              <CloseIcon className="close-icon" />
-            </button>
-          </div>
-          <div className="sidebar-header-right">
-            <button className="sidebar-logout-button" onClick={onLogout}>
-              <LogoutIcon className="sidebar-logout-icon" />
-            </button>
-          </div>
+      <div className="sidebar-header">
+        <div className="sidebar-header-left">
+          <button className="close-button" onClick={onClose}>
+            <CloseIcon className="close-icon" />
+          </button>
         </div>
-        
+        <div className="sidebar-header-right">
+          <button className="sidebar-logout-button" onClick={onLogout}>
+            <LogoutIcon className="sidebar-logout-icon" />
+          </button>
+        </div>
+      </div>
+      
+      <div className="sidebar-content">
         <h1 className="sidebar-title">Your space, your moments.</h1>
         <div className="divider"></div>
         <div className="session-project-name">Designed to track your time,
@@ -71,7 +71,7 @@ const Sidebar = ({ isOpen, onClose, onLogout }) => {
                 <p>Mastery isn't rushed — it's refined. Souko helps you master your craft, one session at a time. No teams, no noise, just you and your moments.</p>
         
         <div className="journal-form-section">
-        <div className="divider"></div>
+          <div className="divider"></div>
           <h2 className="session-feedback">(beta) Share your feedback</h2>
           <div className="journal-input-tile">
             <textarea

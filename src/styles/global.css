@@ -240,9 +240,9 @@ h1 {
   font-family: var(--font-commit-mono);
   font-weight: 400;
 }
-
 .sidebar-title {
   text-align: left;
+  margin-top: 24px;
   margin-bottom: 40px;
   font-size: 32px;
   line-height: 40px;
@@ -282,10 +282,10 @@ h1 {
   font-weight: 400;
 }
 
-.sticky-button {
-  font-family: var(--font-commit-mono);
+/* Base sticky button styling - shared properties */
+.sticky-button,
+.sticky-button-top {
   position: fixed;
-  bottom: 64px;
   left: 24px;
   right: 24px;
   width: calc(100% - 48px);
@@ -293,11 +293,68 @@ h1 {
   margin-left: auto;
   margin-right: auto;
   box-sizing: border-box;
-  background-color: var(--page-background);
-  padding-top: 16px;
-  padding-bottom: 16px;
+  background-color: transparent;
+  border: 1px solid var(--button-border);
   border-radius: 0px;
+  padding: 16px;
+  font-size: 16px;
+  font-family: var(--font-commit-mono);
+  font-weight: 400;
+  text-align: center;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+  margin-bottom: 24px;
 }
+
+/* Top button positioning (Save changes) */
+.sticky-button-top {
+  bottom: 88px; /* Higher position */
+  color: var(--text-color);
+}
+
+/* Bottom button positioning (Erase session) */
+.sticky-button {
+  bottom: 24px; /* Lower position */
+}
+
+/* Save button specific styles */
+.save-button {
+  color: var(--text-color);
+}
+
+.save-button:disabled {
+  color: var(--text-muted);
+  cursor: not-allowed;
+}
+
+.save-button .button-icon {
+  fill: var(--background-color);
+}
+
+.save-button:disabled .button-icon {
+  fill: var(--text-muted);
+}
+
+/* Erase button specific styles */
+.erase-button {
+  color: var(--accent-orange);
+}
+
+.erase-button .button-icon {
+  fill: var(--accent-orange);
+}
+
+/* Make the buttons properly stacked on mobile */
+@media (max-width: 768px) {
+  .sticky-button-top {
+    bottom: 80px; /* Slightly adjust for better mobile spacing */
+  }
+}
+
 
 /* The icon-button for uploadfile/euro/dollar */
 .icon-button {
@@ -397,6 +454,7 @@ body.no-scroll {
   padding-left: 24px;
   padding-right: 24px;
   padding-top: env(safe-area-inset-top);
+  background-color: var(--background-color);
 }
 
 *,
@@ -1265,38 +1323,6 @@ body.allow-scroll > html {
   align-items: stretch; /* Make buttons stretch to full width */
 }
 
-.save-button,
-.erase-button {
-  background-color: transparent;
-  border: 1px solid var(--button-border);
-  border-radius: 0px;
-  text-align: center;
-  font-size: 16px;
-  color: var(--text-color);
-  padding: 16px; /* Padding to match CreateProjectPage button */
-  cursor: pointer;
-  width: 100%; /* Make buttons full width */
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 8px; /* Icon spacing */
-  font-family: var(--font-commit-mono); /* Font family to match button text */
-  font-weight: 400; /* Font weight to match button text */
-  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease; /* Smooth transitions */
-  margin-bottom: 0; /* Remove bottom margin to rely on form-navigation-single-page gap */
-}
-
-.erase-button {
-  margin-top: 16px;
-  color: var(--accent-orange); /* Default text color for Erase button */
-}
-
-.erase-button .button-icon {
-  fill: var(--error-color); /* Error color for erase button icon */
-}
-
-
-
 /* Input Tile Styling - Consistent with SessionDetailPage notes input */
 .journal-form-section-text1,
 .journal-form-section-text2 {
@@ -1760,27 +1786,6 @@ body.allow-scroll > html {
   /* No need for extra bottom padding if using sticky-button approach */
 }
 
-.sticky-button {
-  position: fixed;
-  bottom: 24px;
-  left: 24px;
-  right: 24px;
-  width: calc(100% - 48px);
-  max-width: 680px;
-  margin: 0 auto;
-  box-sizing: border-box;
-  background-color: transparent;
-  border: 1px solid var(--button-border);
-  border-radius: 0px;
-  font-size: 16px;
-  text-align: center;
-  cursor: pointer;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 8px;
-}
-
 .project-image-container,
 .project-icon-container {
   flex-shrink: 0;       /* Prevents shrinking in a flex container */
@@ -1849,6 +1854,7 @@ body.allow-scroll > html {
   align-items: center;
   gap: 8px;
 }
+
 
 .onboarding-step4 {
   margin: 0 auto;
@@ -2510,22 +2516,6 @@ body.allow-scroll > html {
   fill: var(--text-muted);
 }
 
-.save-button:disabled {
-  font-family: var(--font-commit-mono);
-  font-weight: 400;
-  background-color: transparent;
-  color: var(--text-muted);
-  cursor: not-allowed;
-}
-
-.save-button .button-icon {
-  fill: var(--background-color);
-}
-
-.save-button:disabled .button-icon {
-  fill: var(--text-muted);
-}
-
 /* SessionOverviewPage.css */
 .session-overview-page {
   /* padding: 24px;  Keep padding for content spacing */
@@ -2595,7 +2585,6 @@ body.allow-scroll > html {
   cursor: not-allowed;
 }
 
-/* src/styles/components/Sidebar.css */
 .sidebar {
   position: fixed;
   top: 0;
@@ -2607,9 +2596,11 @@ body.allow-scroll > html {
   transform: translateX(100%);
   transition: transform 0.4s ease-in-out;
   z-index: 1100;
-  padding-top: env(safe-area-inset-top, 0); /* iOS safe area support */
-  padding-bottom: env(safe-area-inset-bottom, 0);
   box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  padding-top: env(safe-area-inset-top, 0);
+  padding-bottom: env(safe-area-inset-bottom, 0);
 }
 
 .sidebar.open {
@@ -2617,10 +2608,10 @@ body.allow-scroll > html {
 }
 
 .sidebar-content {
-  padding: 24px;
-  height: 100%;
-  overflow-y: auto; /* Enable scrolling */
-  -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+  padding: 0 24px 24px 24px;
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   box-sizing: border-box;
 }
 
@@ -2649,12 +2640,11 @@ body.allow-scroll > html {
   align-items: center;
   width: 100%;
   height: 40px;
-  margin-bottom: 24px;
+  padding: 24px 24px 16px 24px;
   position: sticky;
   top: 0;
   background-color: var(--background-color);
   z-index: 10;
-  padding-top: env(safe-area-inset-top, 12px);
 }
 
 .sidebar-header-left, 
@@ -2997,23 +2987,6 @@ width: 100%;
 .cancel-delete {
   background-color: #ddd;
   color: black;
-}
-
-.sticky-button-top {
-  position: fixed;
-  bottom: 88px;
-  left: 24px;
-  right: 24px;
-  width: calc(100% - 48px);
-  max-width: 680px;
-  margin-left: auto;
-  margin-right: auto;
-  box-sizing: border-box;
-  background-color: var(--page-background);
-  padding-top: 16px;
-  padding-bottom: 16px;
-  border-radius: 0px;
-  border: 1px solid var(--button-border);
 }
 
 /* == Floating Bottom Navigation == */
@@ -3611,4 +3584,56 @@ width: 100%;
 
 .home-today-button:active {
   background-color: var(--background-color);
+}
+
+.mobile-snackbar {
+  position: fixed;
+  bottom: 96px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: calc(100% - 48px);
+  max-width: 680px;
+  background-color: rgba(19, 19, 20, 0.9);
+  backdrop-filter: blur(4px);
+  border-radius: 0px;
+  padding: 16px;
+  z-index: 2000;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+  font-family: var(--font-commit-mono);
+  color: var(--accent-pink);
+  font-size: 14px;
+  font-weight: 400;
+}
+
+.mobile-snackbar.visible {
+  opacity: 1;
+  visibility: visible;
+}
+
+.snackbar-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.snackbar-close {
+  background: none;
+  border: none;
+  color: var(--text-color);
+  font-size: 20px;
+  cursor: pointer;
+  padding: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.snackbar-close:hover {
+  color: var(--text-color);
 }
