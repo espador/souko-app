@@ -1,6 +1,15 @@
 // pages/TimeTrackerManualPage.jsx
 import React, { useState, useCallback, useEffect } from 'react';
-import { collection, doc, setDoc, serverTimestamp, query, where, getDocs } from 'firebase/firestore';
+import { 
+  collection, 
+  doc, 
+  setDoc, 
+  serverTimestamp, 
+  query, 
+  where, 
+  getDocs,
+  runTransaction 
+} from 'firebase/firestore';
 import { db, auth } from '../services/firebase';
 import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -17,7 +26,14 @@ import { ReactComponent as LabelIcon } from '../styles/components/assets/label-d
 import { ReactComponent as HourRateIcon } from '../styles/components/assets/label-hourrate.svg';
 import { ReactComponent as Spinner } from '../styles/components/assets/spinner.svg';
 
-
+// Helper: Monday-based week start
+function getMondayOfCurrentWeek() {
+  const now = new Date();
+  now.setHours(0, 0, 0, 0);
+  const day = (now.getDay() + 6) % 7;
+  now.setDate(now.getDate() - day);
+  return now.getTime();
+}
 
 const SESSION_LABELS = [
   'Designing',
@@ -89,6 +105,7 @@ const TimeTrackerManualPage = ({ navigate }) => {
     try {
       const sessionRef = doc(collection(db, 'sessions'));
       const elapsedSeconds = durationToSeconds(duration);
+      const sessionDurationMinutes = Math.round(elapsedSeconds / 60);
 
       await setDoc(sessionRef, {
         userId: auth.currentUser.uid,
@@ -103,6 +120,34 @@ const TimeTrackerManualPage = ({ navigate }) => {
         status: 'completed',
         isManual: true,
         manualCreatedAt: serverTimestamp(),
+      });
+
+      // Update user's weekly/total tracked time
+      await runTransaction(db, async (transaction) => {
+        const profileRef = doc(db, 'profiles', auth.currentUser.uid);
+        const profileSnap = await transaction.get(profileRef);
+        if (!profileSnap.exists()) return;
+
+        const profileData = profileSnap.data();
+        let currentWeeklyTime = profileData.weeklyTrackedTime || 0;
+        let storedWeekStart = profileData.weekStart || 0;
+        const thisMonday = getMondayOfCurrentWeek();
+
+        if (storedWeekStart < thisMonday) {
+          currentWeeklyTime = 0;
+          storedWeekStart = thisMonday;
+        }
+
+        const newWeeklyTime = currentWeeklyTime + elapsedSeconds;
+        const currentTotalTrackedTime = profileData.totalTrackedTime || 0;
+        const newTotalTrackedTime = currentTotalTrackedTime + sessionDurationMinutes;
+
+        transaction.update(profileRef, {
+          weeklyTrackedTime: newWeeklyTime,
+          weekStart: storedWeekStart,
+          totalTrackedTime: newTotalTrackedTime,
+          lastUpdated: serverTimestamp(),
+        });
       });
 
       navigate('home');
@@ -133,20 +178,20 @@ const TimeTrackerManualPage = ({ navigate }) => {
 
       <div className="divider"></div>
 
-<h2 className="projects-label">Session date</h2>
-<LocalizationProvider dateAdapter={AdapterDayjs}>
-  <DateTimePicker
-    value={sessionDateTime}
-    onChange={setSessionDateTime}
-    disablePortal={true}
-    slotProps={{
-      textField: {
-        variant: 'outlined',
-        fullWidth: true
-      }
-    }}
-  />
-</LocalizationProvider>
+      <h2 className="projects-label">Session date</h2>
+      <LocalizationProvider dateAdapter={AdapterDayjs}>
+        <DateTimePicker
+          value={sessionDateTime}
+          onChange={setSessionDateTime}
+          disablePortal={true}
+          slotProps={{
+            textField: {
+              variant: 'outlined',
+              fullWidth: true
+            }
+          }}
+        />
+      </LocalizationProvider>
 
 
       {/* Duration Input (HH:MM) */}
