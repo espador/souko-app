@@ -13,7 +13,7 @@ html, body {
 
 body {
   overflow-y: auto; /* Let body handle vertical scrolling */
-  background-color: var(--text-color);
+  background-color: var(--background-color);
 }
 
 #root.login-root {

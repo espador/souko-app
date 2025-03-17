@@ -423,7 +423,7 @@ body.no-scroll, html.no-scroll {
 body {
   margin: 0;
   padding: 0;
-  background:#0C0C0C;
+  background: var(--background-color);
   position: fixed; /* Keep position fixed if needed, otherwise consider removing */
   top: 0;
   left: 0;
