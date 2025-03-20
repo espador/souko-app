@@ -3,7 +3,10 @@ import React, { useEffect, useCallback, useState } from 'react';
 import {
   signInWithPopup,
   getRedirectResult,
-  onAuthStateChanged
+  onAuthStateChanged,
+  browserSessionPersistence,
+  setPersistence,
+  indexedDBLocalPersistence
 } from 'firebase/auth';
 import { auth, googleProvider, db } from '../services/firebase';
 import '../styles/loginpage.css';
@@ -31,6 +34,7 @@ import featureImage3 from '../styles/components/assets/feature-3.png';
 const LoginPage = ({ navigate }) => {
   const [loading, setLoading] = useState(false);
   const [totalTime, setTotalTime] = useState('0h 0m');
+  const [authError, setAuthError] = useState(null);
 
   /**
    * Process login result
@@ -92,7 +96,7 @@ const LoginPage = ({ navigate }) => {
       navigate('home');
     } catch (error) {
       console.error('processLoginResult - Error:', error);
-      alert('Authentication failed during profile processing. Please try again.');
+      setAuthError('Authentication failed during profile processing. Please try again.');
     } finally {
       setLoading(false);
       console.log('processLoginResult - FINISH');
@@ -128,29 +132,49 @@ const LoginPage = ({ navigate }) => {
 
     // Add login-root class to #root element
     const rootElement = document.getElementById('root');
-    rootElement.classList.add('login-root');
+    if (rootElement) {
+      rootElement.classList.add('login-root');
+    }
 
-    // Check redirect result
-    const checkRedirect = async () => {
-      console.log('checkRedirect - START');
-      setLoading(true);
-      try {
-        const result = await getRedirectResult(auth);
-        console.log('checkRedirect - getRedirectResult:', result);
-        if (result) {
-          await processLoginResult(result);
-        } else {
-          console.log('checkRedirect - No redirect result found');
-        }
-      } catch (error) {
-        console.error('checkRedirect - Redirect login error:', error);
-        alert('Authentication failed during redirect. Please try again.');
-      } finally {
-        setLoading(false);
-        console.log('checkRedirect - FINISH');
-      }
-    };
-    checkRedirect();
+    // Set persistence to indexedDBLocalPersistence first
+    // This helps with iOS Safari issues
+    setPersistence(auth, indexedDBLocalPersistence)
+      .then(() => {
+        console.log('Firebase persistence set to indexedDBLocalPersistence');
+        
+        // Check redirect result
+        const checkRedirect = async () => {
+          console.log('checkRedirect - START');
+          setLoading(true);
+          try {
+            const result = await getRedirectResult(auth);
+            console.log('checkRedirect - getRedirectResult:', result);
+            if (result) {
+              await processLoginResult(result);
+            } else {
+              console.log('checkRedirect - No redirect result found');
+            }
+          } catch (error) {
+            console.error('checkRedirect - Redirect login error:', error);
+            setAuthError('Authentication failed during redirect. Please try again.');
+          } finally {
+            setLoading(false);
+            console.log('checkRedirect - FINISH');
+          }
+        };
+        checkRedirect();
+      })
+      .catch((error) => {
+        console.error('Error setting auth persistence:', error);
+        // Fall back to browserSessionPersistence if indexedDB fails
+        setPersistence(auth, browserSessionPersistence)
+          .then(() => {
+            console.log('Fallback: Firebase persistence set to browserSessionPersistence');
+          })
+          .catch((error) => {
+            console.error('Error setting fallback auth persistence:', error);
+          });
+      });
 
     // Listen for auth changes
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -165,7 +189,9 @@ const LoginPage = ({ navigate }) => {
       unsubscribe();
 
       // Cleanup function to remove the class when component unmounts
-      rootElement.classList.remove('login-root');
+      if (rootElement) {
+        rootElement.classList.remove('login-root');
+      }
 
       console.log('LoginPage useEffect - CLEANUP');
     };
@@ -177,14 +203,32 @@ const LoginPage = ({ navigate }) => {
   const handleLogin = async () => {
     console.log('handleLogin - START');
     setLoading(true);
+    setAuthError(null);
+    
     try {
+      // First ensure we're using the right persistence
+      await setPersistence(auth, indexedDBLocalPersistence);
+      
       console.log('handleLogin - Using signInWithPopup');
       const result = await signInWithPopup(auth, googleProvider);
       console.log('handleLogin - signInWithPopup result:', result);
       await processLoginResult(result);
     } catch (error) {
       console.error('handleLogin - Login Error:', error);
-      alert('Authentication failed during login. Please try again.');
+      
+      // Try fallback to session persistence if needed
+      if (error.code === 'auth/internal-error' || error.code === 'auth/web-storage-unsupported') {
+        try {
+          await setPersistence(auth, browserSessionPersistence);
+          const result = await signInWithPopup(auth, googleProvider);
+          await processLoginResult(result);
+        } catch (fallbackError) {
+          console.error('handleLogin - Fallback Login Error:', fallbackError);
+          setAuthError('Authentication failed. Please try again or use a different browser.');
+        }
+      } else {
+        setAuthError('Authentication failed. Please try again.');
+      }
     } finally {
       setLoading(false);
       console.log('handleLogin - FINISH');
@@ -232,6 +276,7 @@ const LoginPage = ({ navigate }) => {
                 <img src={googleIcon} alt="Google Icon" className="google-icon" />
                 {loading ? 'Connecting...' : 'Continue with Google'}
               </button>
+              {authError && <p className="auth-error">{authError}</p>}
             </div>
             <div className="scroll-icon-container">
               <img src={scrollIcon} alt="Scroll down" className="scroll-icon" />
