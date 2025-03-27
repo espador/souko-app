@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import {
   doc,
@@ -142,7 +141,7 @@ const ProjectDetailPage = React.memo(({ navigate, projectId }) => {
         sessionsRef,
         where('projectId', '==', pid),
         where('userId', '==', uid),
-        where('status', '==', 'stopped'),
+        where('status', 'in', ['stopped', 'completed']),
         orderBy('startTime', 'desc'),
         limit(SESSIONS_LIMIT)
       );
@@ -184,7 +183,7 @@ const handleSessionClick = (session) => {
         sessionsRef,
         where('projectId', '==', routeProjectId),
         where('userId', '==', currentUser.uid),
-        where('status', '==', 'stopped'),
+        where('status', 'in', ['stopped', 'completed']),
         orderBy('startTime', 'desc'),
         startAfter(lastSessionDoc || 0),
         limit(SESSIONS_LIMIT)
@@ -480,6 +479,9 @@ const handleSessionClick = (session) => {
                   >
                       <span className="session-start-time">
                         {formatStartTime(session)}
+                        {session.isManual && (
+                          <span className="session-manual-label"> Manual</span>
+                        )}
                       </span>
                       <span
                         className="session-elapsed-time"
@@ -512,6 +514,7 @@ const handleSessionClick = (session) => {
           </div>
         )}
       </div>
+
     </div>
   );
 });
