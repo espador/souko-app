@@ -22,7 +22,7 @@ import { ReactComponent as BillableIcon } from '../styles/components/assets/bill
 import { ReactComponent as EditIcon } from '../styles/components/assets/edit.svg';
 import { TextGenerateEffect } from '../styles/components/text-generate-effect.tsx';
 
-const CACHE_DURATION_MS = 30000; 
+const CACHE_DURATION_MS = 60000; // 1 minute
 const SESSIONS_LIMIT = 30;
 
 const convertToDate = (session) => {
@@ -75,15 +75,22 @@ const loadCachedProjectDetail = (uid, projectId) => {
   return null;
 };
 
-const cacheProjectDetail = (uid, projectId, project, sessions, lastSessionDocCache) => {
-  const cacheKey = `projectDetailData_${uid}_${projectId}`;
-  const cache = {
-    project,
-    sessions,
-    lastSessionDoc: lastSessionDocCache,
+const cacheProjectDetail = (data) => {
+  if (!data || !data.uid || !data.projectId) {
+    console.error('Invalid cache data');
+    return;
+  }
+  
+  const cacheKey = `projectDetailData_${data.uid}_${data.projectId}`;
+  const cacheData = {
+    ...data,
     timestamp: Date.now(),
   };
-  localStorage.setItem(cacheKey, JSON.stringify(cache));
+  
+  delete cacheData.uid; // Don't need to store uid in cache twice
+  delete cacheData.projectId; // Don't need to store projectId in cache twice
+  
+  localStorage.setItem(cacheKey, JSON.stringify(cacheData));
 };
 
 const ProjectDetailPage = React.memo(({ navigate, projectId }) => {
@@ -96,6 +103,11 @@ const ProjectDetailPage = React.memo(({ navigate, projectId }) => {
   const [lastSessionDoc, setLastSessionDoc] = useState(null);
   const [hasMoreSessions, setHasMoreSessions] = useState(true);
   const [sessionsLoading, setSessionsLoading] = useState(false);
+  const [projectTotalTime, setProjectTotalTime] = useState(0);
+  const [billableTotalTime, setBillableTotalTime] = useState(0);
+  
+  // Track whether data has been initialized
+  const isInitialized = useRef(false);
 
   const [selectedTimeRange, setSelectedTimeRange] = useState('total');
   const [displayMode, setDisplayMode] = useState('time');
@@ -103,39 +115,44 @@ const ProjectDetailPage = React.memo(({ navigate, projectId }) => {
 
   const projectHeaderRef = useRef(null);
 
-  const fetchProject = useCallback(async (uid, pid) => {
-    const cachedData = loadCachedProjectDetail(uid, pid);
-    if (cachedData) {
-      setProject(cachedData.project || null);
-      setSessions(cachedData.sessions || []);
-      setLastSessionDoc(cachedData.lastSessionDoc || null);
-      setHasMoreSessions(cachedData.sessions?.length >= SESSIONS_LIMIT);
-      setLoading(false);
-    } else {
-      setLoading(true);
-    }
-
+  // Load ALL project data in one go (project, sessions, totals)
+  const loadProjectData = useCallback(async (uid, pid) => {
+    // Prevent multiple initializations
+    if (isInitialized.current) return;
+    
+    setLoading(true);
+    
     try {
+      // Try cache first
+      const cachedData = loadCachedProjectDetail(uid, pid);
+      if (cachedData) {
+        console.log('Using cached project data');
+        setProject(cachedData.project || null);
+        setSessions(cachedData.sessions || []);
+        setLastSessionDoc(cachedData.lastSessionDoc || null);
+        setProjectTotalTime(cachedData.projectTotalTime || 0);
+        setBillableTotalTime(cachedData.billableTotalTime || 0);
+        setHasMoreSessions(cachedData.sessions?.length >= SESSIONS_LIMIT);
+        isInitialized.current = true;
+        setLoading(false);
+        return;
+      }
+      
+      // Fetch project
       const projectRef = doc(db, 'projects', pid);
       const projectSnap = await getDoc(projectRef);
+      
       if (!projectSnap.exists() || projectSnap.data().userId !== uid) {
         console.error('Project not found or unauthorized.');
         setProject(null);
+        setLoading(false);
         return;
       }
+      
       const projectData = { id: projectSnap.id, ...projectSnap.data() };
       setProject(projectData);
-    } catch (err) {
-      console.error('Error fetching project details:', err);
-      setProject(null);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  const fetchInitialSessions = useCallback(async (uid, pid) => {
-    setSessionsLoading(true);
-    try {
+      
+      // Fetch sessions
       const sessionsRef = collection(db, 'sessions');
       const sessionsQuery = query(
         sessionsRef,
@@ -145,68 +162,131 @@ const ProjectDetailPage = React.memo(({ navigate, projectId }) => {
         orderBy('startTime', 'desc'),
         limit(SESSIONS_LIMIT)
       );
-      const snapshot = await getDocs(sessionsQuery);
-      const fetchedSessions = snapshot.docs.map((doc) => ({
+      
+      const sessionsSnap = await getDocs(sessionsQuery);
+      const fetchedSessions = sessionsSnap.docs.map(doc => ({
         id: doc.id,
-        ...doc.data(),
+        ...doc.data()
       }));
+      
       setSessions(fetchedSessions);
-      setHasMoreSessions(snapshot.docs.length >= SESSIONS_LIMIT);
-      setLastSessionDoc(
-        snapshot.docs.length > 0
-          ? snapshot.docs[snapshot.docs.length - 1]
-          : null
-      );
-      cacheProjectDetail(uid, pid, project, fetchedSessions, snapshot.docs[snapshot.docs.length - 1] || null);
+      setHasMoreSessions(sessionsSnap.docs.length >= SESSIONS_LIMIT);
+      
+      const lastDoc = sessionsSnap.docs.length > 0 
+        ? sessionsSnap.docs[sessionsSnap.docs.length - 1]
+        : null;
+      
+      setLastSessionDoc(lastDoc);
+      
+      // Calculate total time
+      let totalTime = 0;
+      let billableTime = 0;
+      
+      // Try to get total time from all sessions if available
+      try {
+        const totalTimeQuery = query(
+          sessionsRef,
+          where('projectId', '==', pid),
+          where('userId', '==', uid),
+          where('status', 'in', ['stopped', 'completed'])
+        );
+        
+        const totalSnap = await getDocs(totalTimeQuery);
+        
+        totalSnap.docs.forEach(doc => {
+          const session = doc.data();
+          totalTime += (session.elapsedTime || 0);
+          if (session.isBillable) {
+            billableTime += (session.elapsedTime || 0);
+          }
+        });
+        
+        setProjectTotalTime(totalTime);
+        setBillableTotalTime(billableTime);
+      } catch (err) {
+        console.error('Error calculating total time, using visible sessions only', err);
+        // Fall back to using only visible sessions
+        totalTime = fetchedSessions.reduce((sum, s) => sum + (s.elapsedTime || 0), 0);
+        billableTime = fetchedSessions.reduce(
+          (sum, s) => s.isBillable ? sum + (s.elapsedTime || 0) : sum,
+          0
+        );
+        setProjectTotalTime(totalTime);
+        setBillableTotalTime(billableTime);
+      }
+      
+      // Update cache
+      cacheProjectDetail({
+        uid,
+        projectId: pid,
+        project: projectData,
+        sessions: fetchedSessions,
+        lastSessionDoc: lastDoc,
+        projectTotalTime: totalTime,
+        billableTotalTime: billableTime
+      });
+      
+      isInitialized.current = true;
     } catch (err) {
-      console.error('Error fetching initial sessions:', err);
+      console.error('Error loading project data:', err);
     } finally {
-      setSessionsLoading(false);
+      setLoading(false);
     }
-  }, [project]);
+  }, []);
 
   // When navigating to session detail from a project page:
-const handleSessionClick = (session) => {
-  navigate('session-detail', { 
-    sessionId: session.id, 
-    referrer: 'project-detail',
-    projectId: projectId // Pass the current project ID
-  });
-};
+  const handleSessionClick = (session) => {
+    navigate('session-detail', { 
+      sessionId: session.id, 
+      referrer: 'project-detail',
+      projectId: projectId // Pass the current project ID
+    });
+  };
 
   const handleLoadMore = useCallback(async () => {
     if (!currentUser || !routeProjectId || !hasMoreSessions || sessionsLoading) return;
+    
     setSessionsLoading(true);
+    
     try {
       const sessionsRef = collection(db, 'sessions');
-      const qMore = query(
+      const moreQuery = query(
         sessionsRef,
         where('projectId', '==', routeProjectId),
         where('userId', '==', currentUser.uid),
         where('status', 'in', ['stopped', 'completed']),
         orderBy('startTime', 'desc'),
-        startAfter(lastSessionDoc || 0),
+        startAfter(lastSessionDoc),
         limit(SESSIONS_LIMIT)
       );
-      const snapshot = await getDocs(qMore);
-      const more = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
-
-      setSessions((prev) => [...prev, ...more]);
-      setHasMoreSessions(snapshot.docs.length >= SESSIONS_LIMIT);
-      setLastSessionDoc(
-        snapshot.docs.length > 0
-          ? snapshot.docs[snapshot.docs.length - 1]
-          : lastSessionDoc
-      );
-      cacheProjectDetail(
-        currentUser.uid,
-        routeProjectId,
-        project,
-        [...sessions, ...more],
-        snapshot.docs.length > 0
-          ? snapshot.docs[snapshot.docs.length - 1]
-          : lastSessionDoc
-      );
+      
+      const snapshot = await getDocs(moreQuery);
+      const moreData = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      
+      const newSessions = [...sessions, ...moreData];
+      setSessions(newSessions);
+      
+      const hasMore = snapshot.docs.length >= SESSIONS_LIMIT;
+      setHasMoreSessions(hasMore);
+      
+      if (snapshot.docs.length > 0) {
+        const newLastDoc = snapshot.docs[snapshot.docs.length - 1];
+        setLastSessionDoc(newLastDoc);
+        
+        // Cache update
+        cacheProjectDetail({
+          uid: currentUser.uid,
+          projectId: routeProjectId,
+          project,
+          sessions: newSessions,
+          lastSessionDoc: newLastDoc,
+          projectTotalTime,
+          billableTotalTime
+        });
+      }
     } catch (err) {
       console.error('Error loading more sessions:', err);
     } finally {
@@ -215,30 +295,34 @@ const handleSessionClick = (session) => {
   }, [
     currentUser,
     routeProjectId,
-    lastSessionDoc,
     hasMoreSessions,
+    sessionsLoading,
+    lastSessionDoc,
     sessions,
     project,
-    sessionsLoading,
+    projectTotalTime,
+    billableTotalTime
   ]);
 
+  // One-time initialization
   useEffect(() => {
-    const unsub = onAuthStateChanged(auth, async (user) => {
+    const unsub = onAuthStateChanged(auth, (user) => {
       if (!user) {
         navigate('login');
-      } else {
-        setCurrentUser(user);
-        await fetchProject(user.uid, routeProjectId);
+        return;
+      }
+      
+      setCurrentUser(user);
+      if (routeProjectId) {
+        loadProjectData(user.uid, routeProjectId);
       }
     });
-    return () => unsub();
-  }, [fetchProject, routeProjectId, navigate]);
-
-  useEffect(() => {
-    if (currentUser && routeProjectId) {
-      fetchInitialSessions(currentUser.uid, routeProjectId);
-    }
-  }, [currentUser, routeProjectId, fetchInitialSessions]);
+    
+    return () => {
+      unsub();
+      isInitialized.current = false;
+    };
+  }, [navigate, routeProjectId, loadProjectData]);
 
   const handleTimeRangeChange = useCallback((e) => {
     setSelectedTimeRange(e.target.value);
@@ -274,19 +358,29 @@ const handleSessionClick = (session) => {
   }, [sessions, selectedTimeRange, getSessionsForTimeRange]);
 
   const totalTime = useMemo(() => {
-    return filteredSessions.reduce(
-      (sum, session) => sum + (session.elapsedTime || 0),
-      0
-    );
-  }, [filteredSessions]);
+    // For filtered views (week/month), use the filtered sessions
+    if (selectedTimeRange !== 'total') {
+      return filteredSessions.reduce(
+        (sum, session) => sum + (session.elapsedTime || 0),
+        0
+      );
+    }
+    // For total view, use the pre-calculated total that includes all sessions
+    return projectTotalTime;
+  }, [filteredSessions, selectedTimeRange, projectTotalTime]);
 
   const billableTime = useMemo(() => {
-    return filteredSessions.reduce(
-      (sum, session) =>
-        session.isBillable ? sum + (session.elapsedTime || 0) : sum,
-      0
-    );
-  }, [filteredSessions]);
+    // For filtered views (week/month), use the filtered sessions
+    if (selectedTimeRange !== 'total') {
+      return filteredSessions.reduce(
+        (sum, session) =>
+          session.isBillable ? sum + (session.elapsedTime || 0) : sum,
+        0
+      );
+    }
+    // For total view, use the pre-calculated billable total
+    return billableTotalTime;
+  }, [filteredSessions, selectedTimeRange, billableTotalTime]);
 
   const totalEarned = useMemo(() => {
     if (displayMode === 'earned' && project?.hourRate) {
@@ -386,6 +480,7 @@ const handleSessionClick = (session) => {
         variant="journalOverview"
         showBackArrow={true}
         navigate={navigate}
+        onBack={() => navigate('projects')}
       />
       <div
         className="project-dropdown-container top-tile"

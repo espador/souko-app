@@ -14,7 +14,7 @@ const db = admin.firestore(); // Get Firestore instance once
 
 /**
  * Triggered whenever a new journal entry is created.
- * Increments or resets the user’s streak in their profile.
+ * Increments or resets the user's streak in their profile.
  */
 exports.calculateJournalStreak = functions.firestore
   .document("/journalEntries/{journalEntryId}")
@@ -44,8 +44,8 @@ exports.calculateJournalStreak = functions.firestore
       let streak = profileData.currentStreak || 0;
       const userTimezone = profileData.timezone || "UTC";
 
-      // 1) Figure out what date the new entry was created (in user’s local time)
-      //    If there’s no `createdAt`, fallback to the Firestore snapshot’s createTime.
+      // 1) Figure out what date the new entry was created (in user's local time)
+      //    If there's no `createdAt`, fallback to the Firestore snapshot's createTime.
       const entryTimestamp = newEntry.createdAt
         ? (newEntry.createdAt.toDate && newEntry.createdAt.toDate()) ||
           parseISO(newEntry.createdAt)
@@ -53,7 +53,7 @@ exports.calculateJournalStreak = functions.firestore
 
       const newEntryDate = startOfDay(utcToZonedTime(entryTimestamp, userTimezone));
 
-      // 2) Parse the profile’s lastJournalDate (if it exists)
+      // 2) Parse the profile's lastJournalDate (if it exists)
       let lastDate = null;
       if (profileData.lastJournalDate) {
         const parsedLast = parseISO(profileData.lastJournalDate);
@@ -78,7 +78,7 @@ exports.calculateJournalStreak = functions.firestore
         }
       }
 
-      // 4) Update user’s profile
+      // 4) Update user's profile
       await profileRef.update({
         currentStreak: streak,
         lastJournalDate: newEntryDate.toISOString(),
@@ -129,6 +129,71 @@ exports.dailyTotalTrackedTimeUpdate = functions.pubsub.schedule('0 0 * * *') // 
 
     } catch (error) {
       console.error('Error in dailyTotalTrackedTimeUpdate Cloud Function:', error);
+      return null;
+    }
+  });
+
+/**
+ * Updates project total time statistics in an aggregated "projectTotals" document
+ * instead of individual projectStats documents.
+ */
+exports.updateProjectTotalTime = functions.firestore
+  .document('/sessions/{sessionId}')
+  .onWrite(async (change, context) => {
+    try {
+      // Get the old and new session data
+      const oldSession = change.before.exists ? change.before.data() : null;
+      const newSession = change.after.exists ? change.after.data() : null;
+      
+      // We need the user ID to update their aggregated stats
+      const userId = (newSession && newSession.userId) || 
+                    (oldSession && oldSession.userId);
+      
+      if (!userId) {
+        console.log('No user ID found, skipping update');
+        return null;
+      }
+      
+      // Get all sessions for this user
+      const sessionsRef = db.collection('sessions');
+      const userSessionsQuery = sessionsRef
+        .where('userId', '==', userId)
+        .where('status', 'in', ['stopped', 'completed']);
+      
+      const sessionsSnapshot = await userSessionsQuery.get();
+      
+      // Create a map of project totals
+      const projectTotals = {};
+      
+      sessionsSnapshot.forEach(doc => {
+        const session = doc.data();
+        if (session.projectId && session.elapsedTime) {
+          if (!projectTotals[session.projectId]) {
+            projectTotals[session.projectId] = {
+              totalTime: 0,
+              billableTime: 0
+            };
+          }
+          
+          projectTotals[session.projectId].totalTime += session.elapsedTime;
+          
+          if (session.isBillable) {
+            projectTotals[session.projectId].billableTime += session.elapsedTime;
+          }
+        }
+      });
+      
+      // Store aggregated stats in a single document per user
+      const userStatsRef = db.collection('userStats').doc(userId);
+      await userStatsRef.set({
+        projectTotals: projectTotals,
+        lastUpdated: admin.firestore.FieldValue.serverTimestamp()
+      }, { merge: true });
+      
+      console.log(`Updated project stats for user ${userId}`);
+      return null;
+    } catch (error) {
+      console.error('Error in updateProjectTotalTime:', error);
       return null;
     }
   });

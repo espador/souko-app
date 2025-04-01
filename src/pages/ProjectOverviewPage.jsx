@@ -1,7 +1,15 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { auth, db } from '../services/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
-import { collection, query, where, onSnapshot } from 'firebase/firestore';
+import { 
+  collection, 
+  query, 
+  where, 
+  onSnapshot, 
+  getDocs,
+  doc,
+  getDoc
+} from 'firebase/firestore';
 import { formatTime } from '../utils/formatTime';
 import Header from '../components/Layout/Header';
 import '@fontsource/shippori-mincho';
@@ -46,7 +54,7 @@ const parseTimestamp = (timestamp, fallbackTimestamp) => {
 
 const CACHE_DURATION_MS = 30000; // 30s
 
-const loadCachedData = (uid, setProjects, setSessions) => {
+const loadCachedData = (uid, setProjects, setSessions, setProjectTotals) => {
   const cachedStr = localStorage.getItem(`projectOverviewData_${uid}`);
   if (cachedStr) {
     try {
@@ -54,6 +62,7 @@ const loadCachedData = (uid, setProjects, setSessions) => {
       if (Date.now() - cached.timestamp < CACHE_DURATION_MS) {
         setProjects(cached.projects || []);
         setSessions(cached.sessions || []);
+        setProjectTotals(cached.projectTotals || {});
         return true;
       }
     } catch (err) {
@@ -63,10 +72,11 @@ const loadCachedData = (uid, setProjects, setSessions) => {
   return false;
 };
 
-const cacheData = (uid, projects, sessions) => {
+const cacheData = (uid, projects, sessions, projectTotals) => {
   const cache = {
     projects,
     sessions,
+    projectTotals,
     timestamp: Date.now(),
   };
   localStorage.setItem(`projectOverviewData_${uid}`, JSON.stringify(cache));
@@ -76,10 +86,84 @@ const ProjectOverviewPage = ({ navigate }) => {
   const [user, setUser] = useState(null);
   const [projects, setProjects] = useState([]);
   const [sessions, setSessions] = useState([]);
-
+  const [projectTotals, setProjectTotals] = useState({});
   const [loading, setLoading] = useState(true);
   const [dataLoadCounter, setDataLoadCounter] = useState(0);
 
+  // Function to fetch all project totals at once
+  const fetchProjectTotals = useCallback(async (userId) => {
+    if (!userId || !projects.length) return;
+    
+    try {
+      // First try to get from userStats collection (aggregated stats per user)
+      try {
+        const userStatsRef = doc(db, 'userStats', userId);
+        const userStatsSnap = await getDoc(userStatsRef);
+        
+        if (userStatsSnap.exists()) {
+          const stats = userStatsSnap.data();
+          if (stats.projectTotals) {
+            const projectTotals = stats.projectTotals;
+            let totals = {};
+            
+            // Initialize with zeros and then fill in any values from stats
+            projects.forEach(project => {
+              totals[project.id] = projectTotals[project.id]?.totalTime || 0;
+            });
+            
+            // Only use these values if at least some projects have stats
+            if (Object.values(totals).some(val => val > 0)) {
+              setProjectTotals(totals);
+              cacheData(userId, projects, sessions, totals);
+              return;
+            }
+          }
+        }
+      } catch (statErr) {
+        console.log('User stats not available, falling back to sessions query');
+      }
+      
+      // If userStats not available, calculate project totals from sessions
+      const sessionsRef = collection(db, 'sessions');
+      const sessionsQuery = query(
+        sessionsRef,
+        where('userId', '==', userId),
+        where('status', 'in', ['stopped', 'completed'])
+      );
+      
+      const snapshot = await getDocs(sessionsQuery);
+      let totals = {};
+      
+      // Initialize all projects with 0
+      projects.forEach(project => {
+        totals[project.id] = 0;
+      });
+      
+      // Sum up times for each project
+      snapshot.docs.forEach(doc => {
+        const session = doc.data();
+        if (session.projectId && session.elapsedTime) {
+          totals[session.projectId] = (totals[session.projectId] || 0) + session.elapsedTime;
+        }
+      });
+      
+      setProjectTotals(totals);
+      
+      // Update cache with totals
+      cacheData(userId, projects, sessions, totals);
+    } catch (err) {
+      console.error('Error fetching project totals:', err);
+      // Fallback to computing from local sessions
+      let totals = {};
+      projects.forEach(project => {
+        const projectSessions = sessions.filter(s => s.projectId === project.id);
+        totals[project.id] = projectSessions.reduce(
+          (sum, s) => sum + (s.elapsedTime || 0), 0
+        );
+      });
+      setProjectTotals(totals);
+    }
+  }, [projects, sessions]);
 
   // 1) Auth + attempt cache + Firestore onSnapshot
   useEffect(() => {
@@ -90,7 +174,7 @@ const ProjectOverviewPage = ({ navigate }) => {
         setUser(currentUser);
 
         // Try cache
-        if (loadCachedData(currentUser.uid, setProjects, setSessions)) {
+        if (loadCachedData(currentUser.uid, setProjects, setSessions, setProjectTotals)) {
           setLoading(false);
         }
 
@@ -102,7 +186,7 @@ const ProjectOverviewPage = ({ navigate }) => {
         const sessionsQuery = query(
           collection(db, 'sessions'),
           where('userId', '==', currentUser.uid),
-          where('status', '==', 'stopped')
+          where('status', 'in', ['stopped', 'completed'])
         );
 
         let unsubProjects, unsubSessions;
@@ -145,14 +229,26 @@ const ProjectOverviewPage = ({ navigate }) => {
   // 2) After both queries have loaded at least once, cache them
   useEffect(() => {
     if (dataLoadCounter >= 2 && user) {
-      cacheData(user.uid, projects, sessions);
       setLoading(false);
       setDataLoadCounter(0);
+      
+      // Fetch project totals only once after initial data load
+      if (!Object.keys(projectTotals).length) {
+        fetchProjectTotals(user.uid);
+      } else {
+        cacheData(user.uid, projects, sessions, projectTotals);
+      }
     }
-  }, [dataLoadCounter, user, projects, sessions]);
+  }, [dataLoadCounter, user, projects, sessions, projectTotals, fetchProjectTotals]);
 
   // 3) Computed values
   const totalSessionTime = useMemo(() => {
+    // If we have the accurate project totals, use them
+    if (Object.keys(projectTotals).length > 0) {
+      return projectTotals;
+    }
+    
+    // Otherwise fall back to calculating from loaded sessions
     const projectTimes = {};
     projects.forEach((project) => {
       const projectSessions = sessions.filter(
@@ -162,11 +258,17 @@ const ProjectOverviewPage = ({ navigate }) => {
       projectTimes[project.id] = sumTime;
     });
     return projectTimes;
-   }, [projects, sessions]);
+   }, [projects, sessions, projectTotals]);
 
   const totalTrackedTimeAcrossProjects = useMemo(() => {
+    // If we have accurate project totals from the server, use those
+    if (Object.keys(projectTotals).length > 0) {
+      return Object.values(projectTotals).reduce((sum, time) => sum + time, 0);
+    }
+    
+    // Otherwise fall back to loaded sessions
     return sessions.reduce((sum, s) => sum + (s.elapsedTime || 0), 0);
-  }, [sessions]);
+  }, [sessions, projectTotals]);
 
 
   const sortedProjects = useMemo(() => {
@@ -251,7 +353,11 @@ const ProjectOverviewPage = ({ navigate }) => {
         '#18A2FD',                // Blue from gradient
         '#533FF5',                // Darker Blue/Purple from gradient
     ];
-    return sortedProjects.map((project, index) => ({
+    
+    // Filter out projects with zero time to avoid empty pie chart segments
+    const projectsWithTime = sortedProjects.filter(project => totalSessionTime[project.id] > 0);
+    
+    return projectsWithTime.map((project, index) => ({
       id: project.id,
       value: totalSessionTime[project.id] || 0,
       label: project.name,
