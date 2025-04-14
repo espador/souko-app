@@ -125,6 +125,28 @@ const HomePage = React.memo(({ navigate, skipAutoRedirect, currentPage }) => {
         profileData = profileSnap.data();
         totalMinutes = profileData.totalTrackedTime || 0;
         
+        // Reset weeklyTrackedTime if it's Monday and hasn't been reset yet
+        if (isMonday) {
+          const lastWeekReset = profileData.lastWeekReset 
+            ? (profileData.lastWeekReset.toDate ? profileData.lastWeekReset.toDate() : new Date(profileData.lastWeekReset))
+            : null;
+          
+          // Check if we need to reset the weekly counter
+          const todayDate = new Date();
+          todayDate.setHours(0, 0, 0, 0);
+          
+          // If lastWeekReset is null or before today, we need to reset the counter
+          const needsReset = !lastWeekReset || 
+            (new Date(lastWeekReset).setHours(0, 0, 0, 0) < todayDate.getTime());
+          
+          if (needsReset) {
+            // We're resetting in the UI only without updating the database
+            // This will show the Monday message while keeping the data intact
+            profileData.weeklyTrackedTime = 0;
+            console.log('Monday detected - showing 0 weekly tracked time for motivational message');
+          }
+        }
+        
         // Check if user has logged a journal entry today
         const lastJournalDate = profileData.lastJournalDate;
         
@@ -178,7 +200,7 @@ const HomePage = React.memo(({ navigate, skipAutoRedirect, currentPage }) => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [isMonday]);
 
   useEffect(() => {
     const unsubscribeAuth = auth.onAuthStateChanged(async (currentUser) => {
@@ -286,8 +308,10 @@ const handleSessionClick = (session) => {
         <section className="motivational-section">
           <TextGenerateEffect
             words={
-              // If it's Monday, always show the motivational quote to start the week
-              isMonday && weeklyTrackedTime === 0
+              // Log the conditions to debug
+              (console.log(`isMonday: ${isMonday}, weeklyTrackedTime: ${weeklyTrackedTime}, hasTrackedEver: ${hasTrackedEver}`),
+              // If it's Monday, prioritize the Monday message regardless of weekly tracked time
+              isMonday
                 ? `Momentum begins with a single tracked hour. Let's go.`
                 : !hasTrackedEver
                   ? `Every journey begins with one moment.\nStart tracking yours.`
@@ -295,7 +319,7 @@ const handleSessionClick = (session) => {
                     ? `This moment is progress. You\n tracked <span class="accent-text">${formatTime(
                         weeklyTrackedTime
                       )}</span>\ this week.`
-                    : `Momentum begins with a single tracked hour. Let's go.`
+                    : `Momentum begins with a single tracked hour. Let's go.`)
             }
           />
         </section>
