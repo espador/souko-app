@@ -196,7 +196,8 @@ const ProjectOverviewPage = ({ navigate }) => {
             id: doc.id,
             name: doc.data().name,
             imageUrl: doc.data().imageUrl,
-          }));
+            isActive: doc.data().isActive !== false
+          })).filter(project => project.isActive !== false);
           setProjects(userProjects);
           setDataLoadCounter((prev) => prev + 1);
         };

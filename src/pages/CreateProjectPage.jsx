@@ -136,7 +136,8 @@ const CreateProjectPage = React.memo(({ navigate }) => { // <-- Receive navigate
                 trackedTime: 0,
                 imageUrl: imageUrl,
                 hourRate: hourRate ? parseInt(hourRate, 10) : 0,
-                currencyId // Save currency ("euro" or "dollar")
+                currencyId, // Save currency ("euro" or "dollar")
+                isActive: true
             });
 
 

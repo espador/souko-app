@@ -246,7 +246,8 @@ const UpdateProjectPage = React.memo(({ navigate, projectId: routeProjectId }) =
                 name: projectName.trim(),
                 imageUrl: imageUrl,
                 hourRate: hourRate ? parseInt(hourRate, 10) : 0,
-                currencyId // <-- store currency
+                currencyId, // <-- store currency
+                isActive: true // Ensure isActive is set to true on update
             });
 
 
@@ -277,40 +278,23 @@ const UpdateProjectPage = React.memo(({ navigate, projectId: routeProjectId }) =
         setLoading(true); // Start loading, show spinner on delete action
         try {
             const projectDocRef = doc(db, 'projects', projectId);
-            const projectSnap = await getDoc(projectDocRef);
-            const projectData = projectSnap.data();
-            const imageUrl = projectData.imageUrl;
-
-
-            if (imageUrl && !imageUrl.startsWith('default-')) {
-                const storage = getStorage();
-                const imageRef = ref(storage, imageUrl);
-                try {
-                    await deleteObject(imageRef);
-                    console.log('Project image deleted from storage');
-                } catch (deleteError) {
-                    console.error('Error deleting project image from storage:', deleteError);
-                }
-            }
-
-
-            const sessionsQuery = query(collection(db, 'sessions'), where('projectId', '==', projectId));
-            const sessionsSnapshot = await getDocs(sessionsQuery);
-            const batch = db.batch();
-            sessionsSnapshot.forEach((doc) => {
-                batch.delete(doc.ref);
+            
+            // Instead of deleting, mark as inactive
+            await updateDoc(projectDocRef, {
+                isActive: false,
+                deletedAt: new Date().toISOString()
             });
-            await batch.commit();
-            console.log('Related sessions deleted');
-
-
-            await deleteDocFirestore(projectDocRef);
-            navigate('projects'); // <-- Updated navigate call, page name as string
-
+            
+            // Clear local caches
+            localStorage.removeItem(`projectDetailData_${auth.currentUser.uid}_${projectId}`);
+            localStorage.removeItem(`projectOverviewData_${auth.currentUser.uid}`);
+            
+            // Navigate back to projects list
+            navigate('projects');
 
         } catch (err) {
             setLoading(false); // Stop loading even if delete failed
-            console.error('Error deleting project:', err);
+            console.error('Error marking project as inactive:', err);
             setError('Failed to delete the project.');
         }
     }, [projectId, navigate]);
