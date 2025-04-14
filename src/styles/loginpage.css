@@ -498,6 +498,47 @@ body {
   }
 }
 
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Fade-in animations for scrolling elements */
+.fade-in {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+}
+
+.fade-in.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Apply fade-in to specific elements */
+.feature-text,
+.feature-card-title,
+.feature-card-description,
+.cta-content {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+}
+
+.feature-text.visible,
+.feature-card-title.visible,
+.feature-card-description.visible,
+.cta-content.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
 /* Media queries for desktop */
 @media (min-width: 768px) {
   .landing-header {
