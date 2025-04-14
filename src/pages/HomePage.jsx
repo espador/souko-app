@@ -362,7 +362,7 @@ const handleSessionClick = (session) => {
                           <div className="session-project-name">{projectName}</div>
                           <div className="session-details-time-label">
                             <span className="session-start-time-homepage">{startTimeFormatted}</span>
-                            {session.isManual && <span className="session-manual-label"> Manual</span>}
+                            {session.isManual && <span className="session-manual-label"> M</span>}
                             {session.sessionLabel && <span className="session-home-label"> {session.sessionLabel}</span>}
                           </div>
                         </div>

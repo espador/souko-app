@@ -3153,7 +3153,7 @@ width: 100%;
 
 .session-manual-label {
   font-weight: 400;
-  color: var(--accent-orange);
+  color: var(--text-muted);
   font-size: 14px;
   line-height: 20px;
   margin-left: 0px; /* Remove margin left */
