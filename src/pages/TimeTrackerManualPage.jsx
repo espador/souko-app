@@ -52,11 +52,11 @@ const SESSION_LABELS = [
 const TimeTrackerManualPage = ({ navigate }) => {
   // Get current date and time for default values
   const now = new Date();
-  const currentMonth = formatTwoDigits(now.getMonth() + 1);
-  const currentDay = formatTwoDigits(now.getDate());
+  const currentMonth = String(now.getMonth() + 1);
+  const currentDay = String(now.getDate());
   const currentYear = now.getFullYear();
-  const currentHour = formatTwoDigits(now.getHours());
-  const currentMinute = formatTwoDigits(now.getMinutes());
+  const currentHour = String(now.getHours());
+  const currentMinute = String(now.getMinutes());
 
   // State
   const [loading, setLoading] = useState(true);
@@ -73,8 +73,8 @@ const TimeTrackerManualPage = ({ navigate }) => {
   const [minute, setMinute] = useState(currentMinute);
   
   // Duration inputs
-  const [durationHour, setDurationHour] = useState('01');
-  const [durationMinute, setDurationMinute] = useState('00');
+  const [durationHour, setDurationHour] = useState('1');
+  const [durationMinute, setDurationMinute] = useState('0');
   
   const [sessionLabel, setSessionLabel] = useState(SESSION_LABELS[0]);
   const [hourRate, setHourRate] = useState('');
@@ -129,56 +129,70 @@ const TimeTrackerManualPage = ({ navigate }) => {
   // Input handlers with validation
   const handleMonthChange = (e) => {
     let value = e.target.value;
+    // Only allow digits
+    value = value.replace(/\D/g, '');
     if (value.length > 2) value = value.slice(0, 2);
     if (value && parseInt(value) > 12) value = '12';
-    if (value && parseInt(value) < 1) value = '01';
-    setMonth(value.padStart(2, '0'));
+    if (value && parseInt(value) < 1) value = '1';
+    setMonth(value);
   };
 
   const handleDayChange = (e) => {
     let value = e.target.value;
+    // Only allow digits
+    value = value.replace(/\D/g, '');
     if (value.length > 2) value = value.slice(0, 2);
     if (value && parseInt(value) > 31) value = '31';
-    if (value && parseInt(value) < 1) value = '01';
-    setDay(value.padStart(2, '0'));
+    if (value && parseInt(value) < 1) value = '1';
+    setDay(value);
   };
 
   const handleYearChange = (e) => {
     let value = e.target.value;
+    // Only allow digits
+    value = value.replace(/\D/g, '');
     if (value.length > 4) value = value.slice(0, 4);
     setYear(value);
   };
 
   const handleHourChange = (e) => {
     let value = e.target.value;
+    // Only allow digits
+    value = value.replace(/\D/g, '');
     if (value.length > 2) value = value.slice(0, 2);
     if (value && parseInt(value) > 23) value = '23';
-    if (value && parseInt(value) < 0) value = '00';
-    setHour(value.padStart(2, '0'));
+    if (value && parseInt(value) < 0) value = '0';
+    setHour(value);
   };
 
   const handleMinuteChange = (e) => {
     let value = e.target.value;
+    // Only allow digits
+    value = value.replace(/\D/g, '');
     if (value.length > 2) value = value.slice(0, 2);
     if (value && parseInt(value) > 59) value = '59';
-    if (value && parseInt(value) < 0) value = '00';
-    setMinute(value.padStart(2, '0'));
+    if (value && parseInt(value) < 0) value = '0';
+    setMinute(value);
   };
 
   const handleDurationHourChange = (e) => {
     let value = e.target.value;
+    // Only allow digits
+    value = value.replace(/\D/g, '');
     if (value.length > 2) value = value.slice(0, 2);
     if (value && parseInt(value) > 12) value = '12';
-    if (value && parseInt(value) < 0) value = '00';
-    setDurationHour(value.padStart(2, '0'));
+    if (value && parseInt(value) < 0) value = '0';
+    setDurationHour(value);
   };
 
   const handleDurationMinuteChange = (e) => {
     let value = e.target.value;
+    // Only allow digits
+    value = value.replace(/\D/g, '');
     if (value.length > 2) value = value.slice(0, 2);
     if (value && parseInt(value) > 59) value = '59';
-    if (value && parseInt(value) < 0) value = '00';
-    setDurationMinute(value.padStart(2, '0'));
+    if (value && parseInt(value) < 0) value = '0';
+    setDurationMinute(value);
   };
 
   // Convert HH:MM to seconds
