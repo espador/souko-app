@@ -146,13 +146,15 @@
 }
 
 .project-image-container {
-  width: 40px;
-  height: 40px;
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
   overflow: hidden;
   display: flex;
   justify-content: center;
   align-items: center;
-  cursor: pointer;
+  flex-shrink: 0;
+  background-color: #1D1B25;
 }
 
 .project-icon-container {
@@ -173,19 +175,22 @@
 
 .project-image {
   width: 100%;
-  height: auto;
+  height: 100%;
   object-fit: cover;
 }
 
 .default-project-image {
-  width: 100%;
-  height: 100%;
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
   display: flex;
   justify-content: center;
   align-items: center;
-  color: var(--text-color);
-  font-weight: 400;
-  font-size: 20px;
+  color: white;
+  font-weight: bold;
+  font-size: 18px;
+  background-color: #FE2F00;
+  flex-shrink: 0;
 }
 
 .project-name-input {
@@ -355,6 +360,31 @@ h1 {
   }
 }
 
+.home-today-button {
+  left: 24px;
+  right: 24px;
+  width: 100%;
+  max-width: 680px;
+  margin-left: auto;
+  margin-right: auto;
+  box-sizing: border-box;
+  background-color: transparent;
+  border: 1px solid var(--button-border);
+  border-radius: 0px;
+  padding: 16px;
+  font-size: 16px;
+  font-family: var(--font-commit-mono);
+  color: var(--text-color);
+  font-weight: 400;
+  text-align: center;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+  margin-bottom: 24px;
+}
 
 /* The icon-button for uploadfile/euro/dollar */
 .icon-button {
@@ -960,14 +990,20 @@ body.allow-scroll html {
 }
 
 .project-name {
-  flex-grow: 1;
-}
-
-.project-total-time {
-  font-weight: 400;
+  font-weight: 500;
   color: var(--text-color);
   font-size: 16px;
   line-height: 20px;
+  font-family: var(--font-commit-mono);
+}
+
+.project-total-time {
+  font-weight: 600;
+  color: var(--text-color);
+  font-size: 16px;
+  line-height: 20px;
+  font-family: var(--font-commit-mono);
+  text-align: right;
 }
 
 .track-project-button {
@@ -2347,7 +2383,6 @@ body.allow-scroll > html {
   padding: 0;
   margin: 0;
 }
-
 /* Project image container */
 .project-image-container {
   width: 32px;
@@ -3375,114 +3410,63 @@ width: 100%;
   font-size: 16px;
 }
 
-/* DateTimePicker Custom Styling */
-.MuiOutlinedInput-root {
-  background-color: var(--card-background) !important;
-  border-radius: 0px !important;
-  color: var(--text-color) !important;
-  font-family: var(--font-commit-mono) !important;
-  font-size: 16px !important;
+/* Manual Time Input Styles */
+.manual-time-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  width: 100%;
+  margin-bottom: 0px;
 }
 
-.MuiOutlinedInput-notchedOutline {
-  border: none !important;
+.manual-time-column {
+  width: 100%;
 }
 
-.MuiInputBase-input {
-  padding: 16px !important;
-  color: var(--text-color) !important;
+.manual-time-inputs {
+  display: flex;
+  align-items: center;
+  background-color: var(--background-color);
+  border: 1px solid var(--button-border);
+  border-radius: 0px;
+  padding: 8px 12px;
+  margin-bottom: 16px;
+  width: 100%;
 }
 
-.MuiSvgIcon-root {
-  color: var(--text-color) !important;
+.manual-time-input {
+  background-color: transparent;
+  border: none;
+  color: var(--text-color);
+  font-family: var(--font-commit-mono);
+  font-size: 16px;
+  font-weight: 400;
+  width: 32px;
+  text-align: center;
+  padding: 6px 0;
+  -moz-appearance: textfield; /* Remove spinner for Firefox */
 }
 
-/* DateTimePicker Popup Styling */
-.MuiPickersPopper-root .MuiPaper-root {
-  background-color: var(--card-background) !important;
-  color: var(--text-color) !important;
-  border-radius: 0px !important;
+.manual-time-input-year {
+  width: 64px;
 }
 
-/* Calendar Days */
-.MuiPickersDay-root {
-  color: var(--text-color) !important;
-  font-family: var(--font-commit-mono) !important;
+.manual-time-input::-webkit-outer-spin-button,
+.manual-time-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
 }
 
-.MuiPickersDay-root.Mui-selected {
-  background-color: var(--accent-color) !important;
-  color: var(--background-color) !important;
+.manual-time-input:focus {
+  outline: none;
 }
 
-/* Month/Year Selection */
-.MuiPickersCalendarHeader-label {
-  color: var(--text-color) !important;
-  font-family: var(--font-commit-mono) !important;
-}
-
-.MuiPickersArrowSwitcher-button {
-  color: var(--text-color) !important;
-}
-
-/* Time Picker */
-.MuiClock-pin, 
-.MuiClockPointer-root {
-  background-color: var(--accent-color) !important;
-}
-
-.MuiClockPointer-thumb {
-  border-color: var(--accent-color) !important;
-  background-color: var(--accent-color) !important;
-}
-
-.MuiClockNumber-root {
-  color: var(--text-color) !important;
-  font-family: var(--font-commit-mono) !important;
-}
-
-/* Action Buttons */
-.MuiDialogActions-root .MuiButton-root {
-  color: var(--text-color) !important;
-  font-family: var(--font-commit-mono) !important;
-}
-
-/* Tabs in DateTimePicker */
-.MuiTabs-root {
-  background-color: var(--card-background) !important;
-}
-
-.MuiTab-root {
-  color: var(--text-muted) !important;
-  font-family: var(--font-commit-mono) !important;
-}
-
-.MuiTab-root.Mui-selected {
-  color: var(--text-color) !important;
-}
-
-.MuiTabs-indicator {
-  background-color: var(--accent-color) !important;
-}
-
-/* Year selection view */
-.MuiPickersYear-root {
-  color: var(--text-muted) !important;
-  font-family: var(--font-commit-mono) !important;
-}
-
-.MuiPickersYear-yearButton.Mui-selected {
-  color: var(--accent-color) !important;
-}
-
-/* Month selection view */
-.MuiPickersMonth-root {
-  color: var(--text-muted) !important;
-  font-family: var(--font-commit-mono) !important;
-}
-
-.MuiPickersMonth-monthButton.Mui-selected {
-  color: var(--accent-color) !important;
+.manual-time-separator {
+  color: var(--text-color);
+  font-family: var(--font-commit-mono);
+  font-size: 16px;
+  font-weight: 400;
+  padding: 0 4px;
 }
 
 /* Featured Section Styles */
@@ -3549,276 +3533,47 @@ width: 100%;
   margin-top: 16px;
 }
 
-.journal-today-button:hover {
-  background-color: var(--background-color);
-}
-
-.journal-today-button:active {
-  background-color: var(--background-color);
-}
-
-.home-today-button {
-  background-color: transparent;
-  border: 1px solid #312E3C;
-  border-radius: 0px;
-  text-align: center;
-  font-size: 16px;
-  color: var(--text-color);
-  padding: 16px; /* Padding to match CreateProjectPage button */
-  cursor: pointer;
-  width: 100%; /* Make buttons full width */
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 8px; /* Icon spacing */
-  font-family: var(--font-commit-mono); /* Font family to match button text */
-  font-weight: 400; /* Font weight to match button text */
-  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease; /* Smooth transitions */
-  margin-bottom: 24px;
-  margin-top: 0px;
-}
-
-.home-today-button:hover {
-  background-color: var(--background-color);
-}
-
-.home-today-button:active {
-  background-color: var(--background-color);
-}
-
-.mobile-snackbar {
-  position: fixed;
-  bottom: 96px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: calc(100% - 48px);
-  max-width: 680px;
-  background-color: rgba(19, 19, 20, 0.9);
-  backdrop-filter: blur(4px);
-  border-radius: 0px;
-  padding: 16px;
-  z-index: 2000;
-  opacity: 0;
-  visibility: hidden;
-  transition: opacity 0.3s ease, visibility 0.3s ease;
-  font-family: var(--font-commit-mono);
-  color: var(--accent-pink);
-  font-size: 14px;
-  font-weight: 400;
-}
-
-.mobile-snackbar.visible {
-  opacity: 1;
-  visibility: visible;
-}
-
-.snackbar-content {
+/* Project item styles - Updated to match session item layout */
+.project-item-container {
   display: flex;
   justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.project-left-content {
+  display: flex;
   align-items: center;
   gap: 12px;
 }
 
-.snackbar-close {
-  background: none;
-  border: none;
-  color: var(--text-color);
-  font-size: 20px;
-  cursor: pointer;
-  padding: 0;
-  width: 24px;
-  height: 24px;
+.project-right-content {
   display: flex;
   align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
 }
 
-.snackbar-close:hover {
-  color: var(--text-color);
-}
-
-/* iOS-style DateTime and Duration Pickers */
-.ios-datetime-picker {
-  background-color: var(--card-background);
-  border-radius: 0px;
-  margin-bottom: 24px;
-  overflow: hidden;
-}
-
-.ios-picker-container {
-  width: 100%;
+.project-info {
   display: flex;
   flex-direction: column;
+  gap: 4px;
 }
 
-.ios-picker-header {
-  padding: 16px;
-  background-color: #fff;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.ios-picker-title {
-  margin: 0;
-  color: #666;
-  font-family: var(--font-commit-mono);
-  font-size: 14px;
-  font-weight: 600;
-  letter-spacing: 0.5px;
-  text-transform: uppercase;
-}
-
-.ios-date-display {
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin-top: 4px;
-}
-
-.ios-year {
-  font-size: 32px;
-  font-weight: 500;
-  color: #333;
-  margin-bottom: 4px;
-}
-
-.ios-date-time {
-  display: flex;
-  align-items: center;
-  font-size: 48px;
-  font-weight: 300;
-}
-
-.ios-date {
-  font-size: 48px;
-}
-
-.ios-time-separator {
-  margin: 0 12px;
-  font-size: 48px;
-}
-
-.ios-time {
-  font-size: 48px;
-}
-
-.ios-ampm {
-  display: flex;
-  flex-direction: column;
-  margin-left: 12px;
-  font-size: 16px;
-  line-height: 1.2;
-}
-
-.ios-am, .ios-pm {
-  opacity: 0.3;
-  font-weight: 600;
-}
-
-.ios-am.active, .ios-pm.active {
-  opacity: 1;
-  color: var(--accent-color);
-}
-
-.ios-picker-tabs {
-  display: flex;
-  background-color: #2c2c2e;
-  height: 48px;
-}
-
-.ios-picker-tab {
-  flex: 1;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  cursor: pointer;
-  color: #fff;
-}
-
-.ios-picker-tab.active {
-  border-bottom: 2px solid var(--accent-color);
-}
-
-.ios-picker-tab svg {
-  width: 24px;
-  height: 24px;
-  fill: #fff;
-}
-
-.ios-picker-body {
-  padding: 16px;
-  background-color: #fff;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.ios-date-input,
-.ios-time-input {
-  width: 100%;
-  padding: 12px;
-  font-size: 16px;
-  border: 1px solid #e0e0e0;
-  border-radius: 0px;
-  text-align: center;
-  font-family: var(--font-commit-mono);
-}
-
-/* iOS-style Duration Picker */
-.ios-duration-picker {
-  background-color: var(--card-background);
-  border-radius: 0px;
-  margin-bottom: 24px;
-  overflow: hidden;
-  padding: 16px;
-}
-
-.ios-duration-container {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.ios-duration-hours,
-.ios-duration-minutes {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.ios-duration-separator {
-  margin: 0 16px;
-  font-size: 32px;
-  font-weight: 500;
-  color: var(--text-color);
-}
-
-.ios-duration-button {
-  background: none;
-  border: none;
-  width: 40px;
-  height: 40px;
-  font-size: 24px;
-  cursor: pointer;
-  color: var(--accent-color);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.ios-duration-button:disabled {
+.project-details-time-label {
   color: var(--text-muted);
-  cursor: not-allowed;
+  font-size: 14px;
+  font-family: var(--font-commit-mono);
 }
 
-.ios-duration-value {
-  font-size: 32px;
-  font-weight: 500;
-  color: var(--text-color);
-  margin: 8px 0;
-  min-width: 48px;
-  text-align: center;
+.project-last-tracked {
+  font-weight: 400;
+  color: var(--text-muted);
+  font-size: 14px; /* Slightly smaller for start time */
+  line-height: 20px;
+  margin-right: 0px; /* Remove margin right */
+}
+
+
+.project-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }

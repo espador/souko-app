@@ -22,8 +22,6 @@ import { ReactComponent as DropdownIcon } from '../styles/components/assets/drop
 import { ReactComponent as LabelIcon } from '../styles/components/assets/label-dropdown.svg';
 import { ReactComponent as HourRateIcon } from '../styles/components/assets/label-hourrate.svg';
 import { ReactComponent as Spinner } from '../styles/components/assets/spinner.svg';
-import { ReactComponent as CalendarIcon } from '../styles/components/assets/calendar.svg';
-import { ReactComponent as ClockIcon } from '../styles/components/assets/clock.svg';
 
 // Helper: Monday-based week start
 function getMondayOfCurrentWeek() {
@@ -34,24 +32,10 @@ function getMondayOfCurrentWeek() {
   return now.getTime();
 }
 
-// Format date to YYYY-MM-DD for date input
-function formatDateForInput(date) {
-  const d = new Date(date);
-  return d.toISOString().split('T')[0];
-}
-
-// Format time to HH:MM for time input
-function formatTimeForInput(date) {
-  const d = new Date(date);
-  return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
-}
-
-// Convert a date string and time string to a Date object
-function combineDateAndTime(dateStr, timeStr) {
-  const [year, month, day] = dateStr.split('-').map(Number);
-  const [hours, minutes] = timeStr.split(':').map(Number);
-  return new Date(year, month - 1, day, hours, minutes);
-}
+// Helper: Format number as two digits
+const formatTwoDigits = (num) => {
+  return num.toString().padStart(2, '0');
+};
 
 const SESSION_LABELS = [
   'Designing',
@@ -66,25 +50,35 @@ const SESSION_LABELS = [
 ];
 
 const TimeTrackerManualPage = ({ navigate }) => {
+  // Get current date and time for default values
+  const now = new Date();
+  const currentMonth = formatTwoDigits(now.getMonth() + 1);
+  const currentDay = formatTwoDigits(now.getDate());
+  const currentYear = now.getFullYear();
+  const currentHour = formatTwoDigits(now.getHours());
+  const currentMinute = formatTwoDigits(now.getMinutes());
+
   // State
   const [loading, setLoading] = useState(true);
   const [projects, setProjects] = useState([]);
   const [selectedProject, setSelectedProject] = useState(null);
   
-  // Date and time state
-  const now = new Date();
-  const [sessionDate, setSessionDate] = useState(formatDateForInput(now));
-  const [sessionTime, setSessionTime] = useState(formatTimeForInput(now));
-  const [showDatePicker, setShowDatePicker] = useState(false);
+  // Date inputs
+  const [month, setMonth] = useState(currentMonth);
+  const [day, setDay] = useState(currentDay);
+  const [year, setYear] = useState(currentYear.toString());
   
-  // Duration state (default to 1 hour)
-  const [durationHours, setDurationHours] = useState(1);
-  const [durationMinutes, setDurationMinutes] = useState(0);
+  // Time inputs
+  const [hour, setHour] = useState(currentHour);
+  const [minute, setMinute] = useState(currentMinute);
+  
+  // Duration inputs
+  const [durationHour, setDurationHour] = useState('01');
+  const [durationMinute, setDurationMinute] = useState('00');
   
   const [sessionLabel, setSessionLabel] = useState(SESSION_LABELS[0]);
   const [hourRate, setHourRate] = useState('');
   const [currencyId, setCurrencyId] = useState('euro');
-  const [submitting, setSubmitting] = useState(false);
 
   // Fetch projects on component mount
   useEffect(() => {
@@ -95,10 +89,13 @@ const TimeTrackerManualPage = ({ navigate }) => {
           where('userId', '==', auth.currentUser.uid)
         );
         const querySnapshot = await getDocs(projectsQuery);
-        const projectsList = querySnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        }));
+        const projectsList = querySnapshot.docs
+          .map(doc => ({
+            id: doc.id,
+            ...doc.data()
+          }))
+          .filter(project => !project.deletedAt); // Filter out deleted projects
+        
         setProjects(projectsList);
         if (projectsList.length > 0) {
           setSelectedProject(projectsList[0]);
@@ -115,69 +112,88 @@ const TimeTrackerManualPage = ({ navigate }) => {
     fetchProjects();
   }, []);
 
-  // Derived state
+  // Computed values
   const isBillable = Number(hourRate || 0) > 0;
+  const sessionDateTime = dayjs(`${year}-${month}-${day}T${hour}:${minute}`);
+  const duration = `${durationHour}:${durationMinute}`;
   
-  // Get formatted duration string (HH:MM)
-  const getDurationString = () => {
-    return `${String(durationHours).padStart(2, '0')}:${String(durationMinutes).padStart(2, '0')}`;
-  };
-  
-  // Convert duration to seconds
-  const getDurationInSeconds = () => {
-    return (durationHours * 3600) + (durationMinutes * 60);
-  };
-
-  const handleIncrementHours = () => {
-    setDurationHours(prev => prev < 12 ? prev + 1 : prev);
+  // Input handlers with validation
+  const handleMonthChange = (e) => {
+    let value = e.target.value;
+    if (value.length > 2) value = value.slice(0, 2);
+    if (value && parseInt(value) > 12) value = '12';
+    if (value && parseInt(value) < 1) value = '01';
+    setMonth(value.padStart(2, '0'));
   };
 
-  const handleDecrementHours = () => {
-    setDurationHours(prev => prev > 0 ? prev - 1 : prev);
+  const handleDayChange = (e) => {
+    let value = e.target.value;
+    if (value.length > 2) value = value.slice(0, 2);
+    if (value && parseInt(value) > 31) value = '31';
+    if (value && parseInt(value) < 1) value = '01';
+    setDay(value.padStart(2, '0'));
   };
 
-  const handleIncrementMinutes = () => {
-    if (durationMinutes === 59) {
-      if (durationHours < 12) {
-        setDurationHours(prev => prev + 1);
-        setDurationMinutes(0);
-      }
-    } else {
-      setDurationMinutes(prev => prev + 1);
-    }
+  const handleYearChange = (e) => {
+    let value = e.target.value;
+    if (value.length > 4) value = value.slice(0, 4);
+    setYear(value);
   };
 
-  const handleDecrementMinutes = () => {
-    if (durationMinutes === 0) {
-      if (durationHours > 0) {
-        setDurationHours(prev => prev - 1);
-        setDurationMinutes(59);
-      }
-    } else {
-      setDurationMinutes(prev => prev - 1);
-    }
+  const handleHourChange = (e) => {
+    let value = e.target.value;
+    if (value.length > 2) value = value.slice(0, 2);
+    if (value && parseInt(value) > 23) value = '23';
+    if (value && parseInt(value) < 0) value = '00';
+    setHour(value.padStart(2, '0'));
+  };
+
+  const handleMinuteChange = (e) => {
+    let value = e.target.value;
+    if (value.length > 2) value = value.slice(0, 2);
+    if (value && parseInt(value) > 59) value = '59';
+    if (value && parseInt(value) < 0) value = '00';
+    setMinute(value.padStart(2, '0'));
+  };
+
+  const handleDurationHourChange = (e) => {
+    let value = e.target.value;
+    if (value.length > 2) value = value.slice(0, 2);
+    if (value && parseInt(value) > 12) value = '12';
+    if (value && parseInt(value) < 0) value = '00';
+    setDurationHour(value.padStart(2, '0'));
+  };
+
+  const handleDurationMinuteChange = (e) => {
+    let value = e.target.value;
+    if (value.length > 2) value = value.slice(0, 2);
+    if (value && parseInt(value) > 59) value = '59';
+    if (value && parseInt(value) < 0) value = '00';
+    setDurationMinute(value.padStart(2, '0'));
+  };
+
+  // Convert HH:MM to seconds
+  const durationToSeconds = (duration) => {
+    const [hours, minutes] = duration.split(':').map(Number);
+    return (hours * 3600) + (minutes * 60);
   };
 
   const handleSaveManualSession = useCallback(async () => {
-    if (!selectedProject) {
-      alert('Please select a project');
+    if (!selectedProject || !sessionDateTime.isValid() || !duration) {
+      alert('Please fill in all required fields');
       return;
     }
 
-    setSubmitting(true);
-    
     try {
-      // Create a Date object from the selected date and time
-      const sessionDateTime = combineDateAndTime(sessionDate, sessionTime);
       const sessionRef = doc(collection(db, 'sessions'));
-      const elapsedSeconds = getDurationInSeconds();
+      const elapsedSeconds = durationToSeconds(duration);
       const sessionDurationMinutes = Math.round(elapsedSeconds / 60);
 
       await setDoc(sessionRef, {
         userId: auth.currentUser.uid,
         project: selectedProject.name,
         projectId: selectedProject.id,
-        startTime: sessionDateTime,
+        startTime: sessionDateTime.toDate(),
         elapsedTime: elapsedSeconds,
         hourRate: Number(hourRate) || 0,
         currencyId: currencyId || 'euro',
@@ -219,15 +235,13 @@ const TimeTrackerManualPage = ({ navigate }) => {
       navigate('home');
     } catch (error) {
       console.error('Error saving manual session:', error);
-      setSubmitting(false);
-      alert('Failed to save session. Please try again.');
     }
-  }, [selectedProject, sessionDate, sessionTime, hourRate, currencyId, sessionLabel, navigate, isBillable, getDurationInSeconds]);
+  }, [selectedProject, sessionDateTime, duration, hourRate, currencyId, sessionLabel, navigate, isBillable]);
 
   if (loading) {
     return (
       <div className="loading-container">
-        <Spinner className="spinning-logo" />
+        <Spinner className="spinner" />
       </div>
     );
   }
@@ -241,144 +255,96 @@ const TimeTrackerManualPage = ({ navigate }) => {
       />
 
       <div className="motivational-section">
-        Missed tracking? Rewrite your moment.
+        <h1>Missed tracking? Rewrite your moment.</h1>
       </div>
 
       <div className="divider"></div>
 
-      {/* iOS-style Date & Time Picker */}
-      <h2 className="projects-label">Session date</h2>
-      
-      <div className="ios-datetime-picker">
-        <div className="ios-picker-container">
-          {showDatePicker ? (
-            <>
-              <div className="ios-picker-header">
-                <p className="ios-picker-title">SELECT DATE & TIME</p>
-                <div className="ios-date-display">
-                  <div className="ios-year">{new Date(sessionDate).getFullYear()}</div>
-                  <div className="ios-date-time">
-                    <div className="ios-date">{new Date(sessionDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</div>
-                    <div className="ios-time-separator">:</div>
-                    <div className="ios-time">{sessionTime}</div>
-                    <div className="ios-ampm">
-                      <div className={`ios-am ${parseInt(sessionTime.split(':')[0]) < 12 ? 'active' : ''}`}>AM</div>
-                      <div className={`ios-pm ${parseInt(sessionTime.split(':')[0]) >= 12 ? 'active' : ''}`}>PM</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="ios-picker-tabs">
-                <div 
-                  className={`ios-picker-tab ${showDatePicker ? 'active' : ''}`}
-                  onClick={() => setShowDatePicker(true)}
-                >
-                  <CalendarIcon />
-                </div>
-                <div 
-                  className={`ios-picker-tab ${!showDatePicker ? 'active' : ''}`}
-                  onClick={() => setShowDatePicker(false)}
-                >
-                  <ClockIcon />
-                </div>
-              </div>
-
-              <div className="ios-picker-body">
-                <input 
-                  type="date" 
-                  className="ios-date-input" 
-                  value={sessionDate}
-                  onChange={(e) => setSessionDate(e.target.value)}
-                />
-              </div>
-            </>
-          ) : (
-            <>
-              <div className="ios-picker-header">
-                <p className="ios-picker-title">SELECT DATE & TIME</p>
-                <div className="ios-date-display">
-                  <div className="ios-year">{new Date(sessionDate).getFullYear()}</div>
-                  <div className="ios-date-time">
-                    <div className="ios-date">{new Date(sessionDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</div>
-                    <div className="ios-time-separator">:</div>
-                    <div className="ios-time">{sessionTime}</div>
-                    <div className="ios-ampm">
-                      <div className={`ios-am ${parseInt(sessionTime.split(':')[0]) < 12 ? 'active' : ''}`}>AM</div>
-                      <div className={`ios-pm ${parseInt(sessionTime.split(':')[0]) >= 12 ? 'active' : ''}`}>PM</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="ios-picker-tabs">
-                <div 
-                  className={`ios-picker-tab ${showDatePicker ? 'active' : ''}`}
-                  onClick={() => setShowDatePicker(true)}
-                >
-                  <CalendarIcon />
-                </div>
-                <div 
-                  className={`ios-picker-tab ${!showDatePicker ? 'active' : ''}`}
-                  onClick={() => setShowDatePicker(false)}
-                >
-                  <ClockIcon />
-                </div>
-              </div>
-
-              <div className="ios-picker-body">
-                <input 
-                  type="time" 
-                  className="ios-time-input" 
-                  value={sessionTime}
-                  onChange={(e) => setSessionTime(e.target.value)}
-                />
-              </div>
-            </>
-          )}
+      {/* Two column grid for Session date and Start time */}
+      <div className="manual-time-grid">
+        <div className="manual-time-column">
+          <h2 className="projects-label">Session date</h2>
+          <div className="manual-time-inputs">
+            <input
+              type="number"
+              min="1"
+              max="12"
+              className="manual-time-input"
+              value={month}
+              onChange={handleMonthChange}
+              placeholder="MM"
+            />
+            <span className="manual-time-separator">/</span>
+            <input
+              type="number"
+              min="1"
+              max="31"
+              className="manual-time-input"
+              value={day}
+              onChange={handleDayChange}
+              placeholder="DD"
+            />
+            <span className="manual-time-separator">/</span>
+            <input
+              type="number"
+              min="2000"
+              max="2100"
+              className="manual-time-input manual-time-input-year"
+              value={year}
+              onChange={handleYearChange}
+              placeholder="YYYY"
+            />
+          </div>
+        </div>
+        
+        <div className="manual-time-column">
+          <h2 className="projects-label">Start time</h2>
+          <div className="manual-time-inputs">
+            <input
+              type="number"
+              min="0"
+              max="23"
+              className="manual-time-input"
+              value={hour}
+              onChange={handleHourChange}
+              placeholder="HH"
+            />
+            <span className="manual-time-separator">:</span>
+            <input
+              type="number"
+              min="0"
+              max="59"
+              className="manual-time-input"
+              value={minute}
+              onChange={handleMinuteChange}
+              placeholder="MM"
+            />
+          </div>
         </div>
       </div>
 
-      {/* Duration Spinner */}
+      {/* Duration Input */}
       <h2 className="projects-label">Session duration</h2>
-      <div className="ios-duration-picker">
-        <div className="ios-duration-container">
-          <div className="ios-duration-hours">
-            <button 
-              className="ios-duration-button ios-duration-up"
-              onClick={handleIncrementHours}
-              disabled={durationHours >= 12}
-            >
-              +
-            </button>
-            <div className="ios-duration-value">{String(durationHours).padStart(2, '0')}</div>
-            <button 
-              className="ios-duration-button ios-duration-down"
-              onClick={handleDecrementHours}
-              disabled={durationHours <= 0 && durationMinutes <= 0}
-            >
-              -
-            </button>
-          </div>
-          <div className="ios-duration-separator">:</div>
-          <div className="ios-duration-minutes">
-            <button 
-              className="ios-duration-button ios-duration-up"
-              onClick={handleIncrementMinutes}
-              disabled={durationHours >= 12 && durationMinutes >= 59}
-            >
-              +
-            </button>
-            <div className="ios-duration-value">{String(durationMinutes).padStart(2, '0')}</div>
-            <button 
-              className="ios-duration-button ios-duration-down"
-              onClick={handleDecrementMinutes}
-              disabled={durationHours <= 0 && durationMinutes <= 0}
-            >
-              -
-            </button>
-          </div>
-        </div>
+      <div className="manual-time-inputs">
+        <input
+          type="number"
+          min="0"
+          max="12"
+          className="manual-time-input"
+          value={durationHour}
+          onChange={handleDurationHourChange}
+          placeholder="HH"
+        />
+        <span className="manual-time-separator">:</span>
+        <input
+          type="number"
+          min="0"
+          max="59"
+          className="manual-time-input"
+          value={durationMinute}
+          onChange={handleDurationMinuteChange}
+          placeholder="MM"
+        />
       </div>
 
       {/* Project Selection */}
@@ -463,13 +429,9 @@ const TimeTrackerManualPage = ({ navigate }) => {
       <button
         className="save-button sticky-button"
         onClick={handleSaveManualSession}
-        disabled={!selectedProject || submitting}
+        disabled={!selectedProject || !sessionDateTime.isValid() || !duration}
       >
-        {submitting ? (
-          <div className="spinner"></div>
-        ) : (
-          "Create moment"
-        )}
+        Create moment
       </button>
     </div>
   );

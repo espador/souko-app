@@ -23,7 +23,7 @@ import { ReactComponent as DropdownIcon } from '../styles/components/assets/drop
 import { ReactComponent as Spinner } from '../styles/components/assets/spinner.svg';
 import { ReactComponent as EraseIcon } from '../styles/components/assets/erase.svg';
 
-// Optional icons for each dropdown “tile” (if desired)
+// Optional icons for each dropdown "tile" (if desired)
 import { ReactComponent as LabelIcon } from '../styles/components/assets/label-dropdown.svg';
 import { ReactComponent as HourRateIcon } from '../styles/components/assets/label-hourrate.svg';
 import { ReactComponent as ObjectiveIcon } from '../styles/components/assets/label-objective.svg';
@@ -64,7 +64,7 @@ const TimeTrackerSetupPage = React.memo(({ navigate }) => {
   // -- Session label (2nd dropdown) --
   const [sessionLabel, setSessionLabel] = useState(SESSION_LABELS[0]);
 
-  // -- Combine “billable / non-billable” + hourRate in a single logic block --
+  // -- Combine "billable / non-billable" + hourRate in a single logic block --
   // If hourRate > 0 => billable, otherwise non-billable
   const [hourRate, setHourRate] = useState('');
   const [currencyId, setCurrencyId] = useState('euro'); // default
@@ -96,10 +96,12 @@ const TimeTrackerSetupPage = React.memo(({ navigate }) => {
           );
           const projectSnapshot = await getDocs(projectQuery);
 
-          const userProjects = projectSnapshot.docs.map((docSnap) => ({
-            id: docSnap.id,
-            ...docSnap.data(),
-          }));
+          const userProjects = projectSnapshot.docs
+            .map((docSnap) => ({
+              id: docSnap.id,
+              ...docSnap.data(),
+            }))
+            .filter(project => !project.deletedAt); // Filter out deleted projects
 
           if (userProjects.length > 0) {
             // Sort by lastTrackedTime desc
@@ -139,7 +141,7 @@ const TimeTrackerSetupPage = React.memo(({ navigate }) => {
       const found = projects.find((proj) => proj.name === projectName);
       if (found) {
         setSelectedProject(found);
-        // Overwrite local states from that project’s doc
+        // Overwrite local states from that project's doc
         if (found.hourRate) setHourRate(found.hourRate);
         if (found.currencyId) setCurrencyId(found.currencyId);
       }
@@ -166,7 +168,7 @@ const TimeTrackerSetupPage = React.memo(({ navigate }) => {
     setSessionObjective(e.target.value);
   }, []);
 
-  // 3) Start session => create doc in Firestore’s "sessions"
+  // 3) Start session => create doc in Firestore's "sessions"
   const handleStartSession = useCallback(async () => {
     if (!selectedProject) {
       alert('Please select a project first.');

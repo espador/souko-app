@@ -196,7 +196,8 @@ const ProjectOverviewPage = ({ navigate }) => {
             id: doc.id,
             name: doc.data().name,
             imageUrl: doc.data().imageUrl,
-            isActive: doc.data().isActive !== false
+            isActive: doc.data().isActive !== false,
+            lastTrackedTime: doc.data().lastTrackedTime
           })).filter(project => project.isActive !== false);
           setProjects(userProjects);
           setDataLoadCounter((prev) => prev + 1);
@@ -274,6 +275,19 @@ const ProjectOverviewPage = ({ navigate }) => {
 
   const sortedProjects = useMemo(() => {
     return [...projects].sort((a, b) => {
+        // If the project has lastTrackedTime directly, use it first 
+        if (a.lastTrackedTime || b.lastTrackedTime) {
+          const aTime = a.lastTrackedTime ? 
+            (a.lastTrackedTime.toDate ? a.lastTrackedTime.toDate().getTime() : new Date(a.lastTrackedTime).getTime()) 
+            : 0;
+          const bTime = b.lastTrackedTime ? 
+            (b.lastTrackedTime.toDate ? b.lastTrackedTime.toDate().getTime() : new Date(b.lastTrackedTime).getTime()) 
+            : 0;
+          
+          return bTime - aTime; // Most recent first
+        }
+        
+        // Fallback to using session timestamps
         const aSessions = sessions.filter(
           (s) => s.projectId === a.id && s.startTime
         );
@@ -300,19 +314,36 @@ const ProjectOverviewPage = ({ navigate }) => {
       });
   }, [projects, sessions]);
 
+  // Helper function to format lastTrackedTime
+  const formatLastTrackedTime = useCallback((timestamp) => {
+    if (!timestamp) return "Never";
+    
+    // Handle Firestore timestamp or Date object
+    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+    
+    // Format as HH:MM MM/DD/YYYY
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const year = date.getFullYear();
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    
+    return `${hours}:${minutes} ${month}/${day}/${year}`;
+  }, []);
+
   const renderProjectImage = useCallback((project) => {
     if (project.imageUrl) {
       return (
         <img
           src={project.imageUrl}
           alt={project.name}
-          className="project-image"
+          className="session-image"
         />
       );
     }
     // Fallback: first letter
     return (
-      <div className="default-project-image" style={{ backgroundColor: '#FE2F00' }}>
+      <div className="default-session-image" style={{ backgroundColor: '#FE2F00' }}>
         <span>{(project.name || 'P').charAt(0).toUpperCase()}</span>
       </div>
     );
@@ -323,27 +354,44 @@ const ProjectOverviewPage = ({ navigate }) => {
       return <p>No projects found. Start tracking to see results here!</p>;
     }
     return (
-      <ul className="projects-list">
+      <ul className="sessions-list">
         {sortedProjects.map((project) => (
           <li
             key={project.id}
-            className="project-item"
+            className="session-item"
             onClick={() => navigate('project-detail', { projectId: project.id })}
           >
-            <div className="project-image-container">
-              {renderProjectImage(project)}
-            </div>
-            <div className="project-name">{project.name}</div>
-            <div className="project-total-time">
-              {totalSessionTime[project.id]
-                ? formatTime(totalSessionTime[project.id])
-                : formatTime(0)}
+            <div className="session-item-container">
+              <div className="session-left-content">
+                <div className="session-image-container">
+                  {renderProjectImage(project)}
+                </div>
+                <div className="session-info">
+                  <div className="session-project-name">{project.name}</div>
+                  <div className="session-details-time-label">
+                    {project.lastTrackedTime ? (
+                      <span className="project-last-tracked">
+                        {formatLastTrackedTime(project.lastTrackedTime)}
+                      </span>
+                    ) : (
+                      <span className="project-last-tracked">Not tracked yet</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+              <div className="session-right-content">
+                <div className="session-elapsed-time">
+                  {totalSessionTime[project.id]
+                    ? formatTime(totalSessionTime[project.id])
+                    : formatTime(0)}
+                </div>
+              </div>
             </div>
           </li>
         ))}
       </ul>
     );
-  }, [projects, sortedProjects, totalSessionTime, navigate, renderProjectImage]);
+  }, [projects, sortedProjects, totalSessionTime, navigate, renderProjectImage, formatLastTrackedTime]);
 
   const projectChartData = useMemo(() => {
     const colors = [
