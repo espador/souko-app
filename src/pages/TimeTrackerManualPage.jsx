@@ -52,12 +52,10 @@ const SESSION_LABELS = [
 const TimeTrackerManualPage = ({ navigate }) => {
   // Get current date and time for default values
   const now = new Date();
-  const currentMonth = String(now.getMonth() + 1);
-  const currentDay = String(now.getDate());
+  const currentMonth = formatTwoDigits(now.getMonth() + 1);
+  const currentDay = formatTwoDigits(now.getDate());
   const currentYear = now.getFullYear();
-  const currentHour = String(now.getHours());
-  const currentMinute = String(now.getMinutes());
-
+  
   // State
   const [loading, setLoading] = useState(true);
   const [projects, setProjects] = useState([]);
@@ -68,13 +66,13 @@ const TimeTrackerManualPage = ({ navigate }) => {
   const [day, setDay] = useState(currentDay);
   const [year, setYear] = useState(currentYear.toString());
   
-  // Time inputs
-  const [hour, setHour] = useState(currentHour);
-  const [minute, setMinute] = useState(currentMinute);
+  // Time inputs - empty by default
+  const [hour, setHour] = useState('');
+  const [minute, setMinute] = useState('');
   
-  // Duration inputs
-  const [durationHour, setDurationHour] = useState('1');
-  const [durationMinute, setDurationMinute] = useState('0');
+  // Duration inputs - empty by default
+  const [durationHour, setDurationHour] = useState('');
+  const [durationMinute, setDurationMinute] = useState('');
   
   const [sessionLabel, setSessionLabel] = useState(SESSION_LABELS[0]);
   const [hourRate, setHourRate] = useState('');
@@ -115,17 +113,28 @@ const TimeTrackerManualPage = ({ navigate }) => {
   // Computed values
   const isBillable = Number(hourRate || 0) > 0;
   
+  // Check if all required fields are filled
+  const isTimeValid = hour && minute;
+  const isDurationValid = durationHour && durationMinute; 
+  
   // Format values for date construction (with padding)
   const formattedMonth = month.padStart(2, '0');
   const formattedDay = day.padStart(2, '0');
-  const formattedHour = hour.padStart(2, '0');
-  const formattedMinute = minute.padStart(2, '0');
-  const formattedDurationHour = durationHour.padStart(2, '0');
-  const formattedDurationMinute = durationMinute.padStart(2, '0');
+  const formattedHour = hour ? hour.padStart(2, '0') : '';
+  const formattedMinute = minute ? minute.padStart(2, '0') : '';
+  const formattedDurationHour = durationHour ? durationHour.padStart(2, '0') : '';
+  const formattedDurationMinute = durationMinute ? durationMinute.padStart(2, '0') : '';
   
-  const sessionDateTime = dayjs(`${year}-${formattedMonth}-${formattedDay}T${formattedHour}:${formattedMinute}`);
-  const duration = `${formattedDurationHour}:${formattedDurationMinute}`;
-  
+  // Only create datetime if both hour and minute are provided
+  const sessionDateTime = isTimeValid 
+    ? dayjs(`${year}-${formattedMonth}-${formattedDay}T${formattedHour}:${formattedMinute}`)
+    : null;
+    
+  // Only create duration string if both hour and minute are provided
+  const duration = isDurationValid 
+    ? `${formattedDurationHour}:${formattedDurationMinute}`
+    : '';
+
   // Input handlers with validation
   const handleMonthChange = (e) => {
     let value = e.target.value;
@@ -202,7 +211,7 @@ const TimeTrackerManualPage = ({ navigate }) => {
   };
 
   const handleSaveManualSession = useCallback(async () => {
-    if (!selectedProject || !sessionDateTime.isValid() || !duration) {
+    if (!selectedProject || !sessionDateTime || !sessionDateTime.isValid() || !duration) {
       alert('Please fill in all required fields');
       return;
     }
@@ -331,6 +340,7 @@ const TimeTrackerManualPage = ({ navigate }) => {
               value={hour}
               onChange={handleHourChange}
               placeholder="HH"
+              required
             />
             <span className="manual-time-separator">:</span>
             <input
@@ -341,13 +351,14 @@ const TimeTrackerManualPage = ({ navigate }) => {
               value={minute}
               onChange={handleMinuteChange}
               placeholder="MM"
+              required
             />
           </div>
         </div>
       </div>
 
       {/* Duration Input */}
-      <h2 className="projects-label">Session duration</h2>
+      <h2 className="projects-label">Session Duration</h2>
       <div className="manual-time-inputs">
         <input
           type="text"
@@ -357,6 +368,7 @@ const TimeTrackerManualPage = ({ navigate }) => {
           value={durationHour}
           onChange={handleDurationHourChange}
           placeholder="HH"
+          required
         />
         <span className="manual-time-separator">:</span>
         <input
@@ -367,6 +379,7 @@ const TimeTrackerManualPage = ({ navigate }) => {
           value={durationMinute}
           onChange={handleDurationMinuteChange}
           placeholder="MM"
+          required
         />
       </div>
 
@@ -452,7 +465,7 @@ const TimeTrackerManualPage = ({ navigate }) => {
       <button
         className="save-button sticky-button"
         onClick={handleSaveManualSession}
-        disabled={!selectedProject || !sessionDateTime.isValid() || !duration}
+        disabled={!selectedProject || !sessionDateTime || !sessionDateTime.isValid() || !duration}
       >
         Create moment
       </button>
