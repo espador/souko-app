@@ -114,8 +114,17 @@ const TimeTrackerManualPage = ({ navigate }) => {
 
   // Computed values
   const isBillable = Number(hourRate || 0) > 0;
-  const sessionDateTime = dayjs(`${year}-${month}-${day}T${hour}:${minute}`);
-  const duration = `${durationHour}:${durationMinute}`;
+  
+  // Format values for date construction (with padding)
+  const formattedMonth = month.padStart(2, '0');
+  const formattedDay = day.padStart(2, '0');
+  const formattedHour = hour.padStart(2, '0');
+  const formattedMinute = minute.padStart(2, '0');
+  const formattedDurationHour = durationHour.padStart(2, '0');
+  const formattedDurationMinute = durationMinute.padStart(2, '0');
+  
+  const sessionDateTime = dayjs(`${year}-${formattedMonth}-${formattedDay}T${formattedHour}:${formattedMinute}`);
+  const duration = `${formattedDurationHour}:${formattedDurationMinute}`;
   
   // Input handlers with validation
   const handleMonthChange = (e) => {
@@ -266,9 +275,9 @@ const TimeTrackerManualPage = ({ navigate }) => {
           <h2 className="projects-label">Session date</h2>
           <div className="manual-time-inputs">
             <input
-              type="number"
-              min="1"
-              max="12"
+              type="text"
+              inputMode="numeric"
+              maxLength="2"
               className="manual-time-input"
               value={month}
               onChange={handleMonthChange}
@@ -276,9 +285,9 @@ const TimeTrackerManualPage = ({ navigate }) => {
             />
             <span className="manual-time-separator">/</span>
             <input
-              type="number"
-              min="1"
-              max="31"
+              type="text"
+              inputMode="numeric"
+              maxLength="2"
               className="manual-time-input"
               value={day}
               onChange={handleDayChange}
@@ -286,9 +295,9 @@ const TimeTrackerManualPage = ({ navigate }) => {
             />
             <span className="manual-time-separator">/</span>
             <input
-              type="number"
-              min="2000"
-              max="2100"
+              type="text"
+              inputMode="numeric"
+              maxLength="4"
               className="manual-time-input manual-time-input-year"
               value={year}
               onChange={handleYearChange}
@@ -301,9 +310,9 @@ const TimeTrackerManualPage = ({ navigate }) => {
           <h2 className="projects-label">Start time</h2>
           <div className="manual-time-inputs">
             <input
-              type="number"
-              min="0"
-              max="23"
+              type="text"
+              inputMode="numeric"
+              maxLength="2"
               className="manual-time-input"
               value={hour}
               onChange={handleHourChange}
@@ -311,9 +320,9 @@ const TimeTrackerManualPage = ({ navigate }) => {
             />
             <span className="manual-time-separator">:</span>
             <input
-              type="number"
-              min="0"
-              max="59"
+              type="text"
+              inputMode="numeric"
+              maxLength="2"
               className="manual-time-input"
               value={minute}
               onChange={handleMinuteChange}
@@ -327,9 +336,9 @@ const TimeTrackerManualPage = ({ navigate }) => {
       <h2 className="projects-label">Session duration</h2>
       <div className="manual-time-inputs">
         <input
-          type="number"
-          min="0"
-          max="12"
+          type="text"
+          inputMode="numeric"
+          maxLength="2"
           className="manual-time-input"
           value={durationHour}
           onChange={handleDurationHourChange}
@@ -337,9 +346,9 @@ const TimeTrackerManualPage = ({ navigate }) => {
         />
         <span className="manual-time-separator">:</span>
         <input
-          type="number"
-          min="0"
-          max="59"
+          type="text"
+          inputMode="numeric"
+          maxLength="2"
           className="manual-time-input"
           value={durationMinute}
           onChange={handleDurationMinuteChange}
