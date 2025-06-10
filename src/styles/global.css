@@ -454,18 +454,13 @@ body {
   margin: 0;
   padding: 0;
   background: var(--background-color);
-  position: fixed; /* Keep position fixed if needed, otherwise consider removing */
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100vh;
   font-family: var(--font-commit-mono), monospace;
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  overflow-x: hidden; /* Keep horizontal overflow hidden */
+  overflow-x: hidden;
   box-sizing: border-box;
-  overflow-y: auto; /* Change to auto - enable vertical scroll when content overflows */
+  min-height: 100vh;
 }
 
 body.allow-scroll {
@@ -479,7 +474,7 @@ body.no-scroll {
 }
 
 #root {
-  height: 100%; /* Make root take up the full height of the body */
+  min-height: 100vh;
   padding-top: 0px;
   padding-left: 24px;
   padding-right: 24px;
