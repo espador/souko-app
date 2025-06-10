@@ -458,9 +458,6 @@ body {
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  overflow-x: hidden;
-  box-sizing: border-box;
-  min-height: 100vh;
 }
 
 body.allow-scroll {
@@ -475,9 +472,7 @@ body.no-scroll {
 
 #root {
   min-height: 100vh;
-  padding-top: 0px;
-  padding-left: 24px;
-  padding-right: 24px;
+  padding: 0 24px;
   padding-top: env(safe-area-inset-top);
   background-color: var(--background-color);
 }
@@ -686,10 +681,7 @@ p {
 }
 
 .app-container {
-  min-height: 100vh;
-  overflow-x: hidden; /* Hide horizontal scrollbar */
-  position: relative; /* Establish positioning context for motion-container */
-  background-color: #0C0C0C;
+  height: 100%;
 }
 
 /* Styling for the motion container (where your pages are rendered) */
