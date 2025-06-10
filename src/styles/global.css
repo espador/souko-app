@@ -686,20 +686,19 @@ p {
 }
 
 .app-container {
-  height: 100vh; /* Take full viewport height */
-    overflow-y: auto; /* Enable vertical scrolling when content overflows */
-    overflow-x: hidden; /* Hide horizontal scrollbar */
-    position: relative; /* Establish positioning context for motion-container */
-    background-color: #0C0C0C;
+  min-height: 100vh;
+  overflow-x: hidden; /* Hide horizontal scrollbar */
+  position: relative; /* Establish positioning context for motion-container */
+  background-color: #0C0C0C;
 }
 
 /* Styling for the motion container (where your pages are rendered) */
   .motion-container {
-  height: 100%; /* Take full height of app-container */
     position: absolute; /* Position absolutely within app-container */
     top: 0;
     left: 0;
     right: 0;
+    width: 100%;
     opacity: 1; /* Ensure it's visible */
 }
 
