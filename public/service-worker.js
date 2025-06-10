@@ -1,5 +1,5 @@
 console.log('Service worker registered!');
-const CACHE_VERSION = 'v93'; // Increment this version with each deployment
+const CACHE_VERSION = 'v94'; // Increment this version with each deployment
 const CACHE_NAME = `my-pwa-cache-${CACHE_VERSION}`;
 const urlsToCache = [
   '/', // Cache the root (index.html)
@@ -8,8 +8,8 @@ const urlsToCache = [
   '/favicon.ico',
   '/logo192.png',
   '/logo512.png',
-  '/static/js/main.33520a9b.js', // Updated path based on latest build output
-  '/static/css/main.93010005.css' // Updated path based on latest build output
+  '/static/js/main.fb0d904d.js',
+  '/static/css/main.27443676.css'
 ];
 
 self.addEventListener('install', event => {

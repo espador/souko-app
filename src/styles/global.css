@@ -148,7 +148,7 @@
 .project-image-container {
   width: 48px;
   height: 48px;
-  border-radius: 12px;
+  border-radius: 0px;
   overflow: hidden;
   display: flex;
   justify-content: center;
@@ -182,7 +182,7 @@
 .default-project-image {
   width: 48px;
   height: 48px;
-  border-radius: 12px;
+  border-radius: 0px;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -2050,7 +2050,6 @@ body.allow-scroll > html {
   margin-top: 16px;
   padding: 12px 24px;
   background-color: var(--accent-color);
-  color: var(--background-color);
   border: none;
   border-radius: 0px;
   cursor: pointer;
@@ -2105,9 +2104,9 @@ body.allow-scroll > html {
 .dropdown-default-image {
   width: 40px;
   height: 40px;
-  border-radius: 20%;
+  border-radius: 0px;
   background-color: var(--accent-color);
-  color: var(--background-color);
+  color: var(--text-color);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -2405,6 +2404,7 @@ body.allow-scroll > html {
   width: 100%;
   height: 100%;
   display: flex;
+  border-radius: 0px;
   justify-content: center;
   align-items: center;
   color: var(--text-color);

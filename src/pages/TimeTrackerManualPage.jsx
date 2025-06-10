@@ -75,6 +75,7 @@ const TimeTrackerManualPage = ({ navigate }) => {
   const [durationMinute, setDurationMinute] = useState('');
   
   const [sessionLabel, setSessionLabel] = useState(SESSION_LABELS[0]);
+  const [sessionNote, setSessionNote] = useState('');
   const [hourRate, setHourRate] = useState('');
   const [currencyId, setCurrencyId] = useState('euro');
 
@@ -94,11 +95,19 @@ const TimeTrackerManualPage = ({ navigate }) => {
           }))
           .filter(project => !project.deletedAt); // Filter out deleted projects
         
+        // Sort projects by last tracked time (most recent first)
+        projectsList.sort((a, b) => {
+          const aTime = a.lastTrackedTime ? a.lastTrackedTime.toMillis?.() : 0;
+          const bTime = b.lastTrackedTime ? b.lastTrackedTime.toMillis?.() : 0;
+          return bTime - aTime;
+        });
+        
         setProjects(projectsList);
         if (projectsList.length > 0) {
-          setSelectedProject(projectsList[0]);
-          if (projectsList[0].hourRate) setHourRate(projectsList[0].hourRate);
-          if (projectsList[0].currencyId) setCurrencyId(projectsList[0].currencyId);
+          const mostRecentProject = projectsList[0];
+          setSelectedProject(mostRecentProject);
+          if (mostRecentProject.hourRate) setHourRate(mostRecentProject.hourRate);
+          if (mostRecentProject.currencyId) setCurrencyId(mostRecentProject.currencyId);
         }
         setLoading(false);
       } catch (error) {
@@ -231,6 +240,7 @@ const TimeTrackerManualPage = ({ navigate }) => {
         currencyId: currencyId || 'euro',
         isBillable,
         sessionLabel,
+        sessionNote,
         status: 'completed',
         isManual: true,
         manualCreatedAt: serverTimestamp(),
@@ -268,7 +278,7 @@ const TimeTrackerManualPage = ({ navigate }) => {
     } catch (error) {
       console.error('Error saving manual session:', error);
     }
-  }, [selectedProject, sessionDateTime, duration, hourRate, currencyId, sessionLabel, navigate, isBillable]);
+  }, [selectedProject, sessionDateTime, duration, hourRate, currencyId, sessionLabel, sessionNote, navigate, isBillable]);
 
   if (loading) {
     return (
@@ -461,9 +471,25 @@ const TimeTrackerManualPage = ({ navigate }) => {
         </select>
       </div>
 
+      <div className="divider"></div>
+      <h2 className="projects-label">Describe your session</h2>
+      <div className="journal-form-section">
+          <div className="journal-input-tile">
+              <textarea
+                  id="sessionNote"
+                  placeholder="/"
+                  value={sessionNote}
+                  onChange={e => setSessionNote(e.target.value)}
+                  className="journal-input journal-textarea journal-text-input-style"
+                  maxLength={280}
+              />
+          </div>
+      </div>
+
       {/* Save Button */}
       <button
-        className="save-button sticky-button"
+        className="save-button button"
+        style={{ marginTop: '32px', marginBottom: '24px' }}
         onClick={handleSaveManualSession}
         disabled={!selectedProject || !sessionDateTime || !sessionDateTime.isValid() || !duration}
       >

@@ -64,6 +64,7 @@ export default function SessionDetailPage({ navigate, sessionId, referrer = 'hom
   const [hourRate, setHourRate] = useState(0);
   const [currencyId, setCurrencyId] = useState('euro');
   const [sessionObjective, setSessionObjective] = useState('no objective');
+  const [sessionNote, setSessionNote] = useState('');
 
   // For enabling "Save changes" button
   const [isChanged, setIsChanged] = useState(false);
@@ -117,6 +118,7 @@ export default function SessionDetailPage({ navigate, sessionId, referrer = 'hom
         setCurrencyId(sessionData.currencyId ?? 'euro');
         setSessionLabel(sessionData.sessionLabel ?? SESSION_LABELS[0]);
         setSessionObjective(sessionData.sessionObjective ?? 'no objective');
+        setSessionNote(sessionData.sessionNote ?? '');
 
         // Attempt to match project by ID, fallback to name
         let prj = null;
@@ -149,7 +151,8 @@ export default function SessionDetailPage({ navigate, sessionId, referrer = 'hom
       Number(hourRate) !== Number(session.hourRate ?? 0) ||
       currencyId !== (session.currencyId ?? 'euro') ||
       sessionLabel !== (session.sessionLabel ?? SESSION_LABELS[0]) ||
-      sessionObjective !== (session.sessionObjective ?? 'no objective');
+      sessionObjective !== (session.sessionObjective ?? 'no objective') ||
+      sessionNote !== (session.sessionNote ?? '');
     setIsChanged(somethingChanged);
   }, [
     session,
@@ -158,6 +161,7 @@ export default function SessionDetailPage({ navigate, sessionId, referrer = 'hom
     currencyId,
     sessionLabel,
     sessionObjective,
+    sessionNote,
   ]);
 
   // == Handlers ==
@@ -189,6 +193,10 @@ export default function SessionDetailPage({ navigate, sessionId, referrer = 'hom
     setSessionObjective(e.target.value);
   };
 
+  const handleSessionNoteChange = (e) => {
+    setSessionNote(e.target.value);
+  };
+
   // Smart back navigation handler
   const handleBackNavigation = () => {
     console.log('Back navigation triggered with referrer:', referrer, 'projectId:', projectId);
@@ -212,6 +220,7 @@ export default function SessionDetailPage({ navigate, sessionId, referrer = 'hom
         currencyId: currencyId || 'euro',
         sessionLabel,
         sessionObjective,
+        sessionNote,
       });
       console.log('Session updated!');
       setIsChanged(false);
@@ -414,6 +423,21 @@ export default function SessionDetailPage({ navigate, sessionId, referrer = 'hom
           ))}
         </select>
         <DropdownIcon className="dropdown-arrow" />
+      </div>
+
+      <div className="divider"></div>
+      <h2 className="projects-label">Session note</h2>
+      <div className="journal-form-section">
+        <div className="journal-input-tile">
+            <textarea
+                id="sessionNote"
+                placeholder="/"
+                value={sessionNote}
+                onChange={handleSessionNoteChange}
+                className="journal-input journal-textarea journal-text-input-style"
+                maxLength={280}
+            />
+        </div>
       </div>
 
       {/* Sticky Buttons at bottom */}

@@ -64,6 +64,9 @@ const TimeTrackerSetupPage = React.memo(({ navigate }) => {
   // -- Session label (2nd dropdown) --
   const [sessionLabel, setSessionLabel] = useState(SESSION_LABELS[0]);
 
+  // -- Session note --
+  const [sessionNote, setSessionNote] = useState('');
+
   // -- Combine "billable / non-billable" + hourRate in a single logic block --
   // If hourRate > 0 => billable, otherwise non-billable
   const [hourRate, setHourRate] = useState('');
@@ -202,6 +205,7 @@ const TimeTrackerSetupPage = React.memo(({ navigate }) => {
         // Additional fields for your session
         sessionLabel,
         sessionObjective,
+        sessionNote,
       });
 
       // Navigate to the TimeTrackerPage, passing the new sessionId
@@ -216,6 +220,7 @@ const TimeTrackerSetupPage = React.memo(({ navigate }) => {
     isBillable,
     sessionLabel,
     sessionObjective,
+    sessionNote,
     navigate,
   ]);
 
@@ -332,8 +337,24 @@ const TimeTrackerSetupPage = React.memo(({ navigate }) => {
         <DropdownIcon className="dropdown-arrow" />
       </div>
 
+      <div className="divider"></div>
+      <h2 className="projects-label">Describe your session</h2>
+      <div className="journal-form-section">
+        <div className="journal-input-tile">
+            <textarea
+                id="sessionNote"
+                placeholder="/"
+                value={sessionNote}
+                onChange={e => setSessionNote(e.target.value)}
+                className="journal-input journal-textarea journal-text-input-style"
+                maxLength={280}
+            />
+        </div>
+      </div>
+
         <button
-          className="save-button sticky-button"
+          className="save-button button"
+          style={{ marginTop: '32px', marginBottom: '24px' }}
           onClick={handleStartSession}
         >
           Start Session
