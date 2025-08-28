@@ -36,9 +36,14 @@ import { OnboardingProvider } from './contexts/OnboardingContext';
 
 import FloatingNavigation from './components/Layout/FloatingNavigation';
 import './styles/global.css';
+import './styles/mobile-pwa.css';
+import { useMobilePWA } from './hooks/useMobilePWA';
 
 const App = memo(() => {
   console.log('App - RENDER START');
+
+  // Initialize mobile PWA optimizations
+  useMobilePWA();
 
   const [currentPage, setCurrentPage] = useState('login');
   const [pageParams, setPageParams] = useState({});

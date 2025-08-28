@@ -10,8 +10,11 @@
   --accent-pink: #E682FF;
   --accent-orange: #FE4B00;
   --font-commit-mono: 'Commit Mono', monospace;
+  --safe-area-inset-top: env(safe-area-inset-top);
+  --safe-area-inset-bottom: env(safe-area-inset-bottom);
+  --safe-area-inset-left: env(safe-area-inset-left);
+  --safe-area-inset-right: env(safe-area-inset-right);
   -webkit-tap-highlight-color: transparent; /* Remove tap highlight */
-  
 }
 
 #root.login-root {
@@ -353,11 +356,45 @@ h1 {
   fill: var(--accent-orange);
 }
 
-/* Make the buttons properly stacked on mobile */
+/* Mobile-specific adjustments */
 @media (max-width: 768px) {
   .sticky-button-top {
-    bottom: 80px; /* Slightly adjust for better mobile spacing */
+    bottom: 80px;
   }
+  
+  .sessions-section {
+    margin-bottom: 32px;
+  }
+  
+  .homepage-content {
+    padding-bottom: 100px; /* Ensure content doesn't get cut off by floating nav */
+  }
+}
+
+/* iOS-specific fixes */
+@supports (-webkit-touch-callout: none) {
+  html {
+    height: -webkit-fill-available;
+  }
+  
+  body {
+    height: -webkit-fill-available;
+  }
+  
+  #root {
+    height: -webkit-fill-available;
+  }
+}
+
+/* Prevent iOS bounce/overscroll */
+html, body {
+  overscroll-behavior: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Ensure smooth scrolling on all devices */
+* {
+  -webkit-overflow-scrolling: touch;
 }
 
 .home-today-button {
@@ -438,16 +475,16 @@ h1 {
   font-display: swap;
 }
 
-/* Reset and Global Defaults */
+/* Reset and Global Defaults - Mobile-First Approach */
 html {
   background-color: #0C0C0C;
-  min-height: 100%;
-  scroll-behavior: smooth; /* Add smooth scrolling */
-}
-
-body.no-scroll, html.no-scroll {
-  /* Apply to both html and body */
-  overflow: hidden; /* Prevent scrolling when no-scroll is active */
+  height: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+  position: fixed;
+  width: 100%;
 }
 
 body {
@@ -458,28 +495,34 @@ body {
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  overflow-x: hidden;
   box-sizing: border-box;
-  min-height: 100vh;
+  height: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  position: fixed;
+  width: 100%;
 }
 
-body.allow-scroll {
-  position: static; /* Allow body to scroll naturally */
-  height: auto;     /* Remove fixed height */
-  overflow-y: auto; /* Enable vertical scrolling when needed */
-}
-
-body.no-scroll {
-  overflow-y: hidden; /* Force no vertical scroll */
-}
-
+/* PWA Mobile Scrolling Container */
 #root {
-  min-height: 100vh;
-  padding-top: 0px;
-  padding-left: 24px;
-  padding-right: 24px;
-  padding-top: env(safe-area-inset-top);
+  height: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 0 24px;
+  padding-top: var(--safe-area-inset-top);
+  padding-bottom: var(--safe-area-inset-bottom);
   background-color: var(--background-color);
+  position: relative;
+}
+
+/* Mobile-specific adjustments */
+@media (max-width: 768px) {
+  #root {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
 }
 
 *,
@@ -553,8 +596,7 @@ body.no-scroll {
 @media (max-width: 768px) {
   .container {
     padding: 16px;
-}
-
+  }
 }
 
 /* Login Page Specific Styles */
@@ -878,17 +920,19 @@ to {
   background-color: transparent;
   display: flex;
   flex-direction: column;
+  min-height: 100%;
+  overflow-x: hidden;
+  overflow-y: visible;
 }
 
-body.allow-scroll html {
-  overflow: auto;
-  height: auto;
-}
+/* Removed conflicting body.allow-scroll rules for cleaner mobile scrolling */
 
 .homepage-content {
   display: flex;
   flex-direction: column;
-  flex: 0;
+  flex: 1;
+  overflow-x: hidden;
+  overflow-y: visible;
 }
 
 .motivational-section .word {
@@ -2306,7 +2350,9 @@ body.allow-scroll > html {
 .homepage-content {
   display: flex;
   flex-direction: column;
-  flex: 0;
+  flex: 1;
+  overflow-x: hidden;
+  overflow-y: visible;
 }
 
 .motivational-section h1 .tracked-time {
@@ -3035,6 +3081,20 @@ width: 100%;
   z-index: 1000;
 }
 
+/* Mobile PWA optimizations for floating navigation */
+@media (display-mode: standalone) {
+  .floating-navigation-container {
+    bottom: max(24px, var(--safe-area-inset-bottom));
+  }
+}
+
+@media (max-width: 768px) {
+  .floating-navigation-container {
+    bottom: max(24px, var(--safe-area-inset-bottom));
+    width: 280px;
+  }
+}
+
 .floating-navigation-button {
   height: 40px;
   background: transparent;
@@ -3057,6 +3117,8 @@ width: 100%;
   line-height: 20px;
   margin-top: 0px;
   margin-bottom: 24px;
+  overflow-x: hidden;
+  overflow-y: visible;
 }
 
 .sessions-header {
@@ -3361,6 +3423,8 @@ width: 100%;
 .level-journal-container {
   display: flex;
   flex-direction: column; /* Default to vertical stacking for mobile */
+  overflow-x: hidden;
+  overflow-y: visible;
 }
 
 @media (min-width: 768px) { /* Example breakpoint for desktop */

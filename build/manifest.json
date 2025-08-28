@@ -34,5 +34,8 @@
   ],
     "display": "standalone",
     "theme_color": "#0f0f14",
-    "background_color": "#0f0f14"
+    "background_color": "#0f0f14",
+    "orientation": "portrait",
+    "scope": "/",
+    "lang": "en"
   }

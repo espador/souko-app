@@ -1,7 +1,7 @@
 {
   "files": {
-    "main.css": "/static/css/main.189e21d1.css",
-    "main.js": "/static/js/main.fb0d904d.js",
+    "main.css": "/static/css/main.06f9bdc8.css",
+    "main.js": "/static/js/main.74d7e8a1.js",
     "static/media/CommitMono-700-Regular.ttf": "/static/media/CommitMono-700-Regular.abaf71e816dc70e8de48.ttf",
     "static/media/CommitMono-400-Regular.ttf": "/static/media/CommitMono-400-Regular.7acda3e77ae620cd8a41.ttf",
     "static/media/feature-0.png": "/static/media/feature-0.ee30229c9f40f932ecc4.png",
@@ -271,10 +271,10 @@
     "static/media/home-active.svg": "/static/media/home-active.e74c373443d164e7abd8806165763ff9.svg",
     "static/media/shippori-mincho-57-400-normal.woff2": "/static/media/shippori-mincho-57-400-normal.30a207c65652ba163bd7.woff2",
     "static/media/dollar.svg": "/static/media/dollar.3d4fe52cf5f1a8835fdaf37bf8bfcb61.svg",
+    "index.html": "/index.html",
     "static/media/shippori-mincho-58-400-normal.woff2": "/static/media/shippori-mincho-58-400-normal.41eb6dbaf3f9c34f7704.woff2",
     "static/media/euro.svg": "/static/media/euro.900b95ca6c1989c4ecaf03ab02bae784.svg",
     "static/media/shippori-mincho-55-400-normal.woff2": "/static/media/shippori-mincho-55-400-normal.ea7ba4861a2d644315b6.woff2",
-    "index.html": "/index.html",
     "static/media/Souko-logo-header.svg": "/static/media/Souko-logo-header.6ec43a5b07dba366e31f607b66a861aa.svg",
     "static/media/Souko-logo-header-login.svg": "/static/media/Souko-logo-header-login.31613e66f5e96cd2276c17c5739b977d.svg",
     "static/media/download.svg": "/static/media/download.e5a6be25dd8e8d748d2fa2291281d088.svg",
@@ -296,11 +296,11 @@
     "static/media/dropdown.svg": "/static/media/dropdown.ced35e66ac1e1549923b942eb468f607.svg",
     "static/media/play.svg": "/static/media/play.96fdd671041bba56eb630fd86c378b13.svg",
     "static/media/pause.svg": "/static/media/pause.6b572bc836f29e47ed6ef737423bb7cd.svg",
-    "main.189e21d1.css.map": "/static/css/main.189e21d1.css.map",
-    "main.fb0d904d.js.map": "/static/js/main.fb0d904d.js.map"
+    "main.06f9bdc8.css.map": "/static/css/main.06f9bdc8.css.map",
+    "main.74d7e8a1.js.map": "/static/js/main.74d7e8a1.js.map"
   },
   "entrypoints": [
-    "static/css/main.189e21d1.css",
-    "static/js/main.fb0d904d.js"
+    "static/css/main.06f9bdc8.css",
+    "static/js/main.74d7e8a1.js"
   ]
 }

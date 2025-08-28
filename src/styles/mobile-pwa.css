@@ -1,0 +1,101 @@
+/* Mobile PWA Optimizations */
+/* This file contains specific fixes for mobile PWA scrolling issues */
+
+/* Prevent body scrolling when PWA is in standalone mode */
+@media (display-mode: standalone) {
+  html, body {
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+  }
+  
+  #root {
+    height: 100%;
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: none;
+  }
+}
+
+/* iOS Safari specific fixes */
+@supports (-webkit-touch-callout: none) {
+  /* Use -webkit-fill-available for iOS */
+  html, body {
+    height: -webkit-fill-available;
+    min-height: -webkit-fill-available;
+  }
+  
+  #root {
+    height: -webkit-fill-available;
+    min-height: -webkit-fill-available;
+  }
+  
+  /* Prevent iOS bounce */
+  html, body {
+    position: fixed;
+    width: 100%;
+    overflow: hidden;
+  }
+  
+  #root {
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: none;
+  }
+}
+
+/* Android Chrome specific fixes */
+@media (display-mode: standalone) and (-webkit-min-device-pixel-ratio: 0) {
+  html, body {
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+  }
+  
+  #root {
+    height: 100%;
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: none;
+  }
+}
+
+/* General mobile optimizations */
+@media (max-width: 768px) {
+  /* Ensure content doesn't get cut off by mobile UI elements */
+  .homepage-content,
+  .project-content,
+  .timer-content,
+  .journal-content {
+    padding-bottom: 120px;
+  }
+  
+  /* Optimize touch targets */
+  button, 
+  .clickable,
+  [role="button"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* Prevent horizontal scrolling */
+  * {
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+}
+
+/* Safe area support for notched devices */
+@supports (padding: max(0px)) {
+  #root {
+    padding-left: max(24px, var(--safe-area-inset-left));
+    padding-right: max(24px, var(--safe-area-inset-right));
+    padding-top: max(0px, var(--safe-area-inset-top));
+    padding-bottom: max(0px, var(--safe-area-inset-bottom));
+  }
+}
