@@ -745,13 +745,11 @@ p {
 
 /* Styling for the motion container (where your pages are rendered) */
   .motion-container {
-    position: absolute; /* Position absolutely within app-container */
-    top: 0;
-    left: 0;
-    right: 0;
+    position: relative; /* Changed from absolute to allow proper scrolling */
     width: 100%;
+    min-height: 100%; /* Ensure it takes at least full height */
     opacity: 1; /* Ensure it's visible */
-}
+  }
 
 /* WebKit (Chrome, Safari) - Hide Scrollbar */
 .app-container::-webkit-scrollbar {
@@ -2811,7 +2809,9 @@ width: 100%;
   color: var(--text-color);
   display: flex;
   flex-direction: column;
-  /* No extra bottom padding, since the bottom bar is fixed */
+  width: 100%;
+  min-height: 100%; /* Ensure page takes full height */
+  padding-bottom: 120px; /* Add bottom padding for button and safe scrolling */
 }
 
 /* The container that holds the timer + buttons at the bottom */
