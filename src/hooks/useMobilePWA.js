@@ -12,18 +12,15 @@ export const useMobilePWA = () => {
   }, []);
 
   const preventOverscroll = useCallback((e) => {
-    const { scrollTop, scrollHeight, clientHeight } = e.target;
-    
-    // Prevent overscroll at the top
-    if (scrollTop <= 0) {
-      e.preventDefault();
-      e.target.scrollTop = 0;
+    // Don't prevent scroll events - they're read-only
+    // Use CSS overscroll-behavior instead
+    const target = e.target;
+    if (target.scrollTop < 0) {
+      target.scrollTop = 0;
     }
-    
-    // Prevent overscroll at the bottom
-    if (scrollTop + clientHeight >= scrollHeight) {
-      e.preventDefault();
-      e.target.scrollTop = scrollHeight - clientHeight;
+    const maxScroll = target.scrollHeight - target.clientHeight;
+    if (target.scrollTop > maxScroll) {
+      target.scrollTop = maxScroll;
     }
   }, []);
 
@@ -53,15 +50,17 @@ export const useMobilePWA = () => {
       const handleTouchMove = (e) => {
         const deltaY = e.touches[0].clientY - startY;
         const newScrollTop = startScrollTop - deltaY;
+        const maxScroll = rootElement.scrollHeight - rootElement.clientHeight;
 
-        // Prevent overscroll
-        if (newScrollTop < 0) {
+        // Only prevent overscroll at boundaries, allow normal scrolling
+        if (newScrollTop < 0 && rootElement.scrollTop <= 0) {
           e.preventDefault();
           rootElement.scrollTop = 0;
-        } else if (newScrollTop > rootElement.scrollHeight - rootElement.clientHeight) {
+        } else if (newScrollTop > maxScroll && rootElement.scrollTop >= maxScroll) {
           e.preventDefault();
-          rootElement.scrollTop = rootElement.scrollHeight - rootElement.clientHeight;
+          rootElement.scrollTop = maxScroll;
         }
+        // Otherwise, let native scrolling handle it
       };
 
       rootElement.addEventListener('touchstart', handleTouchStart, { passive: false });
@@ -73,12 +72,12 @@ export const useMobilePWA = () => {
       };
     }
 
-    // Add scroll event listener for overscroll prevention
+    // Add scroll event listener for overscroll prevention (passive for better performance)
     const handleScroll = (e) => {
       preventOverscroll(e);
     };
 
-    rootElement.addEventListener('scroll', handleScroll, { passive: false });
+    rootElement.addEventListener('scroll', handleScroll, { passive: true });
 
     return () => {
       rootElement.removeEventListener('scroll', handleScroll);
@@ -90,21 +89,31 @@ export const useMobilePWA = () => {
     return cleanup;
   }, [setupMobileScrolling]);
 
-  // Prevent body scrolling when PWA is active
+  // Prevent body scrolling when PWA is active - but allow #root to scroll
   useEffect(() => {
     if (!isStandalone() && !isIOS()) return;
 
+    // Only prevent body scroll if the touch is not on a scrollable element
     const preventBodyScroll = (e) => {
-      e.preventDefault();
+      const target = e.target;
+      const rootElement = document.getElementById('root');
+      
+      // Allow scrolling if touch is on #root or its children
+      if (rootElement && (target === rootElement || rootElement.contains(target))) {
+        return; // Don't prevent, let it scroll
+      }
+      
+      // Only prevent if it's a direct body touch (shouldn't happen in normal use)
+      if (target === document.body || target === document.documentElement) {
+        e.preventDefault();
+      }
     };
 
-    // Prevent body scroll events
+    // Use passive: true for better performance, only prevent when necessary
     document.body.addEventListener('touchmove', preventBodyScroll, { passive: false });
-    document.body.addEventListener('scroll', preventBodyScroll, { passive: false });
-
+    
     return () => {
       document.body.removeEventListener('touchmove', preventBodyScroll);
-      document.body.removeEventListener('scroll', preventBodyScroll);
     };
   }, [isStandalone, isIOS]);
 

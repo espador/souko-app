@@ -396,15 +396,18 @@ h1, h2, h3, h4, h5, h6 {
   }
 }
 
-/* Prevent iOS bounce/overscroll */
+/* Prevent iOS bounce/overscroll - but allow scrolling */
 html, body {
   overscroll-behavior: none;
   -webkit-overflow-scrolling: touch;
 }
 
-/* Ensure smooth scrolling on all devices */
-* {
+/* Ensure smooth scrolling on scrollable elements */
+[data-scrollable],
+.scrollable,
+#root {
   -webkit-overflow-scrolling: touch;
+  touch-action: pan-y; /* Allow vertical scrolling */
 }
 
 .home-today-button {
@@ -490,11 +493,8 @@ html {
   background-color: #0C0C0C;
   height: 100%;
   overflow-x: hidden;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
   scroll-behavior: smooth;
-  position: fixed;
-  width: 100%;
+  /* Don't set position:fixed here - let mobile-pwa.css handle it for standalone mode */
 }
 
 body {
@@ -508,18 +508,17 @@ body {
   box-sizing: border-box;
   height: 100%;
   overflow-x: hidden;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-  position: fixed;
-  width: 100%;
+  /* Don't set position:fixed here - let mobile-pwa.css handle it for standalone mode */
+  /* Allow body to scroll normally when not in standalone PWA mode */
 }
 
 /* PWA Mobile Scrolling Container */
 #root {
-  height: 100%;
+  min-height: 100%;
   overflow-x: hidden;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
+  touch-action: pan-y; /* Allow vertical panning (scrolling) on touch devices */
   padding: 0 24px;
   padding-top: var(--safe-area-inset-top);
   padding-bottom: var(--safe-area-inset-bottom);
@@ -3513,6 +3512,7 @@ width: 100%;
   text-align: center;
   padding: 6px 0;
   -moz-appearance: textfield; /* Remove spinner for Firefox */
+  appearance: textfield; /* Standard property for compatibility */
 }
 
 .manual-time-input-year {

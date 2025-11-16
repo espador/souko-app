@@ -8,6 +8,7 @@
     width: 100%;
     height: 100%;
     overflow: hidden;
+    /* Prevent body from scrolling, but allow #root to scroll */
   }
   
   #root {
@@ -16,36 +17,45 @@
     overflow-x: hidden;
     -webkit-overflow-scrolling: touch;
     overscroll-behavior: none;
+    touch-action: pan-y; /* Explicitly allow vertical panning/scrolling */
     padding-bottom: 140px; /* Ensure content is scrollable above fixed buttons */
+    /* Ensure #root is the scrolling container */
+    position: relative;
   }
 }
 
 /* iOS Safari specific fixes */
 @supports (-webkit-touch-callout: none) {
-  /* Use -webkit-fill-available for iOS */
+  /* Use -webkit-fill-available for iOS to handle safe areas properly */
   html, body {
     height: -webkit-fill-available;
     min-height: -webkit-fill-available;
   }
   
-  #root {
-    height: -webkit-fill-available;
-    min-height: -webkit-fill-available;
-    padding-bottom: 140px; /* Ensure content is scrollable above fixed buttons */
+  /* Only apply fixed positioning in standalone mode for iOS */
+  @media (display-mode: standalone) {
+    html, body {
+      position: fixed;
+      width: 100%;
+      overflow: hidden;
+    }
+    
+    #root {
+      height: -webkit-fill-available;
+      min-height: -webkit-fill-available;
+      overflow-y: auto;
+      overflow-x: hidden;
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior: none;
+      touch-action: pan-y; /* Allow vertical scrolling on iOS */
+      padding-bottom: 140px; /* Ensure content is scrollable above fixed buttons */
+    }
   }
   
-  /* Prevent iOS bounce */
-  html, body {
-    position: fixed;
-    width: 100%;
-    overflow: hidden;
-  }
-  
+  /* For non-standalone iOS (regular Safari), allow normal scrolling */
   #root {
-    overflow-y: auto;
-    overflow-x: hidden;
     -webkit-overflow-scrolling: touch;
-    overscroll-behavior: none;
+    touch-action: pan-y;
   }
 }
 
@@ -74,16 +84,30 @@
   .homepage-content,
   .project-content,
   .timer-content,
-  .journal-content {
+  .journal-content,
+  .time-tracker-page {
     padding-bottom: 140px; /* Increased from 120px to ensure buttons are accessible */
   }
   
-  /* Optimize touch targets */
+  /* Optimize touch targets for iPhone 12 (390px width) */
   button, 
   .clickable,
-  [role="button"] {
-    min-height: 44px;
+  [role="button"],
+  input,
+  select,
+  textarea {
+    min-height: 44px; /* Apple's recommended minimum touch target */
     min-width: 44px;
+    touch-action: manipulation; /* Remove double-tap zoom delay */
+  }
+  
+  /* Ensure inputs are easily tappable on iPhone 12 */
+  .manual-time-input,
+  .hour-rate-input,
+  .project-dropdown,
+  .session-label-dropdown {
+    min-height: 44px;
+    touch-action: manipulation;
   }
   
   /* Prevent horizontal scrolling */
@@ -96,6 +120,12 @@
   .sticky-button,
   .sticky-button-top {
     z-index: 1000; /* Ensure buttons are above other content */
+  }
+  
+  /* Optimize scrolling for iPhone 12 viewport */
+  #root {
+    touch-action: pan-y;
+    -webkit-overflow-scrolling: touch;
   }
 }
 
