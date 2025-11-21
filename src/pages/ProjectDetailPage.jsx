@@ -574,9 +574,6 @@ const ProjectDetailPage = React.memo(({ navigate, projectId }) => {
                   >
                       <span className="session-start-time">
                         {formatStartTime(session)}
-                        {session.isManual && (
-                          <span className="session-manual-label"> Manual</span>
-                        )}
                       </span>
                       <span
                         className="session-elapsed-time"
